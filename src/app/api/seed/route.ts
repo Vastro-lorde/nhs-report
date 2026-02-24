@@ -1,6 +1,6 @@
 /* ──────────────────────────────────────────
-   API: /api/seed — admin seed route (dev only)
-   Creates initial admin user
+   API: /api/seed — seed route (dev only)
+   Creates one user per role: admin, coordinator, mentor
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
@@ -9,7 +9,34 @@ import { User } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
 
-export async function POST(request: NextRequest) {
+const SEED_USERS = [
+  {
+    name: "System Admin",
+    email: "admin@mailinator.com",
+    password: "admin123",
+    role: UserRole.ADMIN,
+    state: "FCT",
+    lgas: [],
+  },
+  {
+    name: "State Coordinator",
+    email: "coordinator@mailinator.com",
+    password: "coord123",
+    role: UserRole.COORDINATOR,
+    state: "Edo",
+    lgas: ["Etsako West", "Etsako East", "Owan West"],
+  },
+  {
+    name: "Alhaji Bello Ibrahim",
+    email: "mentor@mailinator.com",
+    password: "mentor123",
+    role: UserRole.MENTOR,
+    state: "Edo",
+    lgas: ["Etsako West", "Etsako East"],
+  },
+];
+
+export async function POST(_request: NextRequest) {
   // Only allow in development
   if (process.env.NODE_ENV === "production") {
     return jsonError("Not available in production", 403);
@@ -17,24 +44,33 @@ export async function POST(request: NextRequest) {
 
   await connectDB();
 
-  const existing = await User.findOne({ role: UserRole.ADMIN });
-  if (existing) {
-    return jsonOk({ message: "Admin already exists", email: existing.email });
+  const created: { email: string; role: string; password: string }[] = [];
+  const skipped: string[] = [];
+
+  for (const seed of SEED_USERS) {
+    const existing = await User.findOne({ email: seed.email });
+    if (existing) {
+      skipped.push(seed.email);
+      continue;
+    }
+
+    const hashedPassword = await bcrypt.hash(seed.password, 12);
+    await User.create({
+      name: seed.name,
+      email: seed.email,
+      password: hashedPassword,
+      role: seed.role,
+      state: seed.state,
+      lgas: seed.lgas,
+      active: true,
+    });
+
+    created.push({ email: seed.email, role: seed.role, password: seed.password });
   }
 
-  const hashedPassword = await bcrypt.hash("admin123", 12);
-
-  const admin = await User.create({
-    name: "System Admin",
-    email: "admin@nhs-report.local",
-    password: hashedPassword,
-    role: UserRole.ADMIN,
-    active: true,
-  });
-
   return jsonOk({
-    message: "Admin user created",
-    email: admin.email,
-    password: "admin123 (change immediately)",
+    message: `Seeded ${created.length} user(s), skipped ${skipped.length}`,
+    created,
+    skipped,
   });
 }
