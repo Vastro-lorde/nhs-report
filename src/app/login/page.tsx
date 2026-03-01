@@ -8,6 +8,8 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { DebugSeeder } from "@/components/ui/DebugSeeder";
+import { APP_NAME } from "@/lib/constants";
 
 function LoginForm() {
   const router = useRouter();
@@ -45,10 +47,10 @@ function LoginForm() {
         {/* Logo / Header */}
         <div className="text-center mb-8">
           <div className="mx-auto h-14 w-14 rounded-xl bg-green-700 flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-xl">NHS</span>
+            <span className="text-white font-bold text-xl">CWCR</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Mentor Reporting System
+            {APP_NAME.replace("CWCR-", "")}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Sign in to submit and view reports
@@ -58,6 +60,7 @@ function LoginForm() {
         <form
           onSubmit={handleSubmit}
           className="bg-white shadow-sm border border-gray-200 rounded-xl p-8 space-y-5"
+          suppressHydrationWarning
         >
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
@@ -67,6 +70,7 @@ function LoginForm() {
 
           <Input
             id="email"
+            name="email"
             label="Email"
             type="email"
             placeholder="you@example.com"
@@ -74,16 +78,21 @@ function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoFocus
+            autoComplete="username"
+            suppressHydrationWarning
           />
 
           <Input
             id="password"
+            name="password"
             label="Password"
             type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
+            suppressHydrationWarning
           />
 
           <Button type="submit" className="w-full" disabled={loading}>
@@ -95,6 +104,23 @@ function LoginForm() {
           National Health Fellowship Mentorship Program
         </p>
       </div>
+
+      <DebugSeeder
+        label="Prefill Seeder Roles"
+        onFill={() => {
+          // Cycle through the 3 seeded roles
+          const roles = [
+            { email: "admin@mailinator.com", password: "admin123" },
+            { email: "coordinator@mailinator.com", password: "coord123" },
+            { email: "mentor@mailinator.com", password: "mentor123" },
+          ];
+          const currentIndex = roles.findIndex((r) => r.email === email);
+          const nextIndex = (currentIndex + 1) % roles.length;
+
+          setEmail(roles[nextIndex].email);
+          setPassword(roles[nextIndex].password);
+        }}
+      />
     </div>
   );
 }

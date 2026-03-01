@@ -12,7 +12,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
-import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { DebugSeeder } from "@/components/ui/DebugSeeder";
+import { faker } from "@faker-js/faker";
+import { exportToCSV } from "@/lib/export";
+import Link from "next/link";
 
 /* ─── Create Mentor Modal ──────────────── */
 function CreateMentorModal({
@@ -134,6 +138,21 @@ function CreateMentorModal({
           </div>
         </form>
       </div>
+
+      <DebugSeeder
+        label="Prefill Fake Mentor"
+        onFill={() => {
+          setForm({
+            name: faker.person.fullName(),
+            email: faker.internet.email(),
+            password: faker.internet.password({ length: 8 }),
+            phone: faker.phone.number(),
+            state: faker.helpers.arrayElement(STATES),
+            lgas: `${faker.location.county()}, ${faker.location.county()}`,
+            role: faker.helpers.arrayElement([UserRole.MENTOR, UserRole.COORDINATOR, UserRole.ADMIN]),
+          });
+        }}
+      />
     </div>
   );
 }
@@ -185,7 +204,7 @@ export default function MentorsPage() {
 
   return (
     <>
-      <Header title="Mentors" subtitle={`${total} total mentors`} />
+      <Header title="Mentors" subtitle={`${total} total mentor${total === 1 ? '' : 's'}`} />
 
       <div className="p-6 space-y-4">
         {/* Filters */}
@@ -215,6 +234,19 @@ export default function MentorsPage() {
                 ]}
                 className="w-48"
               />
+              <Button variant="outline" size="sm" onClick={() => {
+                const data = mentors.map(m => ({
+                  Name: m.name,
+                  Email: m.email,
+                  State: m.state,
+                  LGAs: m.lgas?.join(", ") || "",
+                  Role: m.role,
+                  Status: m.active ? "Active" : "Inactive"
+                }));
+                exportToCSV(data, "mentors");
+              }}>
+                <Download className="h-4 w-4 mr-1" /> Export CSV
+              </Button>
               <Button size="sm" onClick={() => setShowCreate(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Add Mentor
               </Button>
@@ -269,9 +301,19 @@ export default function MentorsPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
+                      <Link href={`/mentors/${m._id}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="View Details"
+                        >
+                          View
+                        </Button>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="sm"
+
                         onClick={() => toggleActive(m)}
                         title={m.active ? "Deactivate" : "Activate"}
                       >

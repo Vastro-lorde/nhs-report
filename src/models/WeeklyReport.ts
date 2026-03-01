@@ -79,7 +79,7 @@ const MentorshipSessionSchema = new Schema(
 
 const WeeklyReportSchema = new Schema<IWeeklyReport>(
   {
-    mentor: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    mentor: { type: Schema.Types.ObjectId, ref: "Mentor", required: true },
     weekEnding: { type: Date, required: true },
     weekNumber: { type: Number },
     weekKey: { type: String, required: true, index: true },

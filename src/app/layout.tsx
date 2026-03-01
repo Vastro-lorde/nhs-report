@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
+import { APP_NAME } from "@/lib/constants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NHS Mentor Reporting System",
-  description: "Weekly mentor reporting, tracking, and analytics for NHS programme",
+  title: APP_NAME,
+  description: `Weekly mentor reporting, tracking, and analytics for ${APP_NAME} programme`,
 };
 
 export default function RootLayout({
@@ -24,9 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased text-gray-900 bg-gray-50`}
+        suppressHydrationWarning
       >
         <Providers>{children}</Providers>
       </body>

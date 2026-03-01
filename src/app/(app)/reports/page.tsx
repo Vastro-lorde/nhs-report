@@ -15,8 +15,9 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { api, type Report } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
 import { format } from "date-fns";
-import { Plus, Eye, ChevronLeft, ChevronRight, FileDown } from "lucide-react";
+import { Plus, Eye, ChevronLeft, ChevronRight, FileDown, Download } from "lucide-react";
 import dynamic from "next/dynamic";
+import { exportToCSV } from "@/lib/export";
 
 const PDFDownloadButton = dynamic(
   () => import("@/components/pdf/PDFDownloadButton").then((m) => m.PDFDownloadButton),
@@ -59,8 +60,8 @@ export default function ReportsListPage() {
       status === "submitted"
         ? "info"
         : status === "reviewed"
-        ? "default"
-        : "warning";
+          ? "default"
+          : "warning";
     return <Badge variant={variant}>{status}</Badge>;
   };
 
@@ -78,6 +79,7 @@ export default function ReportsListPage() {
             <div className="flex flex-wrap items-end gap-4">
               <Input
                 label="Week Key"
+                type="week"
                 placeholder="2025-W35"
                 value={weekKey}
                 onChange={(e) => {
@@ -106,6 +108,20 @@ export default function ReportsListPage() {
                   <Plus className="h-4 w-4 mr-1" /> New Report
                 </Button>
               </Link>
+              <Button variant="outline" size="sm" onClick={() => {
+                const data = reports.map(r => ({
+                  Week: r.weekKey,
+                  Mentor: r.mentor?.name ?? r.mentorName ?? "",
+                  State: r.mentor?.state ?? r.state,
+                  Sessions: r.sessionsCount,
+                  Mentees: r.menteesCheckedIn,
+                  Status: r.status,
+                  Submitted: format(new Date(r.createdAt), "yyyy-MM-dd")
+                }));
+                exportToCSV(data, "reports");
+              }}>
+                <Download className="h-4 w-4 mr-1" /> Export CSV
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -154,11 +170,11 @@ export default function ReportsListPage() {
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
                       <Link href={`/reports/${report._id}`}>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" aria-label="View Report">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <PDFDownloadButton report={report} size="icon" variant="ghost">
+                      <PDFDownloadButton report={report} size="icon" variant="ghost" aria-label="Download PDF">
                         <FileDown className="h-4 w-4" />
                       </PDFDownloadButton>
                     </td>

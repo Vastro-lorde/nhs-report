@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport, Alert, User } from "@/models";
+import { WeeklyReport, Alert, User, Mentor, Coordinator } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
@@ -22,26 +22,69 @@ export async function GET(request: NextRequest) {
 
   const filter: Record<string, unknown> = {};
 
-  // Mentors can only see their own reports
+  // Get Mentor ID for mentors
+  let mentorDocId = null;
   if (session!.user.role === UserRole.MENTOR) {
-    filter.mentor = session!.user.id;
+    const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
+    if (mentorDoc) {
+      mentorDocId = mentorDoc._id;
+      filter.mentor = mentorDocId;
+    } else {
+      return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+    }
   }
 
   const weekKey = url.searchParams.get("weekKey");
   const mentorId = url.searchParams.get("mentorId");
   const state = url.searchParams.get("state");
+  const startDate = url.searchParams.get("startDate");
+  const endDate = url.searchParams.get("endDate");
 
   if (weekKey) filter.weekKey = weekKey;
-  if (mentorId && session!.user.role !== UserRole.MENTOR) filter.mentor = mentorId;
-  if (state) {
-    // Need to find mentors in that state first
-    const mentorIds = await User.find({ state, role: UserRole.MENTOR }).distinct("_id");
-    filter.mentor = { $in: mentorIds };
+
+  if (startDate || endDate) {
+    filter.weekEnding = {};
+    if (startDate) (filter.weekEnding as any).$gte = new Date(startDate);
+    if (endDate) (filter.weekEnding as any).$lte = new Date(endDate);
+  }
+
+  if (session!.user.role !== UserRole.MENTOR) {
+    const mentorFilter: Record<string, unknown> = {};
+    let mustFilterByMentorIds = false;
+
+    if (session!.user.role === UserRole.COORDINATOR) {
+      const coordinatorDoc = await Coordinator.findOne({ authId: session!.user.id });
+      if (coordinatorDoc) {
+        mentorFilter.coordinator = coordinatorDoc._id;
+        mustFilterByMentorIds = true;
+      } else {
+        // Coordinator without a profile, return empty
+        return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+      }
+    }
+
+    if (state) {
+      mentorFilter.state = state.toUpperCase();
+      mustFilterByMentorIds = true;
+    }
+    if (mentorId) {
+      mentorFilter._id = mentorId;
+      mustFilterByMentorIds = true;
+    }
+
+    if (mustFilterByMentorIds) {
+      const mentorIds = await Mentor.find(mentorFilter).distinct("_id");
+      filter.mentor = { $in: mentorIds };
+    }
   }
 
   const [reports, total] = await Promise.all([
     WeeklyReport.find(filter)
-      .populate("mentor", "name email state")
+      .populate({
+        path: "mentor",
+        populate: { path: "authId", select: "name email phone active" },
+        select: "state lgas"
+      })
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
@@ -103,7 +146,10 @@ export async function POST(request: NextRequest) {
   if (isNaN(weekEnding.getTime())) return jsonError("Invalid weekEnding date");
 
   const weekKey = isoWeekKey(weekEnding);
-  const mentorId = session!.user.id;
+
+  const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
+  if (!mentorDoc) return jsonError("Mentor profile not found", 403);
+  const mentorId = mentorDoc._id;
 
   // Validate data quality
   const flags: string[] = [];
@@ -150,12 +196,11 @@ export async function POST(request: NextRequest) {
 
   // Create alert if urgent
   if (body.urgentAlert && body.urgentDetails) {
-    const mentor = await User.findById(mentorId).lean();
     await Alert.create({
       report: report._id,
       mentor: mentorId,
       weekKey,
-      state: mentor?.state ?? "",
+      state: mentorDoc.state ?? "",
       urgentDetails: body.urgentDetails,
     });
   }

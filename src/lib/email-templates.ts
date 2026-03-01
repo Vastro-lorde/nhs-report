@@ -1,6 +1,7 @@
 /* ──────────────────────────────────────────
    Email templates (single source of truth)
    ────────────────────────────────────────── */
+import { APP_NAME } from "./constants";
 
 export function reminderEmailTemplate(mentorName: string, weekKey: string, appUrl: string) {
   const subject = `Weekly Mentor Report Reminder (${weekKey})`;
@@ -14,7 +15,7 @@ Submit here: ${appUrl}/reports/new
 Please submit before end of day Friday.
 
 Thank you,
-NHS Mentor Reporting System`;
+${APP_NAME}`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
@@ -30,7 +31,7 @@ NHS Mentor Reporting System`;
       </p>
       <p>Please submit before end of day Friday.</p>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-      <p style="color: #6b7280; font-size: 12px;">NHS Mentor Reporting System</p>
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
     </div>`;
 
   return { subject, text, html };
@@ -75,8 +76,8 @@ ${urgentLines}`;
 
   const urgentHtml = data.urgentAlerts.length
     ? data.urgentAlerts
-        .map((a) => `<li><strong>${a.mentor}</strong> (${a.state}): ${a.details}</li>`)
-        .join("")
+      .map((a) => `<li><strong>${a.mentor}</strong> (${a.state}): ${a.details}</li>`)
+      .join("")
     : "<li>None</li>";
 
   const html = `
@@ -107,7 +108,7 @@ ${urgentLines}`;
       <h3 style="color: #dc2626;">Urgent Alerts</h3>
       <ul>${urgentHtml}</ul>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-      <p style="color: #6b7280; font-size: 12px;">NHS Mentor Reporting System</p>
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
     </div>`;
 
   return { subject, text, html };

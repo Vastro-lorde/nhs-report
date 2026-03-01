@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { DebugSeeder } from "@/components/ui/DebugSeeder";
+import { faker } from "@faker-js/faker";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -35,6 +37,7 @@ export default function SettingsPage() {
         const body = await res.json();
         throw new Error(body.error || "Failed to update profile");
       }
+      await update(); // Force refresh the next-auth session to update layout elements
       setMessage("Profile updated.");
     } catch (err) {
       setMessage((err as Error).message);
@@ -137,21 +140,27 @@ export default function SettingsPage() {
             <CardTitle>Change Password</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
+            <form onSubmit={handlePasswordChange} className="space-y-4" suppressHydrationWarning>
               <Input
                 label="Current Password"
+                name="currentPassword"
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 required
+                autoComplete="current-password"
+                suppressHydrationWarning
               />
               <Input
                 label="New Password"
+                name="newPassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={6}
+                autoComplete="new-password"
+                suppressHydrationWarning
               />
               <Button type="submit" disabled={saving}>
                 {saving ? "Changing…" : "Change Password"}
@@ -160,6 +169,19 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <DebugSeeder
+        label="Prefill Profile/Password Forms (Fake Data)"
+        onFill={() => {
+          // Fill profile updates
+          setName(faker.person.fullName());
+          setPhone(faker.phone.number());
+
+          // Fill password updates
+          setCurrentPassword("admin123");
+          setNewPassword(faker.internet.password({ length: 8 }));
+        }}
+      />
     </>
   );
 }

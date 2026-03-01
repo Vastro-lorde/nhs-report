@@ -6,8 +6,8 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout";
 import { ScoreCard, Card, CardHeader, CardTitle, CardContent } from "@/components/ui";
-import { api, type DashboardData } from "@/lib/api-client";
-import { Users, FileText, AlertTriangle, BarChart3 } from "lucide-react";
+import { api, type DashboardData, type Mentor, type Fellow } from "@/lib/api-client";
+import { Users, FileText, AlertTriangle, BarChart3, UserCheck } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -20,35 +20,9 @@ import {
   Line,
   Legend,
 } from "recharts";
+import { useSession } from "next-auth/react";
 
-export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.dashboard
-      .get()
-      .then(setData)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700" />
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="p-6">
-        <p className="text-gray-500">Failed to load dashboard data.</p>
-      </div>
-    );
-  }
-
+function AdminDashboard({ data }: { data: DashboardData }) {
   const pct = Math.round(data.submissionRate * 100);
 
   // Prepare chart data from rollups
@@ -80,7 +54,7 @@ export default function DashboardPage() {
     <>
       <Header
         title="Dashboard"
-        subtitle={`Week ${data.currentWeekKey}`}
+        subtitle={`Week ${data.currentWeekKey} Overview`}
       />
 
       <div className="p-6 space-y-6">
@@ -200,4 +174,160 @@ export default function DashboardPage() {
       </div>
     </>
   );
+}
+
+function MentorDashboard() {
+  const { data: session } = useSession();
+  const user = session?.user;
+  const [profile, setProfile] = useState<Mentor | null>(null);
+  const [fellows, setFellows] = useState<Fellow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.mentors.get("me"),
+      api.fellows.list()
+    ])
+      .then(([profileData, fellowsData]) => {
+        setProfile(profileData);
+        setFellows(fellowsData.data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-6">
+        <p className="text-gray-500">Failed to load profile data.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Header
+        title={`Welcome, ${user?.name}`}
+        subtitle="Mentor Dashboard"
+      />
+
+      <div className="p-6 space-y-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Profile Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-green-700" />
+                My Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 mt-4">
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase">Full Name</p>
+                  <p className="text-sm font-medium">{profile.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase">Email Address</p>
+                  <p className="text-sm font-medium">{profile.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase">Phone Number</p>
+                  <p className="text-sm font-medium">{profile.phone || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase">State</p>
+                  <p className="text-sm font-medium">{profile.state || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase">Assigned LGAs</p>
+                  <p className="text-sm font-medium">{profile.lgas?.join(", ") || "—"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Fellows Stats Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-700" />
+                My Fellows Statistics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mt-4 flex flex-col items-center justify-center h-full space-y-4 py-6">
+                <div className="text-6xl font-bold text-gray-800">{fellows.length}</div>
+                <p className="text-gray-500 text-sm uppercase tracking-wider font-medium">Total Fellows Assigned</p>
+
+                <div className="w-full mt-6 bg-gray-50 rounded-lg p-4 border grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-green-700">
+                      {fellows.filter(f => f.gender.toLowerCase() === 'male' || f.gender.toLowerCase() === 'm').length}
+                    </p>
+                    <p className="text-xs text-gray-500 uppercase mt-1">Male</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {fellows.filter(f => f.gender.toLowerCase() === 'female' || f.gender.toLowerCase() === 'f').length}
+                    </p>
+                    <p className="text-xs text-gray-500 uppercase mt-1">Female</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const user = session?.user;
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role !== "mentor") {
+      api.dashboard
+        .get()
+        .then(setData)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700" />
+      </div>
+    );
+  }
+
+  if (user?.role === "mentor") {
+    return <MentorDashboard />;
+  }
+
+  if (!data) {
+    return (
+      <div className="p-6">
+        <p className="text-gray-500">Failed to load dashboard data.</p>
+      </div>
+    );
+  }
+
+  return <AdminDashboard data={data} />;
 }

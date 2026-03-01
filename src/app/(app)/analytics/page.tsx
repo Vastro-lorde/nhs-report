@@ -7,7 +7,10 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/layout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
+import { Download } from "lucide-react";
 import { api, type DashboardData } from "@/lib/api-client";
+import { exportToCSV } from "@/lib/export";
 import {
   LineChart,
   Line,
@@ -53,7 +56,7 @@ export default function AnalyticsPage() {
 
   const rollups = data.rollups ?? [];
   const rawByState = data.submissionsByState ?? [];
-  
+
   // Aggregate the submissionsByState (which may be per-state-per-week) into just per-state totals
   const stateMap: Record<string, number> = {};
   rawByState.forEach((s) => {
@@ -101,19 +104,19 @@ export default function AnalyticsPage() {
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
               {chartType === "line" ? (
-                <LineChart data={rollups}>
+                <LineChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="weekKey" fontSize={12} />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
+                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} />
+                  <YAxis yAxisId="left" width={30} fontSize={10} tickMargin={5} />
+                  <YAxis yAxisId="right" orientation="right" width={30} fontSize={10} tickMargin={5} />
                   <Tooltip />
-                  <Legend />
+                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
                   <Line
                     yAxisId="left"
                     type="monotone"
                     dataKey="submissionRate"
                     stroke="#16a34a"
-                    name="Submission Rate %"
+                    name="Submit %"
                     strokeWidth={2}
                   />
                   <Line
@@ -121,18 +124,18 @@ export default function AnalyticsPage() {
                     type="monotone"
                     dataKey="totalSessions"
                     stroke="#2563eb"
-                    name="Total Sessions"
+                    name="Sessions"
                     strokeWidth={2}
                   />
                 </LineChart>
               ) : (
-                <BarChart data={rollups}>
+                <BarChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="weekKey" fontSize={12} />
-                  <YAxis />
+                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} />
+                  <YAxis width={30} fontSize={10} tickMargin={5} />
                   <Tooltip />
-                  <Legend />
-                  <Bar dataKey="reportsSubmitted" fill="#16a34a" name="Reports Submitted" />
+                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                  <Bar dataKey="reportsSubmitted" fill="#16a34a" name="Reports" />
                   <Bar dataKey="totalSessions" fill="#2563eb" name="Sessions" />
                 </BarChart>
               )}
@@ -148,10 +151,10 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={byState} layout="vertical">
+                <BarChart data={byState} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="_id" type="category" width={100} fontSize={12} />
+                  <XAxis type="number" fontSize={10} tickMargin={5} />
+                  <YAxis dataKey="_id" type="category" width={80} fontSize={10} tickMargin={5} />
                   <Tooltip />
                   <Bar dataKey="count" fill="#16a34a" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -205,10 +208,10 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={rollups}>
+              <BarChart data={rollups} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="weekKey" fontSize={12} />
-                <YAxis />
+                <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} />
+                <YAxis width={30} fontSize={10} tickMargin={5} />
                 <Tooltip />
                 <Bar dataKey="urgentAlertsCount" fill="#dc2626" name="Urgent Alerts" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -219,7 +222,18 @@ export default function AnalyticsPage() {
         {/* State-level table */}
         <Card>
           <CardHeader>
-            <CardTitle>State Performance Summary</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>State Performance Summary</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => {
+                const exportData = byState.map((s: { _id: string; count: number }) => ({
+                  State: s._id,
+                  Reports: s.count
+                }));
+                exportToCSV(exportData, "state-performance");
+              }}>
+                <Download className="h-4 w-4 mr-1" /> Export CSV
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

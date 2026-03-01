@@ -4,6 +4,10 @@
    ────────────────────────────────────────── */
 "use client";
 
+import React from "react";
+import { format, parseISO } from "date-fns";
+import { APP_NAME } from "@/lib/constants";
+
 import {
   Document,
   Page,
@@ -152,9 +156,9 @@ function BulletList({ items }: { items: string[] }) {
 function PageFooter() {
   return (
     <Text
-      style={s.footer}
+      style={s.footer} // Assuming 'styles.pageNumber' was a typo and 's.footer' is intended based on the original code's structure
       render={({ pageNumber, totalPages }) =>
-        `Page ${pageNumber} of ${totalPages}  |  NHS Mentor Reporting System`
+        `Page ${pageNumber} of ${totalPages}  |  ${APP_NAME}`
       }
       fixed
     />

@@ -40,6 +40,16 @@ export const api = {
       request<Mentor>(`/api/mentors/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     deactivate: (id: string) =>
       request(`/api/mentors/${id}`, { method: "DELETE" }),
+    bulkCreate: (data: { mentors: BulkMentorInput[] }) =>
+      request<{ successful: number; failed: number; errors: string[] }>("/api/mentors/bulk", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    resetPassword: (id: string, newPassword: string) =>
+      request<{ success: boolean; message: string }>(`/api/mentors/${id}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ password: newPassword }),
+      }),
   },
 
   reports: {
@@ -50,6 +60,14 @@ export const api = {
       request<Report>("/api/reports", { method: "POST", body: JSON.stringify(data) }),
     update: (id: string, data: Partial<Report>) =>
       request<Report>(`/api/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+
+    monthly: {
+      list: (params?: URLSearchParams | Record<string, string>) =>
+        request<PaginatedResponse<MonthlyReport>>(`/api/reports/monthly?${new URLSearchParams(params).toString()}`),
+      get: (id: string) => request<MonthlyReport>(`/api/reports/monthly/${id}`),
+      create: (data: CreateMonthlyReportInput) =>
+        request<MonthlyReport>("/api/reports/monthly", { method: "POST", body: JSON.stringify(data) }),
+    }
   },
 
   alerts: {
@@ -64,6 +82,28 @@ export const api = {
     get: (weekKey: string) => request<RollupItem>(`/api/rollups?weekKey=${weekKey}`),
   },
 
+  fellows: {
+    list: (params?: URLSearchParams | Record<string, string>) =>
+      request<PaginatedResponse<Fellow>>(`/api/fellows?${new URLSearchParams(params).toString()}`),
+    create: (data: CreateFellowInput) =>
+      request<Fellow>("/api/fellows", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Fellow>) =>
+      request<Fellow>(`/api/fellows/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/api/fellows/${id}`, { method: "DELETE" }),
+    documents: {
+      list: (fellowId: string) =>
+        request<FellowDocument[]>(`/api/fellows/${fellowId}/documents`),
+      upload: (fellowId: string, data: { documents: UploadFellowDocumentInput[] }) =>
+        request<FellowDocument[]>(`/api/fellows/${fellowId}/documents`, { method: "POST", body: JSON.stringify(data) }),
+    },
+    bulkCreate: (data: { fellows: BulkFellowInput[] }) =>
+      request<{ successful: number; failed: number; errors: string[] }>("/api/fellows/bulk", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
+
   upload: {
     file: async (file: File) => {
       const formData = new FormData();
@@ -75,6 +115,17 @@ export const api = {
       }
       return res.json() as Promise<{ url: string; publicId: string }>;
     },
+  },
+
+  documentTypes: {
+    list: (params?: URLSearchParams | Record<string, string>) =>
+      request<PaginatedResponse<DocumentType>>(`/api/document-types?${new URLSearchParams(params).toString()}`),
+    create: (data: CreateDocumentTypeInput) =>
+      request<DocumentType>("/api/document-types", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: UpdateDocumentTypeInput) =>
+      request<DocumentType>(`/api/document-types/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      request(`/api/document-types/${id}`, { method: "DELETE" }),
   },
 };
 
@@ -108,6 +159,53 @@ export interface CreateMentorInput {
   phone?: string;
   state?: string;
   lgas?: string[];
+}
+
+export interface BulkMentorInput {
+  name: string;
+  email: string;
+  phone?: string;
+  state?: string;
+  lgas?: string;
+}
+
+export interface Fellow {
+  _id: string;
+  mentor: string;
+  name: string;
+  gender: string;
+  lga: string;
+  quarterlyReports: { url: string; uploadedAt: string }[];
+  createdAt: string;
+}
+
+export interface CreateFellowInput {
+  name: string;
+  gender: string;
+  lga: string;
+  newQuarterlyReportUrl?: string;
+}
+
+export interface BulkFellowInput {
+  name: string;
+  state: string;
+  lga: string;
+  phone: string;
+  gender: string;
+  mentorId: string;
+}
+
+export interface FellowDocument {
+  _id: string;
+  fellow: string;
+  documentType: { _id: string; title: string } | string;
+  url: string;
+  createdAt: string;
+}
+
+export interface UploadFellowDocumentInput {
+  documentTypeId: string;
+  url: string;
 }
 
 export interface MentorshipSessionInput {
@@ -212,4 +310,34 @@ export interface DashboardData {
     sessions?: number;
     checkins?: number;
   }[];
+}
+
+export interface MonthlyReport {
+  _id: string;
+  coordinator: { _id: string; name: string; email: string; state: string };
+  state: string;
+  month: string;
+  summaryText: string;
+  weeklyReports: Report[];
+  status: string;
+  createdAt: string;
+}
+
+export interface CreateMonthlyReportInput {
+  month: string;
+  summaryText: string;
+}
+
+export interface DocumentType {
+  _id: string;
+  title: string;
+  createdAt: string;
+}
+
+export interface CreateDocumentTypeInput {
+  title: string;
+}
+
+export interface UpdateDocumentTypeInput {
+  title: string;
 }

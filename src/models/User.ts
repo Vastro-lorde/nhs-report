@@ -10,8 +10,7 @@ export interface IUser extends Document {
   password: string; // bcrypt hash
   phone?: string;
   role: UserRole;
-  state?: string;
-  lgas: string[];
+  profileImage?: string;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -34,8 +33,7 @@ const UserSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       default: UserRole.MENTOR,
     },
-    state: { type: String, enum: [...STATES, ""] },
-    lgas: { type: [String], default: [] },
+    profileImage: { type: String },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

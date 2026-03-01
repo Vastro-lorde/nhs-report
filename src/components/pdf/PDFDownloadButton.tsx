@@ -13,13 +13,13 @@ import type { Report } from "@/lib/api-client";
 import type { VariantProps } from "class-variance-authority";
 import type { buttonVariants } from "@/components/ui/Button";
 
-interface PDFDownloadButtonProps extends VariantProps<typeof buttonVariants> {
+interface PDFDownloadButtonProps extends VariantProps<typeof buttonVariants>, React.ButtonHTMLAttributes<HTMLButtonElement> {
   report: Report;
   className?: string;
   children?: React.ReactNode;
 }
 
-export function PDFDownloadButton({ report, className, children, variant = "outline", size = "sm" }: PDFDownloadButtonProps) {
+export function PDFDownloadButton({ report, className, children, variant = "outline", size = "sm", ...rest }: PDFDownloadButtonProps) {
   const [generating, setGenerating] = useState(false);
 
   const handleDownload = async () => {
@@ -48,6 +48,7 @@ export function PDFDownloadButton({ report, className, children, variant = "outl
       onClick={handleDownload}
       disabled={generating}
       className={className}
+      {...rest}
     >
       {children ?? (
         <>

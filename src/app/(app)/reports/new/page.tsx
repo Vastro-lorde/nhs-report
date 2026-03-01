@@ -15,7 +15,10 @@ import { Select } from "@/components/ui/Select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type CreateReportInput, type MentorshipSessionInput } from "@/lib/api-client";
 import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
+import { DebugSeeder } from "@/components/ui/DebugSeeder";
+import { faker } from "@faker-js/faker";
+import { useEffect } from "react";
 
 const EMPTY_SESSION: MentorshipSessionInput = {
   menteeName: "",
@@ -35,6 +38,32 @@ export default function NewReportPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  // Assigned Fellows
+  const [assignedFellows, setAssignedFellows] = useState<{ id: string; name: string; lga: string }[]>([]);
+  const [loadingFellows, setLoadingFellows] = useState(true);
+
+  // Fetch fellows on mount
+  useEffect(() => {
+    async function fetchFellows() {
+      try {
+        const response = await fetch("/api/fellows?limit=500");
+        const json = await response.json();
+        if (json.data) {
+          setAssignedFellows(json.data.map((f: any) => ({
+            id: f._id,
+            name: f.name,
+            lga: f.lga
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to load fellows", err);
+      } finally {
+        setLoadingFellows(false);
+      }
+    }
+    fetchFellows();
+  }, []);
 
   // ─── Form state ──────────────────────
   const [weekEnding, setWeekEnding] = useState("");
@@ -77,7 +106,20 @@ export default function NewReportPage() {
     value: unknown
   ) => {
     setSessions((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, [field]: value } : s))
+      prev.map((s, i) => {
+        if (i === idx) {
+          const updated = { ...s, [field]: value };
+          // Auto-fill LGA if menteeName changes and matches a fellow
+          if (field === "menteeName") {
+            const matchedFellow = assignedFellows.find(f => f.name === value);
+            if (matchedFellow && !s.menteeLGA) {
+              updated.menteeLGA = matchedFellow.lga;
+            }
+          }
+          return updated;
+        }
+        return s;
+      })
     );
   };
 
@@ -240,12 +282,23 @@ export default function NewReportPage() {
               {fellows.map((f, i) => (
                 <div key={i} className="flex items-end gap-3">
                   <div className="flex-1">
-                    <Input
-                      label={i === 0 ? "Name" : undefined}
-                      placeholder="Fellow name"
-                      value={f.name}
-                      onChange={(e) => updateFellow(i, "name", e.target.value)}
-                    />
+                    {loadingFellows ? (
+                      <div className="flex items-center text-sm text-gray-500 h-10"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading fellows...</div>
+                    ) : (
+                      <Select
+                        label={i === 0 ? "Name" : undefined}
+                        value={f.name}
+                        onChange={(e) => {
+                          updateFellow(i, "name", e.target.value);
+                          const matchedFellow = assignedFellows.find(af => af.name === e.target.value);
+                          if (matchedFellow) updateFellow(i, "lga", matchedFellow.lga);
+                        }}
+                        options={[
+                          { label: "Select Fellow", value: "" },
+                          ...assignedFellows.map(af => ({ label: af.name, value: af.name }))
+                        ]}
+                      />
+                    )}
                   </div>
                   <div className="flex-1">
                     <Input
@@ -296,13 +349,20 @@ export default function NewReportPage() {
               <div className="space-y-4">
                 {/* Identity */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Name of Mentee/Fellow *"
-                    placeholder="e.g. Fatimah Ahmad Abdullahi"
-                    value={session.menteeName}
-                    onChange={(e) => updateSession(si, "menteeName", e.target.value)}
-                    required
-                  />
+                  {loadingFellows ? (
+                    <div className="flex items-center text-sm text-gray-500 h-10"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading fellows...</div>
+                  ) : (
+                    <Select
+                      label="Name of Mentee/Fellow *"
+                      value={session.menteeName}
+                      onChange={(e) => updateSession(si, "menteeName", e.target.value)}
+                      required
+                      options={[
+                        { label: "Select Fellow", value: "" },
+                        ...assignedFellows.map(af => ({ label: af.name, value: af.name }))
+                      ]}
+                    />
+                  )}
                   <Input
                     label="Mentee LGA"
                     placeholder="e.g. Etsako East"
@@ -626,6 +686,51 @@ export default function NewReportPage() {
           </Button>
         </div>
       </form>
+
+      <DebugSeeder
+        label="Prefill Entire Report (Fake Data)"
+        onFill={() => {
+          setWeekEnding(faker.date.recent().toISOString().split("T")[0]);
+          setWeekNumber(String(faker.number.int({ min: 1, max: 52 })));
+          setCoverNote(faker.lorem.paragraph());
+
+          const fellowCount = faker.number.int({ min: 1, max: 3 });
+          const newFellows = Array.from({ length: fellowCount }).map(() => ({
+            name: faker.person.fullName(),
+            lga: faker.location.county(),
+          }));
+          setFellows(newFellows);
+
+          const newSessions = newFellows.map((f) => ({
+            menteeName: f.name,
+            menteeLGA: f.lga,
+            sessionDate: faker.date.recent().toISOString().split("T")[0],
+            startTime: "09:00 AM",
+            endTime: "10:30 AM",
+            duration: "1.5 hours",
+            topicDiscussed: faker.company.catchPhrase(),
+            challenges: [faker.hacker.phrase()],
+            solutions: [faker.company.catchPhrase()],
+            actionPlan: [faker.lorem.sentence()],
+          }));
+          setSessions(newSessions);
+
+          setOutreachActivities(faker.helpers.arrayElements(OUTREACH_TYPES, { min: 1, max: 3 }));
+          setOutreachDescription(faker.lorem.sentences(2));
+
+          setChallenges(faker.helpers.arrayElements(CHALLENGE_TYPES, { min: 1, max: 2 }));
+          setChallengeDescription(faker.lorem.sentences(2));
+
+          setKeyWins(faker.lorem.paragraph());
+          setSupportNeeded(faker.lorem.sentence());
+
+          const isUrgent = faker.datatype.boolean();
+          setUrgentAlert(isUrgent);
+          if (isUrgent) {
+            setUrgentDetails(faker.lorem.paragraph());
+          }
+        }}
+      />
     </>
   );
 }

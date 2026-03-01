@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport } from "@/models";
+import { WeeklyReport, Mentor } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
@@ -26,11 +26,14 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (!report) return jsonError("Report not found", 404);
 
   // Mentors can only view their own
-  if (
-    session!.user.role === UserRole.MENTOR &&
-    report.mentor._id.toString() !== session!.user.id
-  ) {
-    return jsonError("Forbidden", 403);
+  let mentorDocId = null;
+  if (session!.user.role === UserRole.MENTOR) {
+    const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
+    if (mentorDoc) mentorDocId = mentorDoc._id.toString();
+
+    if (report.mentor._id.toString() !== mentorDocId) {
+      return jsonError("Forbidden", 403);
+    }
   }
 
   return jsonOk(report);
@@ -51,11 +54,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (!report) return jsonError("Report not found", 404);
 
   // Mentors can only update their own
-  if (
-    session!.user.role === UserRole.MENTOR &&
-    report.mentor.toString() !== session!.user.id
-  ) {
-    return jsonError("Forbidden", 403);
+  let mentorDocId = null;
+  if (session!.user.role === UserRole.MENTOR) {
+    const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
+    if (mentorDoc) mentorDocId = mentorDoc._id.toString();
+
+    if (report.mentor.toString() !== mentorDocId) {
+      return jsonError("Forbidden", 403);
+    }
   }
 
   // Apply updates
