@@ -131,7 +131,7 @@ function CoordinatorModal({
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         />
                         <Input
-                            label="States Managed (comma separated) *"
+                            label="Zones Managed (comma separated) *"
                             placeholder="e.g. LAGOS, ABUJA"
                             value={form.states}
                             onChange={(e) => setForm({ ...form, states: e.target.value })}
@@ -376,7 +376,7 @@ export default function CoordinatorsPage() {
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">States Managed</th>
+                                <th className="px-4 py-3 font-medium text-gray-600">Zones Managed</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">
                                     Actions
