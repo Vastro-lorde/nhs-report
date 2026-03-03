@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
   });
 
   const { password: _, ...userData } = user.toObject();
-  userData.state = mentorDoc.state;
-  userData.lgas = mentorDoc.lgas;
+  (userData as any).state = mentorDoc.state;
+  (userData as any).lgas = mentorDoc.lgas;
 
   void _;
   return jsonCreated(userData);

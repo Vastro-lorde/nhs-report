@@ -30,10 +30,6 @@ export async function PATCH(
 
         const body = await request.json();
 
-        // Allow updating fields, specifically pushing to quarterlyReports array
-        if (body.newQuarterlyReportUrl) {
-            fellow.quarterlyReports.push({ url: body.newQuarterlyReportUrl, uploadedAt: new Date() });
-        }
         if (body.name !== undefined) fellow.name = body.name;
         if (body.gender !== undefined) fellow.gender = body.gender;
         if (body.lga !== undefined) fellow.lga = body.lga;

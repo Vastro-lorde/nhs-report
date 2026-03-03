@@ -97,7 +97,7 @@ export default function MonthlyReportDetailPage() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="text-2xl mb-1">{displayMonth} Overview</CardTitle>
-                                <p className="text-green-100 font-medium">State Coordinator: {report.coordinator?.authId?.name || report.coordinator?.name || "Unknown Coordinator"}</p>
+                                <p className="text-green-100 font-medium">State Coordinator: {(report.coordinator as any)?.authId?.name || report.coordinator?.name || "Unknown Coordinator"}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-xs uppercase tracking-wider text-green-200 font-semibold mb-1">Total Reports Aggregated</p>

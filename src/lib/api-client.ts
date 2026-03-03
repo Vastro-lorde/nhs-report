@@ -230,7 +230,6 @@ export interface Fellow {
   name: string;
   gender: string;
   lga: string;
-  quarterlyReports: { url: string; uploadedAt: string }[];
   createdAt: string;
 }
 
@@ -238,7 +237,6 @@ export interface CreateFellowInput {
   name: string;
   gender: string;
   lga: string;
-  newQuarterlyReportUrl?: string;
 }
 
 export interface BulkFellowInput {

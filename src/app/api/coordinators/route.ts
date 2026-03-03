@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     });
 
     const { password: _, ...userData } = user.toObject();
-    userData.states = coordinatorDoc.states;
+    (userData as any).states = coordinatorDoc.states;
 
     // Send email invitation
     try {

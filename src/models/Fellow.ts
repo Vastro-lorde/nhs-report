@@ -18,7 +18,7 @@ const FellowSchema = new Schema<IFellow>(
         mentor: { type: Schema.Types.ObjectId, ref: "Mentor", required: true, index: true },
         name: { type: String, required: true, trim: true },
         gender: { type: String, required: true, trim: true },
-        lga: { type: String, required: true, trim: true, uppercase: true },
+        lga: { type: String, required: true, trim: true, uppercase: true }
     },
     { timestamps: true }
 );

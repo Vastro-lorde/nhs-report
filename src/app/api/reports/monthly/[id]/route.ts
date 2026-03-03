@@ -41,7 +41,7 @@ export async function GET(
         }
 
         // Role-based access control
-        const coordAuthId = report.coordinator?.authId?._id?.toString() || report.coordinator?.toString();
+        const coordAuthId = (report.coordinator as any)?.authId?._id?.toString() || report.coordinator?.toString();
 
         if (session.user.role === UserRole.COORDINATOR && session.user.id !== coordAuthId && session.user.state !== report.state) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

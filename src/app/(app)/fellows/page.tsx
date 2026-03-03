@@ -100,13 +100,8 @@ export default function FellowsPage() {
     const [loading, setLoading] = useState(true);
     const [total, setTotal] = useState(0);
     const [showAdd, setShowAdd] = useState(false);
-    const [uploadingId, setUploadingId] = useState<string | null>(null);
-
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDeletingBulk, setIsDeletingBulk] = useState(false);
-
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [activeUploadFellow, setActiveUploadFellow] = useState<string | null>(null);
 
     const fetchFellows = useCallback(async () => {
         setLoading(true);
@@ -176,34 +171,6 @@ export default function FellowsPage() {
         }
     };
 
-    const triggerUpload = (fellowId: string) => {
-        setActiveUploadFellow(fellowId);
-        fileInputRef.current?.click();
-    };
-
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        const fellowId = activeUploadFellow;
-        if (!file || !fellowId) return;
-
-        setUploadingId(fellowId);
-        try {
-            // Upload file to Cloudinary
-            const { url } = await api.upload.file(file);
-
-            // Save URL to Fellow record
-            await api.fellows.update(fellowId, { newQuarterlyReportUrl: url } as any);
-
-            // Refresh list
-            fetchFellows();
-        } catch (err) {
-            alert(`Upload failed: ${(err as Error).message}`);
-        } finally {
-            setUploadingId(null);
-            setActiveUploadFellow(null);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-    };
 
     return (
         <>
@@ -213,7 +180,7 @@ export default function FellowsPage() {
                 <Card>
                     <CardContent className="pt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-600 max-w-2xl">
-                            Keep track of your assigned mentees here. You can also securely attach their latest Quarterly Report directly to their profile for administrators and coordinators to review.
+                            Keep track of your assigned mentees here. You can also securely manage their documents.
                         </div>
                         <div className="flex gap-2">
                             <Button
@@ -224,7 +191,6 @@ export default function FellowsPage() {
                                         Name: f.name,
                                         Gender: f.gender,
                                         LGA: f.lga,
-                                        QuarterlyReportSubmitted: f.quarterlyReports.length > 0 ? "Yes" : "No",
                                     }));
                                     exportToCSV(data, "my-fellows");
                                 }}
@@ -266,7 +232,7 @@ export default function FellowsPage() {
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Gender</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Quarterly Report</th>
+
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -293,35 +259,11 @@ export default function FellowsPage() {
                                         <td className="px-4 py-3 font-medium">{f.name}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-col gap-1">
-                                                {f.quarterlyReports.map((r, i) => (
-                                                    <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-green-600 hover:underline text-xs">
-                                                        <FileCheck className="h-3 w-3 mr-1" /> View Report ({new Date(r.uploadedAt).toLocaleDateString()})
-                                                    </a>
-                                                ))}
-                                                {f.quarterlyReports.length === 0 && (
-                                                    <span className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Missing</span>
-                                                )}
-                                            </div>
-                                        </td>
+
                                         <td className="px-4 py-3 text-right space-x-2">
                                             {session?.user?.role === UserRole.MENTOR && (
                                                 <>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        disabled={uploadingId === f._id}
-                                                        onClick={() => triggerUpload(f._id)}
-                                                    >
-                                                        {uploadingId === f._id ? (
-                                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                                        ) : (
-                                                            <>
-                                                                <Upload className="h-3 w-3 mr-1" /> Upload
-                                                            </>
-                                                        )}
-                                                    </Button>
+
                                                     <Link href={`/fellows/${f._id}/documents/upload`}>
                                                         <Button variant="secondary" size="sm">
                                                             <FileUp className="h-3 w-3 mr-1" /> Documents
@@ -346,13 +288,6 @@ export default function FellowsPage() {
                 </div>
             </div>
 
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept="application/pdf,image/*"
-                className="hidden"
-            />
 
             <AddFellowModal
                 open={showAdd}

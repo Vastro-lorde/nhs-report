@@ -5,8 +5,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User } from "@/models/User";
-import type { UserRole } from "@/lib/constants";
+import { User, Coordinator, Mentor } from "@/models";
+import { UserRole } from "@/lib/constants";
 
 declare module "next-auth" {
   interface Session {
@@ -59,12 +59,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
         if (!isValid) return null;
 
+        let userState: string | undefined = undefined;
+        if (user.role === UserRole.COORDINATOR) {
+          const coord = await Coordinator.findOne({ authId: user._id }).lean();
+          userState = coord?.states?.[0];
+        } else if (user.role === UserRole.MENTOR) {
+          const mentor = await Mentor.findOne({ authId: user._id }).lean();
+          userState = mentor?.state;
+        }
+
         return {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
           role: user.role,
-          state: user.state,
+          state: userState,
         };
       },
     }),
