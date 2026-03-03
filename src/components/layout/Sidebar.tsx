@@ -24,7 +24,7 @@ const NAV_ITEMS = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "Submit Report",
@@ -36,13 +36,13 @@ const NAV_ITEMS = [
     label: "Reports",
     href: "/reports",
     icon: FileText,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "Monthly Report",
     href: "/reports/monthly",
     icon: FileText,
-    roles: [UserRole.COORDINATOR],
+    roles: [UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "My Fellows",
@@ -69,10 +69,16 @@ const NAV_ITEMS = [
     roles: [UserRole.ADMIN],
   },
   {
+    label: "Desk Officers Management",
+    href: "/admin/desk-officers",
+    icon: Users,
+    roles: [UserRole.ADMIN],
+  },
+  {
     label: "Alerts",
     href: "/alerts",
     icon: AlertTriangle,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "Document Types",
@@ -180,7 +186,7 @@ export function Sidebar() {
               </p>
               <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
               <span className="inline-block mt-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 capitalize">
-                {session.user.role === UserRole.COORDINATOR ? "Zonal Coordinator" : session.user.role}
+                {session.user.role === UserRole.COORDINATOR ? "Zonal Coordinator" : session.user.role === UserRole.ZONAL_DESK_OFFICER ? "Zonal Desk Officer" : session.user.role}
               </span>
             </div>
           )}

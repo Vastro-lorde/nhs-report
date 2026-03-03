@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport, Alert, User, Mentor, Coordinator } from "@/models";
+import { WeeklyReport, Alert, User, Mentor, Coordinator, DeskOfficer } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
@@ -59,6 +59,15 @@ export async function GET(request: NextRequest) {
         mustFilterByMentorIds = true;
       } else {
         // Coordinator without a profile, return empty
+        return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+      }
+    } else if (session!.user.role === UserRole.ZONAL_DESK_OFFICER) {
+      const deskOfficerDoc = await DeskOfficer.findOne({ authId: session!.user.id });
+      if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
+        mentorFilter.state = { $in: deskOfficerDoc.states };
+        mustFilterByMentorIds = true;
+      } else {
+        // Desk Officer without a profile, return empty
         return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
       }
     }

@@ -5,7 +5,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User, Coordinator, Mentor } from "@/models";
+import { User, Coordinator, Mentor, DeskOfficer } from "@/models";
 import { UserRole } from "@/lib/constants";
 
 declare module "next-auth" {
@@ -66,6 +66,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } else if (user.role === UserRole.MENTOR) {
           const mentor = await Mentor.findOne({ authId: user._id }).lean();
           userState = mentor?.state;
+        } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
+          const deskOfficer = await DeskOfficer.findOne({ authId: user._id }).lean();
+          userState = deskOfficer?.states?.[0];
         }
 
         return {
