@@ -24,7 +24,7 @@ export default function BulkUploadMentorsPage() {
     const itemsPerPage = 10;
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    if (user?.role !== "admin") {
+    if (user?.role !== "admin" && user?.role !== "coordinator") {
         return (
             <div className="p-6">
                 <p className="text-red-600">You are not authorized to view this page.</p>
@@ -195,9 +195,14 @@ export default function BulkUploadMentorsPage() {
                         </Button>
 
                         {mentors.length > 0 && (
-                            <Button onClick={handleUploadToBackend} disabled={loading}>
-                                {loading ? "Processing..." : `Upload to Server (${mentors.length})`}
-                            </Button>
+                            <>
+                                <Button onClick={handleUploadToBackend} disabled={loading}>
+                                    {loading ? "Processing..." : `Upload to Server (${mentors.length})`}
+                                </Button>
+                                <Button variant="outline" onClick={() => setMentors([])} disabled={loading}>
+                                    Clear All
+                                </Button>
+                            </>
                         )}
                     </CardContent>
                 </Card>

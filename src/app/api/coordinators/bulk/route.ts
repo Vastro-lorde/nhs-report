@@ -1,14 +1,13 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { Fellow } from "@/models";
+import { User, Coordinator } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 
-// DELETE /api/fellows/bulk — Bulk delete fellows
 export async function DELETE(request: NextRequest) {
     try {
-        const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR);
+        const { session, error } = await requireRole(UserRole.ADMIN);
         if (error) return error;
 
         const body = await parseBody<{ ids: string[] }>(request);
@@ -18,13 +17,15 @@ export async function DELETE(request: NextRequest) {
 
         await connectDB();
 
-        // Admin or Coordinator can bulk delete fellows.
-        // Similar to Mentors, we could restrict this to ensure Coordinators can only
-        // delete fellows assigned to Mentors under them if we mapped out the aggregations.
-        // For simplicity, just proceeding with standard deleteMany.
+        // 1. Delete the Auth user docs
+        const deleteResult = await User.deleteMany({
+            _id: { $in: body.ids },
+            role: UserRole.COORDINATOR
+        });
 
-        const deleteResult = await Fellow.deleteMany({
-            _id: { $in: body.ids }
+        // 2. Delete the Coordinator detail configs
+        await Coordinator.deleteMany({
+            authId: { $in: body.ids }
         });
 
         return jsonOk({
@@ -32,7 +33,7 @@ export async function DELETE(request: NextRequest) {
             deletedCount: deleteResult.deletedCount
         });
     } catch (globalErr: any) {
-        console.error("Fellow Bulk Delete Error:", globalErr);
+        console.error("Coordinator Bulk Delete Error:", globalErr);
         return jsonError(`Internal Server Error: ${globalErr.message}`, 500);
     }
 }

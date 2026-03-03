@@ -17,12 +17,21 @@ export async function GET(
 
         await connectDB();
         const report = await MonthlyReport.findById(id)
-            .populate("coordinator", "name email state")
+            .populate({
+                path: "coordinator",
+                populate: {
+                    path: "authId",
+                    select: "name email state"
+                }
+            })
             .populate({
                 path: "weeklyReports",
                 populate: {
                     path: "mentor",
-                    select: "name email state lgas",
+                    populate: {
+                        path: "authId",
+                        select: "name email state"
+                    }
                 },
             })
             .lean();
@@ -32,10 +41,12 @@ export async function GET(
         }
 
         // Role-based access control
-        if (session.user.role === UserRole.COORDINATOR && session.user.id !== report.coordinator._id.toString() && session.user.state !== report.state) {
+        const coordAuthId = report.coordinator?.authId?._id?.toString() || report.coordinator?.toString();
+
+        if (session.user.role === UserRole.COORDINATOR && session.user.id !== coordAuthId && session.user.state !== report.state) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
-        if (session.user.role === UserRole.MENTOR && session.user.id !== report.coordinator._id.toString()) {
+        if (session.user.role === UserRole.MENTOR && session.user.id !== coordAuthId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 

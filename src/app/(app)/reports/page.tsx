@@ -103,11 +103,13 @@ export default function ReportsListPage() {
                   className="w-48"
                 />
               )}
-              <Link href="/reports/new">
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-1" /> New Report
-                </Button>
-              </Link>
+              {isMentor && (
+                <Link href="/reports/new">
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-1" /> New Report
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" size="sm" onClick={() => {
                 const data = reports.map(r => ({
                   Week: r.weekKey,

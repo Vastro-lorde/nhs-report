@@ -255,9 +255,14 @@ export default function BulkUploadFellowsPage() {
                         </Button>
 
                         {fellows.length > 0 && (
-                            <Button onClick={handleUploadToBackend} disabled={loading}>
-                                {loading ? "Processing..." : `Upload to Server (${fellows.length})`}
-                            </Button>
+                            <>
+                                <Button onClick={handleUploadToBackend} disabled={loading}>
+                                    {loading ? "Processing..." : `Upload to Server (${fellows.length})`}
+                                </Button>
+                                <Button variant="outline" onClick={() => setFellows([])} disabled={loading}>
+                                    Clear All
+                                </Button>
+                            </>
                         )}
                     </CardContent>
                 </Card>

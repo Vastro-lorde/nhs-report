@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User } from "@/models";
+import { User, Mentor } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
@@ -17,9 +17,17 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   await connectDB();
-  const mentor = await User.findById(id).select("-password").lean();
-  if (!mentor) return jsonError("Mentor not found", 404);
-  return jsonOk(mentor);
+  const user = await User.findById(id).select("-password").lean();
+  if (!user) return jsonError("Mentor not found", 404);
+
+  const mentorDoc = await Mentor.findOne({ authId: user._id }).lean();
+  const merged = {
+    ...user,
+    state: mentorDoc?.state || "",
+    lgas: mentorDoc?.lgas || []
+  };
+
+  return jsonOk(merged);
 }
 
 // PATCH /api/mentors/:id
@@ -35,12 +43,32 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   delete body.password;
   delete body.role;
 
-  await connectDB();
-  const mentor = await User.findByIdAndUpdate(id, body, { new: true })
+  const { state, lgas, ...userUpdates } = body;
+
+  const updatedUser = await User.findByIdAndUpdate(id, userUpdates, { new: true })
     .select("-password")
     .lean();
-  if (!mentor) return jsonError("Mentor not found", 404);
-  return jsonOk(mentor);
+
+  if (!updatedUser) return jsonError("Mentor not found", 404);
+
+  // Update Mentor details
+  const mentorUpdate: any = {};
+  if (state !== undefined) mentorUpdate.state = typeof state === 'string' ? state.toUpperCase().trim() : state;
+  if (lgas !== undefined) mentorUpdate.lgas = Array.isArray(lgas) ? lgas.map(l => l.toUpperCase().trim()) : lgas;
+
+  const mentorDoc = await Mentor.findOneAndUpdate(
+    { authId: id },
+    { $set: mentorUpdate },
+    { new: true, upsert: true }
+  ).lean();
+
+  const merged = {
+    ...updatedUser,
+    state: mentorDoc?.state || "",
+    lgas: mentorDoc?.lgas || []
+  };
+
+  return jsonOk(merged);
 }
 
 // DELETE /api/mentors/:id — soft-delete (deactivate)

@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
 import { UserRole } from "@/lib/constants";
 import { api, type Fellow } from "@/lib/api-client";
-import { Plus, UserMinus, Upload, FileCheck, FileDown, Loader2, FileUp } from "lucide-react";
+import { Plus, UserMinus, Upload, FileCheck, FileDown, Loader2, FileUp, Trash2 } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
 import Link from "next/link";
 
@@ -102,6 +102,9 @@ export default function FellowsPage() {
     const [showAdd, setShowAdd] = useState(false);
     const [uploadingId, setUploadingId] = useState<string | null>(null);
 
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeUploadFellow, setActiveUploadFellow] = useState<string | null>(null);
 
@@ -123,7 +126,7 @@ export default function FellowsPage() {
     }, [fetchFellows]);
 
     // Mentors only
-    if (session?.user && session.user.role !== UserRole.MENTOR) {
+    if (session?.user && ![UserRole.MENTOR, UserRole.COORDINATOR, UserRole.ADMIN].includes(session.user.role as any)) {
         return (
             <div className="p-12 text-center text-gray-500">
                 You do not have permission to view this page. Fellows are managed directly by Mentors.
@@ -138,6 +141,38 @@ export default function FellowsPage() {
             fetchFellows();
         } catch {
             alert("Failed to delete fellow");
+        }
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            const allIds = fellows.map((f) => f._id);
+            setSelectedIds(allIds);
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelectOne = (id: string, checked: boolean) => {
+        if (checked) {
+            setSelectedIds((prev) => [...prev, id]);
+        } else {
+            setSelectedIds((prev) => prev.filter((item) => item !== id));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} fellow(s)? This action cannot be undone.`)) return;
+
+        setIsDeletingBulk(true);
+        try {
+            await api.fellows.bulkDelete({ ids: selectedIds });
+            setSelectedIds([]);
+            fetchFellows();
+        } catch (error) {
+            alert(`Failed to delete: ${(error as Error).message}`);
+        } finally {
+            setIsDeletingBulk(false);
         }
     };
 
@@ -196,6 +231,19 @@ export default function FellowsPage() {
                             >
                                 <FileDown className="h-4 w-4 mr-1" /> Export CSV
                             </Button>
+                            {session?.user?.role === UserRole.COORDINATOR && (
+                                <Link href="/fellows/bulk-upload">
+                                    <Button size="sm" variant="secondary">
+                                        <Upload className="h-4 w-4 mr-1" /> Bulk Upload Fellows
+                                    </Button>
+                                </Link>
+                            )}
+                            {selectedIds.length > 0 && (
+                                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+                                </Button>
+                            )}
                             <Button size="sm" onClick={() => setShowAdd(true)}>
                                 <Plus className="h-4 w-4 mr-1" /> Add Fellow
                             </Button>
@@ -207,6 +255,14 @@ export default function FellowsPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-gray-50 text-left">
                             <tr>
+                                <th className="px-4 py-3 font-medium text-gray-600 w-10">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={fellows.length > 0 && selectedIds.length === fellows.length}
+                                        onChange={(e) => handleSelectAll(e.target.checked)}
+                                    />
+                                </th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Gender</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
@@ -217,15 +273,23 @@ export default function FellowsPage() {
                         <tbody className="divide-y">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-gray-400">Loading…</td>
+                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading…</td>
                                 </tr>
                             ) : !fellows.length ? (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-gray-400">No fellows added yet.</td>
+                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">No fellows added yet.</td>
                                 </tr>
                             ) : (
                                 fellows.map((f) => (
                                     <tr key={f._id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300"
+                                                checked={selectedIds.includes(f._id)}
+                                                onChange={(e) => handleSelectOne(f._id, e.target.checked)}
+                                            />
+                                        </td>
                                         <td className="px-4 py-3 font-medium">{f.name}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
@@ -242,25 +306,29 @@ export default function FellowsPage() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-right space-x-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                disabled={uploadingId === f._id}
-                                                onClick={() => triggerUpload(f._id)}
-                                            >
-                                                {uploadingId === f._id ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <>
-                                                        <Upload className="h-3 w-3 mr-1" /> Upload
-                                                    </>
-                                                )}
-                                            </Button>
-                                            <Link href={`/fellows/${f._id}/documents/upload`}>
-                                                <Button variant="secondary" size="sm">
-                                                    <FileUp className="h-3 w-3 mr-1" /> Documents
-                                                </Button>
-                                            </Link>
+                                            {session?.user?.role === UserRole.MENTOR && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={uploadingId === f._id}
+                                                        onClick={() => triggerUpload(f._id)}
+                                                    >
+                                                        {uploadingId === f._id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <Upload className="h-3 w-3 mr-1" /> Upload
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                    <Link href={`/fellows/${f._id}/documents/upload`}>
+                                                        <Button variant="secondary" size="sm">
+                                                            <FileUp className="h-3 w-3 mr-1" /> Documents
+                                                        </Button>
+                                                    </Link>
+                                                </>
+                                            )}
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

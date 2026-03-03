@@ -5,7 +5,7 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User } from "@/models";
+import { User, Coordinator, Mentor } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
 
@@ -55,15 +55,35 @@ export async function POST(_request: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(seed.password, 12);
-    await User.create({
+    const user = await User.create({
       name: seed.name,
       email: seed.email,
       password: hashedPassword,
       role: seed.role,
-      state: seed.state,
-      lgas: seed.lgas,
       active: true,
     });
+
+    if (seed.role === UserRole.COORDINATOR) {
+      await Coordinator.create({
+        authId: user._id,
+        states: seed.state ? [seed.state.toUpperCase()] : []
+      });
+    } else if (seed.role === UserRole.MENTOR) {
+      // Find the coordinator to assign to this mentor
+      const coordUser = await User.findOne({ role: UserRole.COORDINATOR });
+      let coordinatorId = null;
+      if (coordUser) {
+        const coord = await Coordinator.findOne({ authId: coordUser._id });
+        if (coord) coordinatorId = coord._id;
+      }
+
+      await Mentor.create({
+        authId: user._id,
+        coordinator: coordinatorId,
+        state: seed.state ? seed.state.toUpperCase() : "",
+        lgas: seed.lgas ? seed.lgas.map(l => l.toUpperCase()) : []
+      });
+    }
 
     created.push({ email: seed.email, role: seed.role, password: seed.password });
   }

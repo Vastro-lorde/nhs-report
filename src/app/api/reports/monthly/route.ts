@@ -43,7 +43,13 @@ export async function GET(request: Request) {
 
         const [data, total] = await Promise.all([
             MonthlyReport.find(filter)
-                .populate("coordinator", "name email")
+                .populate({
+                    path: "coordinator",
+                    populate: {
+                        path: "authId",
+                        select: "name email"
+                    }
+                })
                 .sort({ month: -1, createdAt: -1 })
                 .skip(skip)
                 .limit(limit)

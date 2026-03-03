@@ -97,7 +97,7 @@ export default function MonthlyReportDetailPage() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="text-2xl mb-1">{displayMonth} Overview</CardTitle>
-                                <p className="text-green-100 font-medium">State Coordinator: {report.coordinator.name}</p>
+                                <p className="text-green-100 font-medium">State Coordinator: {report.coordinator?.authId?.name || report.coordinator?.name || "Unknown Coordinator"}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-xs uppercase tracking-wider text-green-200 font-semibold mb-1">Total Reports Aggregated</p>
@@ -125,7 +125,7 @@ export default function MonthlyReportDetailPage() {
                                                 W{wr.weekNumber || (i + 1)}
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-gray-900">{wr.mentorName || (wr.mentor as any)?.name}</p>
+                                                <p className="font-semibold text-gray-900">{wr.mentorName || (wr.mentor as any)?.authId?.name || (wr.mentor as any)?.name || "Unknown Mentor"}</p>
                                                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
                                                     <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {wr.weekKey}</span>
                                                     <span>•</span>

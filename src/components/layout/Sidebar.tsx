@@ -42,7 +42,7 @@ const NAV_ITEMS = [
     label: "Monthly Report",
     href: "/reports/monthly",
     icon: FileText,
-    roles: [UserRole.COORDINATOR, UserRole.ADMIN, UserRole.MENTOR],
+    roles: [UserRole.COORDINATOR],
   },
   {
     label: "My Fellows",
@@ -51,10 +51,22 @@ const NAV_ITEMS = [
     roles: [UserRole.MENTOR],
   },
   {
-    label: "Mentors",
+    label: "Fellows Management",
+    href: "/fellows",
+    icon: Users,
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR],
+  },
+  {
+    label: "Mentors Management",
     href: "/mentors",
     icon: Users,
     roles: [UserRole.ADMIN, UserRole.COORDINATOR],
+  },
+  {
+    label: "Coordinators Management",
+    href: "/admin/coordinators",
+    icon: Users,
+    roles: [UserRole.ADMIN],
   },
   {
     label: "Alerts",
@@ -70,7 +82,7 @@ const NAV_ITEMS = [
   },
   {
     label: "Bulk Mentors",
-    href: "/admin/mentors/bulk-upload",
+    href: "/mentors/bulk-upload",
     icon: Users,
     roles: [UserRole.ADMIN],
   },
@@ -90,13 +102,24 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const role = session?.user?.role as UserRole | undefined;
   const { isSidebarOpen, setSidebarOpen } = useSidebar();
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !role || item.roles.includes(role)
   );
+
+  if (status === "loading") {
+    // Return empty sidebar skeleton or null during initial load to prevent FOUC
+    return (
+      <aside className="fixed left-0 top-0 z-[70] hidden md:flex h-[100dvh] w-64 flex-col border-r border-gray-200 bg-white">
+        <div className="flex h-16 shrink-0 items-center justify-center border-b border-gray-200">
+          <div className="h-6 w-32 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <>
@@ -125,10 +148,10 @@ export function Sidebar() {
         {/* Nav Items */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="space-y-1">
-            {visibleItems.map((item) => {
+            {visibleItems.map((item, index) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
-                <li key={item.href}>
+                <li key={`${item.href}-${index}`}>
                   <Link
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
@@ -157,7 +180,7 @@ export function Sidebar() {
               </p>
               <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
               <span className="inline-block mt-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 capitalize">
-                {session.user.role}
+                {session.user.role === UserRole.COORDINATOR ? "Zonal Coordinator" : session.user.role}
               </span>
             </div>
           )}

@@ -12,11 +12,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
-import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, Download, Upload, Trash2 } from "lucide-react";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
 import { faker } from "@faker-js/faker";
 import { exportToCSV } from "@/lib/export";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 /* ─── Create Mentor Modal ──────────────── */
 function CreateMentorModal({
@@ -159,6 +160,7 @@ function CreateMentorModal({
 
 /* ─── Main Page ────────────────────────── */
 export default function MentorsPage() {
+  const { data: session } = useSession();
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -167,6 +169,9 @@ export default function MentorsPage() {
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   const fetchMentors = useCallback(async () => {
     setLoading(true);
@@ -199,6 +204,38 @@ export default function MentorsPage() {
       fetchMentors();
     } catch {
       /* no-op */
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = mentors.map((m) => m._id);
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => [...prev, id]);
+    } else {
+      setSelectedIds((prev) => prev.filter((item) => item !== id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} mentor(s)? This action cannot be undone.`)) return;
+
+    setIsDeletingBulk(true);
+    try {
+      await api.mentors.bulkDelete({ ids: selectedIds });
+      setSelectedIds([]);
+      fetchMentors();
+    } catch (error) {
+      alert(`Failed to delete: ${(error as Error).message}`);
+    } finally {
+      setIsDeletingBulk(false);
     }
   };
 
@@ -247,6 +284,19 @@ export default function MentorsPage() {
               }}>
                 <Download className="h-4 w-4 mr-1" /> Export CSV
               </Button>
+              {session?.user?.role && (session.user.role === UserRole.COORDINATOR || session.user.role === UserRole.ADMIN) && (
+                <Link href="/mentors/bulk-upload">
+                  <Button size="sm" variant="secondary">
+                    <Upload className="h-4 w-4 mr-1" /> Bulk Upload Mentors
+                  </Button>
+                </Link>
+              )}
+              {selectedIds.length > 0 && (
+                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+                </Button>
+              )}
               <Button size="sm" onClick={() => setShowCreate(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Add Mentor
               </Button>
@@ -259,6 +309,14 @@ export default function MentorsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left">
               <tr>
+                <th className="px-4 py-3 font-medium text-gray-600 w-10">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={mentors.length > 0 && selectedIds.length === mentors.length}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
                 <th className="px-4 py-3 font-medium text-gray-600">State</th>
@@ -273,19 +331,27 @@ export default function MentorsPage() {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     Loading…
                   </td>
                 </tr>
               ) : !mentors.length ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     No mentors found.
                   </td>
                 </tr>
               ) : (
                 mentors.map((m) => (
                   <tr key={m._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                        checked={selectedIds.includes(m._id)}
+                        onChange={(e) => handleSelectOne(m._id, e.target.checked)}
+                      />
+                    </td>
                     <td className="px-4 py-3 font-medium">{m.name}</td>
                     <td className="px-4 py-3 text-gray-600">{m.email}</td>
                     <td className="px-4 py-3">{m.state}</td>

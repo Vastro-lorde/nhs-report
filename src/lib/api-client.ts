@@ -17,6 +17,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
+    if (typeof window !== "undefined" && (res.status === 401 || res.status === 403)) {
+      window.location.href = "/unauthorized";
+    }
+
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new ApiError(res.status, body.error || "Request failed");
   }
@@ -49,6 +53,33 @@ export const api = {
       request<{ success: boolean; message: string }>(`/api/mentors/${id}/reset-password`, {
         method: "POST",
         body: JSON.stringify({ password: newPassword }),
+      }),
+    bulkDelete: (data: { ids: string[] }) =>
+      request<{ success: boolean; deletedCount: number }>("/api/mentors/bulk", {
+        method: "DELETE",
+        body: JSON.stringify(data),
+      }),
+  },
+
+  coordinators: {
+    list: (params?: URLSearchParams | Record<string, string>) =>
+      request<PaginatedResponse<Coordinator>>(`/api/coordinators?${new URLSearchParams(params).toString()}`),
+    get: (id: string) => request<Coordinator>(`/api/coordinators/${id}`),
+    create: (data: CreateCoordinatorInput) =>
+      request<Coordinator>("/api/coordinators", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Coordinator>) =>
+      request<Coordinator>(`/api/coordinators/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    deactivate: (id: string) =>
+      request(`/api/coordinators/${id}`, { method: "DELETE" }),
+    resetPassword: (id: string, newPassword: string) =>
+      request<{ success: boolean; message: string }>(`/api/coordinators/${id}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ password: newPassword }),
+      }),
+    bulkDelete: (data: { ids: string[] }) =>
+      request<{ success: boolean; deletedCount: number }>("/api/coordinators/bulk", {
+        method: "DELETE",
+        body: JSON.stringify(data),
       }),
   },
 
@@ -100,6 +131,11 @@ export const api = {
     bulkCreate: (data: { fellows: BulkFellowInput[] }) =>
       request<{ successful: number; failed: number; errors: string[] }>("/api/fellows/bulk", {
         method: "POST",
+        body: JSON.stringify(data),
+      }),
+    bulkDelete: (data: { ids: string[] }) =>
+      request<{ success: boolean; deletedCount: number }>("/api/fellows/bulk", {
+        method: "DELETE",
         body: JSON.stringify(data),
       }),
   },
@@ -167,6 +203,25 @@ export interface BulkMentorInput {
   phone?: string;
   state?: string;
   lgas?: string;
+}
+
+export interface Coordinator {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  states: string[];
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateCoordinatorInput {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  states?: string[];
 }
 
 export interface Fellow {
