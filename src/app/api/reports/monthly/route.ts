@@ -5,6 +5,7 @@ import { MonthlyReport } from "@/models/MonthlyReport";
 import { WeeklyReport } from "@/models/WeeklyReport";
 import { Coordinator } from "@/models/Coordinator";
 import { Mentor } from "@/models/Mentor";
+import { DeskOfficer } from "@/models/DeskOfficer";
 import { UserRole } from "@/lib/constants";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
 
@@ -38,6 +39,19 @@ export async function GET(request: Request) {
             const mentorDoc = await Mentor.findOne({ authId: session.user.id });
             if (mentorDoc) {
                 filter.coordinator = mentorDoc.coordinator;
+            }
+        }
+
+        // If Zonal Desk Officer, see monthly reports from their states
+        if (session.user.role === UserRole.ZONAL_DESK_OFFICER) {
+            const deskOfficerDoc = await DeskOfficer.findOne({ authId: session.user.id });
+            if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
+                filter.state = { $in: deskOfficerDoc.states };
+            } else {
+                return NextResponse.json({
+                    data: [],
+                    pagination: { page, limit, total: 0, totalPages: 0 },
+                });
             }
         }
 

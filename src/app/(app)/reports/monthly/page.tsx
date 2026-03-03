@@ -11,11 +11,17 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { api, type MonthlyReport } from "@/lib/api-client";
 import { Plus, Eye, FileText } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { UserRole } from "@/lib/constants";
 
 export default function MonthlyReportsPage() {
     const [reports, setReports] = useState<MonthlyReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [total, setTotal] = useState(0);
+
+    const { data: session } = useSession();
+    const userRole = session?.user?.role;
+    const hideCreateAction = userRole === UserRole.COORDINATOR || userRole === UserRole.ZONAL_DESK_OFFICER;
 
     const fetchReports = useCallback(async () => {
         setLoading(true);
@@ -44,11 +50,13 @@ export default function MonthlyReportsPage() {
                         <div className="text-sm text-gray-600">
                             {total} report{total === 1 ? "" : "s"} found.
                         </div>
-                        <Link href="/reports/monthly/new">
-                            <Button size="sm">
-                                <Plus className="h-4 w-4 mr-1" /> New Monthly Report
-                            </Button>
-                        </Link>
+                        {!hideCreateAction && (
+                            <Link href="/reports/monthly/new">
+                                <Button size="sm">
+                                    <Plus className="h-4 w-4 mr-1" /> New Monthly Report
+                                </Button>
+                            </Link>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -73,9 +81,11 @@ export default function MonthlyReportsPage() {
                                         <div className="flex flex-col items-center justify-center space-y-2">
                                             <FileText className="h-8 w-8 text-gray-300" />
                                             <p>No monthly reports generated yet.</p>
-                                            <Link href="/reports/monthly/new">
-                                                <span className="text-green-600 hover:underline">Create your first monthly report</span>
-                                            </Link>
+                                            {!hideCreateAction && (
+                                                <Link href="/reports/monthly/new">
+                                                    <span className="text-green-600 hover:underline">Create your first monthly report</span>
+                                                </Link>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

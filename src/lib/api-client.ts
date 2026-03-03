@@ -34,6 +34,28 @@ export const api = {
     get: () => request<DashboardData>("/api/dashboard"),
   },
 
+  admins: {
+    list: (params?: URLSearchParams | Record<string, string>) =>
+      request<PaginatedResponse<Admin>>(`/api/admins?${new URLSearchParams(params).toString()}`),
+    get: (id: string) => request<Admin>(`/api/admins/${id}`),
+    create: (data: CreateAdminInput) =>
+      request<Admin>("/api/admins", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Admin>) =>
+      request<Admin>(`/api/admins/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    deactivate: (id: string) =>
+      request(`/api/admins/${id}`, { method: "DELETE" }),
+    resetPassword: (id: string, newPassword: string) =>
+      request<{ success: boolean; message: string }>(`/api/admins/${id}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ password: newPassword }),
+      }),
+    bulkDelete: (data: { ids: string[] }) =>
+      request<{ success: boolean; deletedCount: number; message?: string }>("/api/admins/bulk", {
+        method: "DELETE",
+        body: JSON.stringify(data),
+      }),
+  },
+
   mentors: {
     list: (params?: URLSearchParams | Record<string, string>) =>
       request<PaginatedResponse<Mentor>>(`/api/mentors?${new URLSearchParams(params).toString()}`),
@@ -78,6 +100,28 @@ export const api = {
       }),
     bulkDelete: (data: { ids: string[] }) =>
       request<{ success: boolean; deletedCount: number }>("/api/coordinators/bulk", {
+        method: "DELETE",
+        body: JSON.stringify(data),
+      }),
+  },
+
+  deskOfficers: {
+    list: (params?: URLSearchParams | Record<string, string>) =>
+      request<PaginatedResponse<DeskOfficer>>(`/api/desk-officers?${new URLSearchParams(params).toString()}`),
+    get: (id: string) => request<DeskOfficer>(`/api/desk-officers/${id}`),
+    create: (data: CreateDeskOfficerInput) =>
+      request<DeskOfficer>("/api/desk-officers", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<DeskOfficer>) =>
+      request<DeskOfficer>(`/api/desk-officers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    deactivate: (id: string) =>
+      request(`/api/desk-officers/${id}`, { method: "DELETE" }),
+    resetPassword: (id: string, newPassword: string) =>
+      request<{ success: boolean; message: string }>(`/api/desk-officers/${id}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ password: newPassword }),
+      }),
+    bulkDelete: (data: { ids: string[] }) =>
+      request<{ success: boolean; deletedCount: number }>("/api/desk-officers/bulk", {
         method: "DELETE",
         body: JSON.stringify(data),
       }),
@@ -176,6 +220,24 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface Admin {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  rootAdmin?: boolean;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateAdminInput {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+}
+
 export interface Mentor {
   _id: string;
   name: string;
@@ -217,6 +279,25 @@ export interface Coordinator {
 }
 
 export interface CreateCoordinatorInput {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  states?: string[];
+}
+
+export interface DeskOfficer {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  states: string[];
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateDeskOfficerInput {
   name: string;
   email: string;
   password: string;

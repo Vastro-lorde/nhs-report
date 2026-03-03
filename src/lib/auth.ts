@@ -5,7 +5,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User, Coordinator, Mentor } from "@/models";
+import { User, Coordinator, Mentor, DeskOfficer } from "@/models";
 import { UserRole } from "@/lib/constants";
 
 declare module "next-auth" {
@@ -15,12 +15,14 @@ declare module "next-auth" {
       name: string;
       email: string;
       role: UserRole;
+      rootAdmin?: boolean;
       state?: string;
     };
   }
 
   interface User {
     role: UserRole;
+    rootAdmin?: boolean;
     state?: string;
   }
 }
@@ -29,6 +31,7 @@ declare module "next-auth" {
   interface JWT {
     id: string;
     role: UserRole;
+    rootAdmin?: boolean;
     state?: string;
   }
 }
@@ -66,6 +69,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } else if (user.role === UserRole.MENTOR) {
           const mentor = await Mentor.findOne({ authId: user._id }).lean();
           userState = mentor?.state;
+        } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
+          const deskOfficer = await DeskOfficer.findOne({ authId: user._id }).lean();
+          userState = deskOfficer?.states?.[0];
         }
 
         return {
@@ -73,6 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           email: user.email,
           role: user.role,
+          rootAdmin: user.rootAdmin,
           state: userState,
         };
       },
@@ -83,6 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id as string;
         token.role = user.role;
+        token.rootAdmin = user.rootAdmin;
         token.state = user.state;
       }
       return token;
@@ -90,6 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       session.user.id = token.id as string;
       session.user.role = token.role as UserRole;
+      session.user.rootAdmin = token.rootAdmin as boolean | undefined;
       session.user.state = token.state as string;
       return session;
     },

@@ -5,9 +5,11 @@
 
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout";
-import { ScoreCard, Card, CardHeader, CardTitle, CardContent } from "@/components/ui";
+import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button } from "@/components/ui";
 import { api, type DashboardData, type Mentor, type Fellow } from "@/lib/api-client";
-import { Users, FileText, AlertTriangle, BarChart3, UserCheck } from "lucide-react";
+import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download } from "lucide-react";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import {
   BarChart,
   Bar,
@@ -23,6 +25,34 @@ import {
 import { useSession } from "next-auth/react";
 
 function AdminDashboard({ data }: { data: DashboardData }) {
+  const { data: session } = useSession();
+  const isDeskOfficer = session?.user?.role === "zonal_desk_officer";
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const element = document.getElementById("dashboard-export-area");
+      if (!element) return;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const canvas = await html2canvas(element, { scale: 2 } as any);
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Dashboard_Export_Week_${data.currentWeekKey}.pdf`);
+    } catch (error) {
+      console.error("Failed to export dashboard:", error);
+      alert("Failed to export dashboard.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const pct = Math.round(data.submissionRate * 100);
 
   // Prepare chart data from rollups
@@ -55,9 +85,22 @@ function AdminDashboard({ data }: { data: DashboardData }) {
       <Header
         title="Dashboard"
         subtitle={`Week ${data.currentWeekKey} Overview`}
-      />
+      >
+        {isDeskOfficer && (
+          <Button
+            onClick={handleExportPDF}
+            disabled={exporting}
+            size="sm"
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            {exporting ? "Exporting..." : "Export as PDF"}
+          </Button>
+        )}
+      </Header>
 
-      <div className="p-6 space-y-6">
+      <div id="dashboard-export-area" className="p-6 space-y-6 bg-gray-50">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <ScoreCard
