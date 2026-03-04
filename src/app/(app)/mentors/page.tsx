@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
@@ -29,13 +30,13 @@ function CreateMentorModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, state: string, lgas: string[], role: string }>({
     name: "",
     email: "",
     password: "",
     phone: "",
     state: "",
-    lgas: "",
+    lgas: [],
     role: UserRole.MENTOR as string,
   });
   const [loading, setLoading] = useState(false);
@@ -50,14 +51,11 @@ function CreateMentorModal({
     try {
       await api.mentors.create({
         ...form,
-        lgas: form.lgas
-          .split(",")
-          .map((l) => l.trim())
-          .filter(Boolean),
+        lgas: form.lgas,
       });
       onCreated();
       onClose();
-      setForm({ name: "", email: "", password: "", phone: "", state: "", lgas: "", role: UserRole.MENTOR });
+      setForm({ name: "", email: "", password: "", phone: "", state: "", lgas: [], role: UserRole.MENTOR });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -101,33 +99,23 @@ function CreateMentorModal({
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
-            <Select
-              label="State *"
-              value={form.state}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
-              options={[
-                { label: "Select state", value: "" },
-                ...STATES.map((s) => ({ label: s, value: s })),
-              ]}
-              required
+            <LocationSelector
+              selectedStates={form.state ? [form.state] : []}
+              onChangeStates={(states) => {
+                const newState = states.length > 0 ? states[states.length - 1] : "";
+                if (newState !== form.state) {
+                  setForm({ ...form, state: newState, lgas: [] });
+                } else if (states.length === 0) {
+                  setForm({ ...form, state: "", lgas: [] });
+                }
+              }}
+              showLgas={true}
+              selectedLgas={form.lgas}
+              onChangeLgas={(lgas) => setForm({ ...form, lgas })}
             />
-            <Input
-              label="LGAs (comma separated)"
-              placeholder="e.g. Etsako West, Etsako East"
-              value={form.lgas}
-              onChange={(e) => setForm({ ...form, lgas: e.target.value })}
-            />
-            <Select
-              label="Role *"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value as string })}
-              options={[
-                { label: "Mentor", value: UserRole.MENTOR },
-                { label: "Coordinator", value: UserRole.COORDINATOR },
-                { label: "Admin", value: UserRole.ADMIN },
-              ]}
-              required
-            />
+            <div className="hidden">
+              <input type="hidden" name="role" value={form.role} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 px-6 pb-6">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -149,8 +137,8 @@ function CreateMentorModal({
             password: faker.internet.password({ length: 8 }),
             phone: faker.phone.number(),
             state: faker.helpers.arrayElement(STATES),
-            lgas: `${faker.location.county()}, ${faker.location.county()}`,
-            role: faker.helpers.arrayElement([UserRole.MENTOR, UserRole.COORDINATOR, UserRole.ADMIN]),
+            lgas: [faker.location.county(), faker.location.county()],
+            role: UserRole.MENTOR,
           });
         }}
       />
