@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Coordinator } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
@@ -26,12 +27,12 @@ function CoordinatorModal({
     onSuccess: () => void;
     coordinator: Coordinator | null;
 }) {
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, states: string[] }>({
         name: "",
         email: "",
         password: "",
         phone: "",
-        states: "",
+        states: [],
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -43,10 +44,10 @@ function CoordinatorModal({
                 email: coordinator.email,
                 password: "", // don't show password on edit
                 phone: coordinator.phone || "",
-                states: coordinator.states ? coordinator.states.join(", ") : "",
+                states: coordinator.states || [],
             });
         } else {
-            setForm({ name: "", email: "", password: "", phone: "", states: "" });
+            setForm({ name: "", email: "", password: "", phone: "", states: [] });
         }
     }, [coordinator, open]);
 
@@ -58,10 +59,7 @@ function CoordinatorModal({
         setLoading(true);
 
         try {
-            const statesArray = form.states
-                .split(",")
-                .map((l) => l.trim().toUpperCase())
-                .filter(Boolean);
+            const statesArray = form.states;
 
             if (coordinator) {
                 // Update Mode
@@ -130,13 +128,13 @@ function CoordinatorModal({
                             value={form.phone}
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         />
-                        <Input
-                            label="Zones Managed (comma separated) *"
-                            placeholder="e.g. LAGOS, ABUJA"
-                            value={form.states}
-                            onChange={(e) => setForm({ ...form, states: e.target.value })}
-                            required
-                        />
+                        <div className="space-y-1">
+                            <label className="block text-sm font-medium text-gray-700">Zones Managed *</label>
+                            <LocationSelector
+                                selectedStates={form.states}
+                                onChangeStates={(states) => setForm({ ...form, states })}
+                            />
+                        </div>
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
                         <Button type="button" variant="outline" onClick={onClose}>

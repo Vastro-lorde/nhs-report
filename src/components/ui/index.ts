@@ -5,3 +5,4 @@ export { Textarea } from "./Textarea";
 export { Card, CardHeader, CardTitle, CardContent } from "./Card";
 export { Badge } from "./Badge";
 export { ScoreCard } from "./ScoreCard";
+export { LocationSelector } from "./LocationSelector";
