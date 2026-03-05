@@ -10,6 +10,7 @@ export interface IUser extends Document {
   password: string; // bcrypt hash
   phone?: string;
   role: UserRole;
+  rootAdmin?: boolean;
   profileImage?: string;
   active: boolean;
   createdAt: Date;
@@ -33,6 +34,7 @@ const UserSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       default: UserRole.MENTOR,
     },
+    rootAdmin: { type: Boolean, default: false },
     profileImage: { type: String },
     active: { type: Boolean, default: true },
   },

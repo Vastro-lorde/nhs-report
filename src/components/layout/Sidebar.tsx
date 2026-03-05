@@ -24,7 +24,7 @@ const NAV_ITEMS = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "Submit Report",
@@ -36,13 +36,13 @@ const NAV_ITEMS = [
     label: "Reports",
     href: "/reports",
     icon: FileText,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "Monthly Report",
     href: "/reports/monthly",
     icon: FileText,
-    roles: [UserRole.COORDINATOR],
+    roles: [UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "My Fellows",
@@ -63,8 +63,20 @@ const NAV_ITEMS = [
     roles: [UserRole.ADMIN, UserRole.COORDINATOR],
   },
   {
+    label: "Admins Management",
+    href: "/admin/admins",
+    icon: Users,
+    roles: [UserRole.ADMIN],
+  },
+  {
     label: "Coordinators Management",
     href: "/admin/coordinators",
+    icon: Users,
+    roles: [UserRole.ADMIN],
+  },
+  {
+    label: "Desk Officers Management",
+    href: "/admin/desk-officers",
     icon: Users,
     roles: [UserRole.ADMIN],
   },
@@ -72,7 +84,7 @@ const NAV_ITEMS = [
     label: "Alerts",
     href: "/alerts",
     icon: AlertTriangle,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER],
   },
   {
     label: "Document Types",

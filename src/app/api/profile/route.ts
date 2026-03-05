@@ -1,7 +1,7 @@
 /* ──────────────────────────────────────────
-   API Route: /api/mentors/me
+   API Route: /api/profile
    GET — current user profile
-   PATCH — update own name / phone
+   PATCH — update own name / phone / profileImage
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth-guard";
@@ -23,13 +23,14 @@ export async function PATCH(request: NextRequest) {
   const { session, error } = await requireAuth();
   if (error) return error;
 
-  const body = await parseBody<{ name?: string; phone?: string }>(request);
+  const body = await parseBody<{ name?: string; phone?: string; profileImage?: string }>(request);
   if (!body) return jsonError("Invalid JSON", 400);
 
   await connectDB();
   const updates: Record<string, unknown> = {};
   if (body.name) updates.name = body.name;
   if (body.phone !== undefined) updates.phone = body.phone;
+  if (body.profileImage !== undefined) updates.profileImage = body.profileImage;
 
   const user = await User.findByIdAndUpdate(session!.user.id, updates, {
     new: true,

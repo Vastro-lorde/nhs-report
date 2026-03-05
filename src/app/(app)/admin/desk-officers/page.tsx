@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────
-   Coordinators Management Page (admin)
+   Desk Officers Management Page (admin)
    ────────────────────────────────────────── */
 "use client";
 
@@ -7,25 +7,23 @@ import { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { LocationSelector } from "@/components/ui/LocationSelector";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { api, type Coordinator } from "@/lib/api-client";
-import { STATES, UserRole } from "@/lib/constants";
+import { Card, CardContent } from "@/components/ui/Card";
+import { api, type DeskOfficer } from "@/lib/api-client";
 import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, KeyRound, Pencil, Trash2 } from "lucide-react";
 
-/* ─── Create/Update Coordinator Modal ──── */
-function CoordinatorModal({
+/* ─── Create/Update Desk Officer Modal ──── */
+function DeskOfficerModal({
     open,
     onClose,
     onSuccess,
-    coordinator,
+    deskOfficer,
 }: {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    coordinator: Coordinator | null;
+    deskOfficer: DeskOfficer | null;
 }) {
     const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, states: string[] }>({
         name: "",
@@ -38,18 +36,18 @@ function CoordinatorModal({
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (coordinator) {
+        if (deskOfficer) {
             setForm({
-                name: coordinator.name,
-                email: coordinator.email,
+                name: deskOfficer.name,
+                email: deskOfficer.email,
                 password: "", // don't show password on edit
-                phone: coordinator.phone || "",
-                states: coordinator.states || [],
+                phone: deskOfficer.phone || "",
+                states: deskOfficer.states || [],
             });
         } else {
             setForm({ name: "", email: "", password: "", phone: "", states: [] });
         }
-    }, [coordinator, open]);
+    }, [deskOfficer, open]);
 
     if (!open) return null;
 
@@ -61,9 +59,9 @@ function CoordinatorModal({
         try {
             const statesArray = form.states;
 
-            if (coordinator) {
+            if (deskOfficer) {
                 // Update Mode
-                await api.coordinators.update(coordinator._id, {
+                await api.deskOfficers.update(deskOfficer._id, {
                     name: form.name,
                     email: form.email,
                     phone: form.phone,
@@ -71,9 +69,9 @@ function CoordinatorModal({
                 });
             } else {
                 // Create Mode
-                if (!form.password) throw new Error("Password is required for new coordinators.");
+                if (!form.password) throw new Error("Password is required for new desk officers.");
 
-                await api.coordinators.create({
+                await api.deskOfficers.create({
                     name: form.name,
                     email: form.email,
                     password: form.password,
@@ -95,7 +93,7 @@ function CoordinatorModal({
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
-                        <h2 className="text-lg font-semibold">{coordinator ? "Edit Coordinator" : "Add New Coordinator"}</h2>
+                        <h2 className="text-lg font-semibold">{deskOfficer ? "Edit Desk Officer" : "Add New Desk Officer"}</h2>
                         {error && (
                             <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
                         )}
@@ -113,7 +111,7 @@ function CoordinatorModal({
                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                             required
                         />
-                        {!coordinator && (
+                        {!deskOfficer && (
                             <Input
                                 label="Password *"
                                 type="password"
@@ -129,7 +127,7 @@ function CoordinatorModal({
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         />
                         <div className="space-y-1">
-                            <label className="block text-sm font-medium text-gray-700">Zones Managed *</label>
+                            <label className="block text-sm font-medium text-gray-700">Zones Supervised *</label>
                             <LocationSelector
                                 selectedStates={form.states}
                                 onChangeStates={(states) => setForm({ ...form, states })}
@@ -141,7 +139,7 @@ function CoordinatorModal({
                             Cancel
                         </Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? "Saving…" : (coordinator ? "Save Changes" : "Create Coordinator")}
+                            {loading ? "Saving…" : (deskOfficer ? "Save Changes" : "Create Desk Officer")}
                         </Button>
                     </div>
                 </form>
@@ -154,11 +152,11 @@ function CoordinatorModal({
 function ResetPasswordModal({
     open,
     onClose,
-    coordinatorId,
+    deskOfficerId,
 }: {
     open: boolean;
     onClose: () => void;
-    coordinatorId: string;
+    deskOfficerId: string;
 }) {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -172,7 +170,7 @@ function ResetPasswordModal({
         setError("");
         setLoading(true);
         try {
-            await api.coordinators.resetPassword(coordinatorId, password);
+            await api.deskOfficers.resetPassword(deskOfficerId, password);
             setSuccess(true);
             setTimeout(() => {
                 setSuccess(false);
@@ -228,8 +226,8 @@ function ResetPasswordModal({
 }
 
 /* ─── Main Page ────────────────────────── */
-export default function CoordinatorsPage() {
-    const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+export default function DeskOfficersPage() {
+    const [deskOfficers, setDeskOfficers] = useState<DeskOfficer[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -237,7 +235,7 @@ export default function CoordinatorsPage() {
     const [search, setSearch] = useState("");
 
     const [showModal, setShowModal] = useState(false);
-    const [selectedCoord, setSelectedCoord] = useState<Coordinator | null>(null);
+    const [selectedCoord, setSelectedCoord] = useState<DeskOfficer | null>(null);
 
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetCoordId, setResetCoordId] = useState("");
@@ -245,13 +243,13 @@ export default function CoordinatorsPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
-    const fetchCoordinators = useCallback(async () => {
+    const fetchDeskOfficers = useCallback(async () => {
         setLoading(true);
         try {
             const params: Record<string, string> = { page: String(page), limit: "20" };
             if (search) params.search = search;
-            const result = await api.coordinators.list(params);
-            setCoordinators(result.data);
+            const result = await api.deskOfficers.list(params);
+            setDeskOfficers(result.data);
             setTotalPages(result.pagination.totalPages);
             setTotal(result.pagination.total);
         } catch {
@@ -262,23 +260,23 @@ export default function CoordinatorsPage() {
     }, [page, search]);
 
     useEffect(() => {
-        fetchCoordinators();
-    }, [fetchCoordinators]);
+        fetchDeskOfficers();
+    }, [fetchDeskOfficers]);
 
-    const toggleActive = async (coord: Coordinator) => {
+    const toggleActive = async (coord: DeskOfficer) => {
         try {
             if (coord.active) {
-                await api.coordinators.deactivate(coord._id);
+                await api.deskOfficers.deactivate(coord._id);
             } else {
-                await api.coordinators.update(coord._id, { active: true });
+                await api.deskOfficers.update(coord._id, { active: true });
             }
-            fetchCoordinators();
+            fetchDeskOfficers();
         } catch {
             /* no-op */
         }
     };
 
-    const openEdit = (coord: Coordinator) => {
+    const openEdit = (coord: DeskOfficer) => {
         setSelectedCoord(coord);
         setShowModal(true);
     };
@@ -295,7 +293,7 @@ export default function CoordinatorsPage() {
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
-            const allIds = coordinators.map(c => c._id);
+            const allIds = deskOfficers.map(c => c._id);
             setSelectedIds(allIds);
         } else {
             setSelectedIds([]);
@@ -311,13 +309,13 @@ export default function CoordinatorsPage() {
     };
 
     const handleBulkDelete = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} coordinator(s)? This action cannot be undone.`)) return;
+        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} desk officer(s)? This action cannot be undone.`)) return;
 
         setIsDeletingBulk(true);
         try {
-            await api.coordinators.bulkDelete({ ids: selectedIds });
+            await api.deskOfficers.bulkDelete({ ids: selectedIds });
             setSelectedIds([]);
-            fetchCoordinators();
+            fetchDeskOfficers();
         } catch (error) {
             alert(`Failed to delete: ${(error as Error).message}`);
         } finally {
@@ -327,7 +325,7 @@ export default function CoordinatorsPage() {
 
     return (
         <>
-            <Header title="Zonal Coordinators" subtitle={`${total} total coordinator${total === 1 ? '' : 's'}`} />
+            <Header title="Zonal Desk Officers" subtitle={`${total} total desk officer${total === 1 ? '' : 's'}`} />
 
             <div className="p-6 space-y-4">
                 {/* Filters */}
@@ -352,7 +350,7 @@ export default function CoordinatorsPage() {
                                 </Button>
                             )}
                             <Button size="sm" onClick={openCreate}>
-                                <Plus className="h-4 w-4 mr-1" /> Add Coordinator
+                                <Plus className="h-4 w-4 mr-1" /> Add Desk Officer
                             </Button>
                         </div>
                     </CardContent>
@@ -367,14 +365,14 @@ export default function CoordinatorsPage() {
                                     <input
                                         type="checkbox"
                                         className="rounded border-gray-300"
-                                        checked={coordinators.length > 0 && selectedIds.length === coordinators.length}
+                                        checked={deskOfficers.length > 0 && selectedIds.length === deskOfficers.length}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                     />
                                 </th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Zones Managed</th>
+                                <th className="px-4 py-3 font-medium text-gray-600">Zones Supervised</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">
                                     Actions
@@ -388,14 +386,14 @@ export default function CoordinatorsPage() {
                                         Loading…
                                     </td>
                                 </tr>
-                            ) : !coordinators.length ? (
+                            ) : !deskOfficers.length ? (
                                 <tr>
                                     <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                                        No coordinators found.
+                                        No desk officers found.
                                     </td>
                                 </tr>
                             ) : (
-                                coordinators.map((c) => (
+                                deskOfficers.map((c) => (
                                     <tr key={c._id} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
                                             <input
@@ -467,17 +465,17 @@ export default function CoordinatorsPage() {
                 )}
             </div>
 
-            <CoordinatorModal
+            <DeskOfficerModal
                 open={showModal}
                 onClose={() => setShowModal(false)}
-                onSuccess={fetchCoordinators}
-                coordinator={selectedCoord}
+                onSuccess={fetchDeskOfficers}
+                deskOfficer={selectedCoord}
             />
 
             <ResetPasswordModal
                 open={showResetModal}
                 onClose={() => setShowResetModal(false)}
-                coordinatorId={resetCoordId}
+                deskOfficerId={resetCoordId}
             />
         </>
     );

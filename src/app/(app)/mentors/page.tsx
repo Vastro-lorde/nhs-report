@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
+import { LocationSelector } from "@/components/ui/LocationSelector";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
@@ -29,13 +30,13 @@ function CreateMentorModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, states: string[], lgas: string[], role: string }>({
     name: "",
     email: "",
     password: "",
     phone: "",
-    state: "",
-    lgas: "",
+    states: [],
+    lgas: [],
     role: UserRole.MENTOR as string,
   });
   const [loading, setLoading] = useState(false);
@@ -50,14 +51,11 @@ function CreateMentorModal({
     try {
       await api.mentors.create({
         ...form,
-        lgas: form.lgas
-          .split(",")
-          .map((l) => l.trim())
-          .filter(Boolean),
+        lgas: form.lgas,
       });
       onCreated();
       onClose();
-      setForm({ name: "", email: "", password: "", phone: "", state: "", lgas: "", role: UserRole.MENTOR });
+      setForm({ name: "", email: "", password: "", phone: "", states: [], lgas: [], role: UserRole.MENTOR });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -101,33 +99,16 @@ function CreateMentorModal({
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
-            <Select
-              label="State *"
-              value={form.state}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
-              options={[
-                { label: "Select state", value: "" },
-                ...STATES.map((s) => ({ label: s, value: s })),
-              ]}
-              required
+            <LocationSelector
+              selectedStates={form.states}
+              onChangeStates={(states) => setForm({ ...form, states, lgas: [] })}
+              showLgas={true}
+              selectedLgas={form.lgas}
+              onChangeLgas={(lgas) => setForm({ ...form, lgas })}
             />
-            <Input
-              label="LGAs (comma separated)"
-              placeholder="e.g. Etsako West, Etsako East"
-              value={form.lgas}
-              onChange={(e) => setForm({ ...form, lgas: e.target.value })}
-            />
-            <Select
-              label="Role *"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value as string })}
-              options={[
-                { label: "Mentor", value: UserRole.MENTOR },
-                { label: "Coordinator", value: UserRole.COORDINATOR },
-                { label: "Admin", value: UserRole.ADMIN },
-              ]}
-              required
-            />
+            <div className="hidden">
+              <input type="hidden" name="role" value={form.role} />
+            </div>
           </div>
           <div className="flex justify-end gap-3 px-6 pb-6">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -148,9 +129,9 @@ function CreateMentorModal({
             email: faker.internet.email(),
             password: faker.internet.password({ length: 8 }),
             phone: faker.phone.number(),
-            state: faker.helpers.arrayElement(STATES),
-            lgas: `${faker.location.county()}, ${faker.location.county()}`,
-            role: faker.helpers.arrayElement([UserRole.MENTOR, UserRole.COORDINATOR, UserRole.ADMIN]),
+            states: [faker.helpers.arrayElement(STATES)],
+            lgas: [faker.location.county(), faker.location.county()],
+            role: UserRole.MENTOR,
           });
         }}
       />
@@ -179,7 +160,7 @@ export default function MentorsPage() {
     try {
       const params: Record<string, string> = { page: String(page), limit: "20" };
       if (search) params.search = search;
-      if (stateFilter) params.state = stateFilter;
+      if (stateFilter) params.states = stateFilter;
       const result = await api.mentors.list(params);
       setMentors(result.data);
       setTotalPages(result.pagination.totalPages);
@@ -273,7 +254,7 @@ export default function MentorsPage() {
                 className="w-60"
               />
               <Select
-                label="State"
+                label="State Filter"
                 value={stateFilter}
                 onChange={(e) => {
                   setStateFilter(e.target.value);
@@ -289,7 +270,7 @@ export default function MentorsPage() {
                 const data = mentors.map(m => ({
                   Name: m.name,
                   Email: m.email,
-                  State: m.state,
+                  States: m.states?.join(", ") || "",
                   LGAs: m.lgas?.join(", ") || "",
                   Role: m.role,
                   Status: m.active ? "Active" : "Inactive"
@@ -344,7 +325,7 @@ export default function MentorsPage() {
                 </th>
                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
-                <th className="px-4 py-3 font-medium text-gray-600">State</th>
+                <th className="px-4 py-3 font-medium text-gray-600">States</th>
                 <th className="px-4 py-3 font-medium text-gray-600">LGAs</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Role</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
@@ -379,7 +360,7 @@ export default function MentorsPage() {
                     </td>
                     <td className="px-4 py-3 font-medium">{m.name}</td>
                     <td className="px-4 py-3 text-gray-600">{m.email}</td>
-                    <td className="px-4 py-3">{m.state}</td>
+                    <td className="px-4 py-3">{m.states?.join(", ") || "—"}</td>
                     <td className="px-4 py-3 text-gray-600">{m.lgas?.join(", ") || "—"}</td>
                     <td className="px-4 py-3">
                       <Badge variant={m.role === UserRole.ADMIN ? "destructive" : "secondary"}>

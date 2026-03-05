@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────
-   Coordinators Management Page (admin)
+   Admins Management Page (admin)
    ────────────────────────────────────────── */
 "use client";
 
@@ -7,78 +7,80 @@ import { useEffect, useState, useCallback } from "react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
-import { LocationSelector } from "@/components/ui/LocationSelector";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { api, type Coordinator } from "@/lib/api-client";
-import { STATES, UserRole } from "@/lib/constants";
-import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, KeyRound, Pencil, Trash2 } from "lucide-react";
+import { api, type Admin } from "@/lib/api-client";
+import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, KeyRound, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { useSession } from "next-auth/react";
 
-/* ─── Create/Update Coordinator Modal ──── */
-function CoordinatorModal({
+/* ─── Create/Update Admin Modal ──── */
+function AdminModal({
     open,
     onClose,
     onSuccess,
-    coordinator,
+    admin,
 }: {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    coordinator: Coordinator | null;
+    admin: Admin | null;
 }) {
-    const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, states: string[] }>({
+    const { data: session } = useSession();
+    const isRootAdmin = session?.user?.rootAdmin;
+    const [form, setForm] = useState({
         name: "",
         email: "",
         password: "",
         phone: "",
-        states: [],
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (coordinator) {
+        if (admin) {
             setForm({
-                name: coordinator.name,
-                email: coordinator.email,
+                name: admin.name,
+                email: admin.email,
                 password: "", // don't show password on edit
-                phone: coordinator.phone || "",
-                states: coordinator.states || [],
+                phone: admin.phone || "",
             });
         } else {
-            setForm({ name: "", email: "", password: "", phone: "", states: [] });
+            setForm({ name: "", email: "", password: "", phone: "" });
         }
-    }, [coordinator, open]);
+    }, [admin, open]);
 
     if (!open) return null;
+
+    const isSystemRootAdmin = admin && admin.rootAdmin;
+    const isDisabled = !!(isSystemRootAdmin && !isRootAdmin);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        if (isDisabled) {
+            setError("You do not have permission to modify a root administrator.");
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const statesArray = form.states;
-
-            if (coordinator) {
+            if (admin) {
                 // Update Mode
-                await api.coordinators.update(coordinator._id, {
+                await api.admins.update(admin._id, {
                     name: form.name,
-                    email: form.email,
                     phone: form.phone,
-                    states: statesArray,
                 });
             } else {
                 // Create Mode
-                if (!form.password) throw new Error("Password is required for new coordinators.");
+                if (!form.password) throw new Error("Password is required for new admins.");
 
-                await api.coordinators.create({
+                await api.admins.create({
                     name: form.name,
                     email: form.email,
                     password: form.password,
                     phone: form.phone,
-                    states: statesArray,
                 });
             }
             onSuccess();
@@ -95,15 +97,21 @@ function CoordinatorModal({
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
-                        <h2 className="text-lg font-semibold">{coordinator ? "Edit Coordinator" : "Add New Coordinator"}</h2>
+                        <h2 className="text-lg font-semibold">{admin ? "Edit Administrator" : "Add New Administrator"}</h2>
                         {error && (
                             <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>
+                        )}
+                        {isDisabled && (
+                            <p className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                                You are viewing a root administrator in read-only mode because you lack sufficient privileges to edit it.
+                            </p>
                         )}
                         <Input
                             label="Full Name *"
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                             required
+                            disabled={isDisabled}
                         />
                         <Input
                             id="email"
@@ -112,8 +120,9 @@ function CoordinatorModal({
                             value={form.email}
                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                             required
+                            disabled={!!admin || isDisabled} // Never edit email once created
                         />
-                        {!coordinator && (
+                        {!admin && (
                             <Input
                                 label="Password *"
                                 type="password"
@@ -127,22 +136,18 @@ function CoordinatorModal({
                             label="Phone"
                             value={form.phone}
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            disabled={isDisabled}
                         />
-                        <div className="space-y-1">
-                            <label className="block text-sm font-medium text-gray-700">Zones Managed *</label>
-                            <LocationSelector
-                                selectedStates={form.states}
-                                onChangeStates={(states) => setForm({ ...form, states })}
-                            />
-                        </div>
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
                         <Button type="button" variant="outline" onClick={onClose}>
-                            Cancel
+                            Close
                         </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? "Saving…" : (coordinator ? "Save Changes" : "Create Coordinator")}
-                        </Button>
+                        {!isDisabled && (
+                            <Button type="submit" disabled={loading}>
+                                {loading ? "Saving…" : (admin ? "Save Changes" : "Create Administrator")}
+                            </Button>
+                        )}
                     </div>
                 </form>
             </div>
@@ -154,11 +159,11 @@ function CoordinatorModal({
 function ResetPasswordModal({
     open,
     onClose,
-    coordinatorId,
+    adminId,
 }: {
     open: boolean;
     onClose: () => void;
-    coordinatorId: string;
+    adminId: string;
 }) {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -172,7 +177,7 @@ function ResetPasswordModal({
         setError("");
         setLoading(true);
         try {
-            await api.coordinators.resetPassword(coordinatorId, password);
+            await api.admins.resetPassword(adminId, password);
             setSuccess(true);
             setTimeout(() => {
                 setSuccess(false);
@@ -228,8 +233,12 @@ function ResetPasswordModal({
 }
 
 /* ─── Main Page ────────────────────────── */
-export default function CoordinatorsPage() {
-    const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+export default function AdminsPage() {
+    const { data: session } = useSession();
+    const isRootAdmin = session?.user?.rootAdmin;
+    const currentUserId = session?.user?.id;
+
+    const [admins, setAdmins] = useState<Admin[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -237,21 +246,21 @@ export default function CoordinatorsPage() {
     const [search, setSearch] = useState("");
 
     const [showModal, setShowModal] = useState(false);
-    const [selectedCoord, setSelectedCoord] = useState<Coordinator | null>(null);
+    const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
 
     const [showResetModal, setShowResetModal] = useState(false);
-    const [resetCoordId, setResetCoordId] = useState("");
+    const [resetAdminId, setResetAdminId] = useState("");
 
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
-    const fetchCoordinators = useCallback(async () => {
+    const fetchAdmins = useCallback(async () => {
         setLoading(true);
         try {
             const params: Record<string, string> = { page: String(page), limit: "20" };
             if (search) params.search = search;
-            const result = await api.coordinators.list(params);
-            setCoordinators(result.data);
+            const result = await api.admins.list(params);
+            setAdmins(result.data);
             setTotalPages(result.pagination.totalPages);
             setTotal(result.pagination.total);
         } catch {
@@ -262,40 +271,50 @@ export default function CoordinatorsPage() {
     }, [page, search]);
 
     useEffect(() => {
-        fetchCoordinators();
-    }, [fetchCoordinators]);
+        fetchAdmins();
+    }, [fetchAdmins]);
 
-    const toggleActive = async (coord: Coordinator) => {
+    const toggleActive = async (admin: Admin) => {
+        if (admin.rootAdmin && !isRootAdmin) {
+            alert("Forbidden: Cannot deactivate a root administrator.");
+            return;
+        }
+
         try {
-            if (coord.active) {
-                await api.coordinators.deactivate(coord._id);
+            if (admin.active) {
+                await api.admins.deactivate(admin._id);
             } else {
-                await api.coordinators.update(coord._id, { active: true });
+                await api.admins.update(admin._id, { active: true });
             }
-            fetchCoordinators();
+            fetchAdmins();
         } catch {
             /* no-op */
         }
     };
 
-    const openEdit = (coord: Coordinator) => {
-        setSelectedCoord(coord);
+    const openEdit = (admin: Admin) => {
+        setSelectedAdmin(admin);
         setShowModal(true);
     };
 
     const openCreate = () => {
-        setSelectedCoord(null);
+        setSelectedAdmin(null);
         setShowModal(true);
     };
 
-    const openReset = (id: string) => {
-        setResetCoordId(id);
+    const openReset = (admin: Admin) => {
+        if (admin.rootAdmin && !isRootAdmin) {
+            alert("Forbidden: Cannot reset the password of a root administrator.");
+            return;
+        }
+        setResetAdminId(admin._id);
         setShowResetModal(true);
     };
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
-            const allIds = coordinators.map(c => c._id);
+            // Unconditionally allow selecting, but the backend will filter deletions if needed
+            const allIds = admins.map(a => a._id);
             setSelectedIds(allIds);
         } else {
             setSelectedIds([]);
@@ -311,13 +330,16 @@ export default function CoordinatorsPage() {
     };
 
     const handleBulkDelete = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} coordinator(s)? This action cannot be undone.`)) return;
+        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} admin(s)? This action cannot be undone.`)) return;
 
         setIsDeletingBulk(true);
         try {
-            await api.coordinators.bulkDelete({ ids: selectedIds });
+            const result = await api.admins.bulkDelete({ ids: selectedIds });
             setSelectedIds([]);
-            fetchCoordinators();
+            fetchAdmins();
+            if (result.message) {
+                alert(result.message);
+            }
         } catch (error) {
             alert(`Failed to delete: ${(error as Error).message}`);
         } finally {
@@ -327,7 +349,7 @@ export default function CoordinatorsPage() {
 
     return (
         <>
-            <Header title="Zonal Coordinators" subtitle={`${total} total coordinator${total === 1 ? '' : 's'}`} />
+            <Header title="Administrators" subtitle={`${total} total administrator${total === 1 ? '' : 's'}`} />
 
             <div className="p-6 space-y-4">
                 {/* Filters */}
@@ -352,7 +374,7 @@ export default function CoordinatorsPage() {
                                 </Button>
                             )}
                             <Button size="sm" onClick={openCreate}>
-                                <Plus className="h-4 w-4 mr-1" /> Add Coordinator
+                                <Plus className="h-4 w-4 mr-1" /> Add Administrator
                             </Button>
                         </div>
                     </CardContent>
@@ -367,14 +389,14 @@ export default function CoordinatorsPage() {
                                     <input
                                         type="checkbox"
                                         className="rounded border-gray-300"
-                                        checked={coordinators.length > 0 && selectedIds.length === coordinators.length}
+                                        checked={admins.length > 0 && selectedIds.length === admins.length}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                     />
                                 </th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Zones Managed</th>
+                                <th className="px-4 py-3 font-medium text-gray-600">Role</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">
                                     Actions
@@ -388,64 +410,83 @@ export default function CoordinatorsPage() {
                                         Loading…
                                     </td>
                                 </tr>
-                            ) : !coordinators.length ? (
+                            ) : !admins.length ? (
                                 <tr>
                                     <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                                        No coordinators found.
+                                        No administrators found.
                                     </td>
                                 </tr>
                             ) : (
-                                coordinators.map((c) => (
-                                    <tr key={c._id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-gray-300"
-                                                checked={selectedIds.includes(c._id)}
-                                                onChange={(e) => handleSelectOne(c._id, e.target.checked)}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 font-medium">{c.name}</td>
-                                        <td className="px-4 py-3 text-gray-600">{c.email}</td>
-                                        <td className="px-4 py-3">{c.phone || "—"}</td>
-                                        <td className="px-4 py-3 text-gray-600 break-words max-w-xs">{c.states?.join(", ") || "—"}</td>
-                                        <td className="px-4 py-3">
-                                            <Badge variant={c.active ? "default" : "warning"}>
-                                                {c.active ? "Active" : "Suspended"}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => openEdit(c)}
-                                                title="Edit Details"
-                                            >
-                                                <Pencil className="h-4 w-4 text-blue-600" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => openReset(c._id)}
-                                                title="Reset Password"
-                                            >
-                                                <KeyRound className="h-4 w-4 text-gray-600" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => toggleActive(c)}
-                                                title={c.active ? "Suspend" : "Activate"}
-                                            >
-                                                {c.active ? (
-                                                    <UserX className="h-4 w-4 text-red-500" />
+                                admins.map((a) => {
+                                    const isSelf = currentUserId === a._id;
+                                    const cannotModify = a.rootAdmin && !isRootAdmin;
+
+                                    return (
+                                        <tr key={a._id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="checkbox"
+                                                    className="rounded border-gray-300"
+                                                    checked={selectedIds.includes(a._id)}
+                                                    onChange={(e) => handleSelectOne(a._id, e.target.checked)}
+                                                    disabled={isSelf || cannotModify}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3 font-medium flex items-center gap-2">
+                                                {a.name}
+                                                {isSelf && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">You</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600">{a.email}</td>
+                                            <td className="px-4 py-3">{a.phone || "—"}</td>
+                                            <td className="px-4 py-3">
+                                                {a.rootAdmin ? (
+                                                    <Badge variant="default" className="bg-purple-600 gap-1 hover:bg-purple-700">
+                                                        <ShieldAlert className="w-3 h-3" /> Root Admin
+                                                    </Badge>
                                                 ) : (
-                                                    <UserCheck className="h-4 w-4 text-green-600" />
+                                                    <Badge variant="secondary" className="text-gray-600">Admin</Badge>
                                                 )}
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Badge variant={a.active ? "default" : "warning" as any}>
+                                                    {a.active ? "Active" : "Suspended"}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => openEdit(a)}
+                                                    title={cannotModify ? "View Details" : "Edit Details"}
+                                                >
+                                                    <Pencil className="h-4 w-4 text-blue-600" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => openReset(a)}
+                                                    title="Reset Password"
+                                                    disabled={cannotModify}
+                                                >
+                                                    <KeyRound className="h-4 w-4 text-gray-600 hover:text-gray-900" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => toggleActive(a)}
+                                                    title={a.active ? "Suspend" : "Activate"}
+                                                    disabled={isSelf || cannotModify}
+                                                >
+                                                    {a.active ? (
+                                                        <UserX className="h-4 w-4 text-red-500 hover:text-red-700" />
+                                                    ) : (
+                                                        <UserCheck className="h-4 w-4 text-green-600 hover:text-green-800" />
+                                                    )}
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
@@ -467,17 +508,17 @@ export default function CoordinatorsPage() {
                 )}
             </div>
 
-            <CoordinatorModal
+            <AdminModal
                 open={showModal}
                 onClose={() => setShowModal(false)}
-                onSuccess={fetchCoordinators}
-                coordinator={selectedCoord}
+                onSuccess={fetchAdmins}
+                admin={selectedAdmin}
             />
 
             <ResetPasswordModal
                 open={showResetModal}
                 onClose={() => setShowResetModal(false)}
-                coordinatorId={resetCoordId}
+                adminId={resetAdminId}
             />
         </>
     );

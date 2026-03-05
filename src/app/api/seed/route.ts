@@ -15,6 +15,7 @@ const SEED_USERS = [
     email: "admin@mailinator.com",
     password: "admin123",
     role: UserRole.ADMIN,
+    rootAdmin: true,
     state: "FCT",
     lgas: [],
   },
@@ -60,6 +61,7 @@ export async function POST(_request: NextRequest) {
       email: seed.email,
       password: hashedPassword,
       role: seed.role,
+      rootAdmin: seed.rootAdmin ?? false,
       active: true,
     });
 
@@ -80,7 +82,7 @@ export async function POST(_request: NextRequest) {
       await Mentor.create({
         authId: user._id,
         ...(coordinatorId ? { coordinator: coordinatorId } : {}),
-        state: seed.state ? seed.state.toUpperCase() : "",
+        states: seed.state ? [seed.state.toUpperCase()] : [],
         lgas: seed.lgas ? seed.lgas.map(l => l.toUpperCase()) : []
       });
     }

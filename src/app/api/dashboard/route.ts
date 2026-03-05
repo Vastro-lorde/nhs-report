@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator } from "@/models";
+import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer } from "@/models";
 import mongoose from "mongoose";
 import { UserRole, AlertStatus } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
@@ -28,6 +28,16 @@ export async function GET(_request: NextRequest) {
       const coordinator = await Coordinator.findOne({ authId: user.id }).lean();
       if (coordinator) {
         const mentors = await Mentor.find({ coordinator: coordinator._id }).lean();
+        mentorAuthIds = mentors.map(m => m.authId.toString());
+        mentorDocIds = mentors.map(m => m._id.toString());
+      } else {
+        mentorAuthIds = [];
+        mentorDocIds = [];
+      }
+    } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
+      const deskOfficer = await DeskOfficer.findOne({ authId: user.id }).lean();
+      if (deskOfficer && deskOfficer.states && deskOfficer.states.length > 0) {
+        const mentors = await Mentor.find({ state: { $in: deskOfficer.states } }).lean();
         mentorAuthIds = mentors.map(m => m.authId.toString());
         mentorDocIds = mentors.map(m => m._id.toString());
       } else {
@@ -69,7 +79,7 @@ export async function GET(_request: NextRequest) {
       User.countDocuments(activeMentorFilter),
       WeeklyReport.countDocuments(reportFilter),
       Alert.countDocuments(alertFilter),
-      user.role === UserRole.ADMIN || user.role === UserRole.COORDINATOR ? WeeklyRollup.find().sort({ weekKey: -1 }).limit(12).lean() : Promise.resolve([]),
+      user.role === UserRole.ADMIN || user.role === UserRole.COORDINATOR || user.role === UserRole.ZONAL_DESK_OFFICER ? WeeklyRollup.find().sort({ weekKey: -1 }).limit(12).lean() : Promise.resolve([]),
     ]);
 
     // Aggregate submissions by state
@@ -90,9 +100,10 @@ export async function GET(_request: NextRequest) {
         },
       },
       { $unwind: "$mentorData" },
+      { $unwind: { path: "$mentorData.states", preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: { state: "$mentorData.state", weekKey: "$weekKey" },
+          _id: { state: "$mentorData.states", weekKey: "$weekKey" },
           count: { $sum: 1 },
           sessions: { $sum: "$sessionsCount" },
           checkins: { $sum: "$menteesCheckedIn" },

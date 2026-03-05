@@ -1,28 +1,19 @@
 /* ──────────────────────────────────────────
-   Model: Mentor
+   Model: DeskOfficer
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 
-export interface IMentor extends Document {
+export interface IDeskOfficer extends Document {
     authId: Types.ObjectId;
-    coordinator: Types.ObjectId;
     states: string[];
-    lgas: string[];
     createdAt: Date;
     updatedAt: Date;
 }
 
-const MentorSchema = new Schema<IMentor>(
+const DeskOfficerSchema = new Schema<IDeskOfficer>(
     {
         authId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-        coordinator: { type: Schema.Types.ObjectId, ref: "Coordinator", required: true, index: true },
         states: {
-            type: [String],
-            required: true,
-            uppercase: true,
-            default: []
-        },
-        lgas: {
             type: [String],
             uppercase: true,
             default: []
@@ -31,5 +22,5 @@ const MentorSchema = new Schema<IMentor>(
     { timestamps: true }
 );
 
-export const Mentor: Model<IMentor> =
-    models.Mentor || mongoose.model<IMentor>("Mentor", MentorSchema);
+export const DeskOfficer: Model<IDeskOfficer> =
+    models.DeskOfficer || mongoose.model<IDeskOfficer>("DeskOfficer", DeskOfficerSchema);

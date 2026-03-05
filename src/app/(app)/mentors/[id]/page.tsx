@@ -116,7 +116,7 @@ export default function MentorDetailsPage({
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-gray-500">State</label>
-                                    <p className="text-sm">{mentor.state || "—"}</p>
+                                    <p className="text-sm">{mentor.states?.join(", ") || "—"}</p>
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-gray-500">LGAs</label>

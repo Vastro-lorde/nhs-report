@@ -9,3 +9,4 @@ export { Coordinator, type ICoordinator } from "./Coordinator";
 export { Mentor, type IMentor } from "./Mentor";
 export { Fellow, type IFellow } from "./Fellow";
 export { MonthlyReport, type IMonthlyReport } from "./MonthlyReport";
+export { DeskOfficer, type IDeskOfficer } from "./DeskOfficer";
