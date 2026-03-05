@@ -23,7 +23,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const mentorDoc = await Mentor.findOne({ authId: user._id }).lean();
   const merged = {
     ...user,
-    state: mentorDoc?.state || "",
+    states: mentorDoc?.states || [],
     lgas: mentorDoc?.lgas || []
   };
 
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   delete body.password;
   delete body.role;
 
-  const { state, lgas, ...userUpdates } = body;
+  const { states, lgas, ...userUpdates } = body;
 
   const updatedUser = await User.findByIdAndUpdate(id, userUpdates, { new: true })
     .select("-password")
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // Update Mentor details
   const mentorUpdate: any = {};
-  if (state !== undefined) mentorUpdate.state = typeof state === 'string' ? state.toUpperCase().trim() : state;
+  if (states !== undefined) mentorUpdate.states = Array.isArray(states) ? states.map(s => s.toUpperCase().trim()) : states;
   if (lgas !== undefined) mentorUpdate.lgas = Array.isArray(lgas) ? lgas.map(l => l.toUpperCase().trim()) : lgas;
 
   const mentorDoc = await Mentor.findOneAndUpdate(
@@ -64,7 +64,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const merged = {
     ...updatedUser,
-    state: mentorDoc?.state || "",
+    states: mentorDoc?.states || [],
     lgas: mentorDoc?.lgas || []
   };
 

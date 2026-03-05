@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────
-   API Route: /api/mentors/me/password
+   API Route: /api/profile/password
    PATCH — change own password
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";

@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     } else if (session!.user.role === UserRole.ZONAL_DESK_OFFICER) {
       const deskOfficerDoc = await DeskOfficer.findOne({ authId: session!.user.id });
       if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
-        mentorFilter.state = { $in: deskOfficerDoc.states };
+        mentorFilter.states = { $in: deskOfficerDoc.states };
         mustFilterByMentorIds = true;
       } else {
         // Desk Officer without a profile, return empty
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (state) {
-      mentorFilter.state = state.toUpperCase();
+      mentorFilter.states = state.toUpperCase();
       mustFilterByMentorIds = true;
     }
     if (mentorId) {
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       .populate({
         path: "mentor",
         populate: { path: "authId", select: "name email phone active" },
-        select: "state lgas"
+        select: "states lgas"
       })
       .skip(skip)
       .limit(limit)
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
       report: report._id,
       mentor: mentorId,
       weekKey,
-      state: mentorDoc.state ?? "",
+      state: mentorDoc.states?.[0] ?? "", // Best effort for simple alerts
       urgentDetails: body.urgentDetails,
     });
   }

@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { api, type BulkMentorInput } from "@/lib/api-client";
+import { api, type BulkMentorInput, type Coordinator } from "@/lib/api-client";
 import { Upload, Download, Trash2 } from "lucide-react";
 import Papa from "papaparse";
 import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/Input";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 /* ─── CSV Columns ──────────────────────────── */
-const EXPECTED_HEADERS = ["Name of Mentor", "Email", "Phone Number", "State", "Assigned L.G.As"];
+const EXPECTED_HEADERS = ["Name of Mentor", "Email", "Phone Number", "States", "Assigned L.G.As"];
 
 export default function BulkUploadMentorsPage() {
     const { data: session } = useSession();
@@ -21,8 +22,18 @@ export default function BulkUploadMentorsPage() {
     const [error, setError] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
     const [page, setPage] = useState(1);
+    const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+    const [selectedCoordinatorId, setSelectedCoordinatorId] = useState("");
     const itemsPerPage = 10;
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (user?.role === "admin") {
+            api.coordinators.list({ limit: "100" })
+                .then(res => setCoordinators(res.data))
+                .catch(console.error);
+        }
+    }, [user?.role]);
 
     if (user?.role !== "admin" && user?.role !== "coordinator") {
         return (
@@ -68,11 +79,11 @@ export default function BulkUploadMentorsPage() {
                     const name = row["Name of Mentor"] || row["name"] || "";
                     const email = row["Email"] || row["email"] || "";
                     const phone = row["Phone Number"] || row["phone"] || "";
-                    const state = row["State"] || row["state"] || "";
+                    const states = row["States"] || row["State"] || row["state"] || row["states"] || "";
                     const lgas = row["Assigned L.G.As"] || row["lgas"] || "";
 
                     if (name && email) {
-                        parsedMentors.push({ name, email, phone, state, lgas });
+                        parsedMentors.push({ name, email, phone, states, lgas });
                     }
                 }
 
@@ -124,13 +135,20 @@ export default function BulkUploadMentorsPage() {
 
     const handleUploadToBackend = async () => {
         if (mentors.length === 0) return;
+        if (user?.role === "admin" && !selectedCoordinatorId) {
+            setError("Please select a Coordinator to assign these mentors to.");
+            return;
+        }
 
         setLoading(true);
         setError("");
         setSuccessMsg("");
 
         try {
-            const response = await api.mentors.bulkCreate({ mentors });
+            const response = await api.mentors.bulkCreate({
+                mentors,
+                coordinatorId: user?.role === "admin" ? selectedCoordinatorId : undefined
+            });
 
             let msg = `Successfully uploaded ${response.successful} mentors.`;
             if (response.failed > 0) {
@@ -196,7 +214,17 @@ export default function BulkUploadMentorsPage() {
 
                         {mentors.length > 0 && (
                             <>
-                                <Button onClick={handleUploadToBackend} disabled={loading}>
+                                {user?.role === "admin" && (
+                                    <div className="w-64">
+                                        <SearchableSelect
+                                            options={coordinators.map(c => ({ value: c._id, label: c.name }))}
+                                            value={selectedCoordinatorId}
+                                            onChange={setSelectedCoordinatorId}
+                                            placeholder="Assign to Coordinator..."
+                                        />
+                                    </div>
+                                )}
+                                <Button onClick={handleUploadToBackend} disabled={loading || (user?.role === "admin" && !selectedCoordinatorId)}>
                                     {loading ? "Processing..." : `Upload to Server (${mentors.length})`}
                                 </Button>
                                 <Button variant="outline" onClick={() => setMentors([])} disabled={loading}>
@@ -216,7 +244,7 @@ export default function BulkUploadMentorsPage() {
                                     <th className="px-4 py-3 font-medium text-gray-600">Name *</th>
                                     <th className="px-4 py-3 font-medium text-gray-600">Email *</th>
                                     <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
-                                    <th className="px-4 py-3 font-medium text-gray-600">State</th>
+                                    <th className="px-4 py-3 font-medium text-gray-600">States</th>
                                     <th className="px-4 py-3 font-medium text-gray-600">LGAs</th>
                                     <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
                                 </tr>
@@ -247,8 +275,8 @@ export default function BulkUploadMentorsPage() {
                                         </td>
                                         <td className="px-4 py-2">
                                             <Input
-                                                value={m.state || ""}
-                                                onChange={(e) => handleEditMentor(idx, "state", e.target.value)}
+                                                value={m.states || ""}
+                                                onChange={(e) => handleEditMentor(idx, "states", e.target.value)}
                                                 className="h-8 w-24"
                                             />
                                         </td>

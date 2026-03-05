@@ -288,7 +288,7 @@ function MentorDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase">State</p>
-                  <p className="text-sm font-medium">{profile.state || "—"}</p>
+                  <p className="text-sm font-medium">{profile.states?.join(", ") || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase">Assigned LGAs</p>

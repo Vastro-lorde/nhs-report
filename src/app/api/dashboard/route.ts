@@ -100,9 +100,10 @@ export async function GET(_request: NextRequest) {
         },
       },
       { $unwind: "$mentorData" },
+      { $unwind: { path: "$mentorData.states", preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: { state: "$mentorData.state", weekKey: "$weekKey" },
+          _id: { state: "$mentorData.states", weekKey: "$weekKey" },
           count: { $sum: 1 },
           sessions: { $sum: "$sessionsCount" },
           checkins: { $sum: "$menteesCheckedIn" },

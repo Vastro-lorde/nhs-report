@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
 
   // Mentor-specific filters
   const mentorFilter: Record<string, unknown> = {};
-  const state = url.searchParams.get("state");
-  if (state) mentorFilter.state = state;
+  const states = url.searchParams.get("states");
+  if (states) mentorFilter.states = { $in: states.split(",") };
 
   const active = url.searchParams.get("active");
   if (active !== null) filter.active = active === "true";
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const md = mentorDetailsList.find(m => m.authId.toString() === u._id.toString());
     return {
       ...u,
-      state: md?.state || "",
+      states: md?.states || [],
       lgas: md?.lgas || [],
       coordinator: md?.coordinator,
       mentorId: md?._id, // Outputting the mentor doc ID as well
@@ -77,7 +77,7 @@ interface CreateMentorBody {
   email: string;
   password: string;
   phone?: string;
-  state?: string;
+  states?: string[];
   lgas?: string[];
 }
 
@@ -110,12 +110,12 @@ export async function POST(request: NextRequest) {
   // but if they do, we create a mentor document mapped to a dummy or null coordinator.
   const mentorDoc = await Mentor.create({
     authId: user._id,
-    state: body.state ? body.state.toUpperCase().trim() : "",
+    states: body.states ? body.states.map((s: string) => s.toUpperCase().trim()) : [],
     lgas: body.lgas ? body.lgas.map((lga: string) => lga.toUpperCase().trim()) : []
   });
 
   const { password: _, ...userData } = user.toObject();
-  (userData as any).state = mentorDoc.state;
+  (userData as any).states = mentorDoc.states;
   (userData as any).lgas = mentorDoc.lgas;
 
   void _;

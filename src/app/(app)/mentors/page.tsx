@@ -30,12 +30,12 @@ function CreateMentorModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, state: string, lgas: string[], role: string }>({
+  const [form, setForm] = useState<{ name: string, email: string, password: string, phone: string, states: string[], lgas: string[], role: string }>({
     name: "",
     email: "",
     password: "",
     phone: "",
-    state: "",
+    states: [],
     lgas: [],
     role: UserRole.MENTOR as string,
   });
@@ -55,7 +55,7 @@ function CreateMentorModal({
       });
       onCreated();
       onClose();
-      setForm({ name: "", email: "", password: "", phone: "", state: "", lgas: [], role: UserRole.MENTOR });
+      setForm({ name: "", email: "", password: "", phone: "", states: [], lgas: [], role: UserRole.MENTOR });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -100,15 +100,8 @@ function CreateMentorModal({
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
             <LocationSelector
-              selectedStates={form.state ? [form.state] : []}
-              onChangeStates={(states) => {
-                const newState = states.length > 0 ? states[states.length - 1] : "";
-                if (newState !== form.state) {
-                  setForm({ ...form, state: newState, lgas: [] });
-                } else if (states.length === 0) {
-                  setForm({ ...form, state: "", lgas: [] });
-                }
-              }}
+              selectedStates={form.states}
+              onChangeStates={(states) => setForm({ ...form, states, lgas: [] })}
               showLgas={true}
               selectedLgas={form.lgas}
               onChangeLgas={(lgas) => setForm({ ...form, lgas })}
@@ -136,7 +129,7 @@ function CreateMentorModal({
             email: faker.internet.email(),
             password: faker.internet.password({ length: 8 }),
             phone: faker.phone.number(),
-            state: faker.helpers.arrayElement(STATES),
+            states: [faker.helpers.arrayElement(STATES)],
             lgas: [faker.location.county(), faker.location.county()],
             role: UserRole.MENTOR,
           });
@@ -166,7 +159,7 @@ export default function MentorsPage() {
     try {
       const params: Record<string, string> = { page: String(page), limit: "20" };
       if (search) params.search = search;
-      if (stateFilter) params.state = stateFilter;
+      if (stateFilter) params.states = stateFilter;
       const result = await api.mentors.list(params);
       setMentors(result.data);
       setTotalPages(result.pagination.totalPages);
@@ -247,7 +240,7 @@ export default function MentorsPage() {
                 className="w-60"
               />
               <Select
-                label="State"
+                label="State Filter"
                 value={stateFilter}
                 onChange={(e) => {
                   setStateFilter(e.target.value);
@@ -263,7 +256,7 @@ export default function MentorsPage() {
                 const data = mentors.map(m => ({
                   Name: m.name,
                   Email: m.email,
-                  State: m.state,
+                  States: m.states?.join(", ") || "",
                   LGAs: m.lgas?.join(", ") || "",
                   Role: m.role,
                   Status: m.active ? "Active" : "Inactive"
@@ -307,7 +300,7 @@ export default function MentorsPage() {
                 </th>
                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
-                <th className="px-4 py-3 font-medium text-gray-600">State</th>
+                <th className="px-4 py-3 font-medium text-gray-600">States</th>
                 <th className="px-4 py-3 font-medium text-gray-600">LGAs</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Role</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
@@ -342,7 +335,7 @@ export default function MentorsPage() {
                     </td>
                     <td className="px-4 py-3 font-medium">{m.name}</td>
                     <td className="px-4 py-3 text-gray-600">{m.email}</td>
-                    <td className="px-4 py-3">{m.state}</td>
+                    <td className="px-4 py-3">{m.states?.join(", ") || "—"}</td>
                     <td className="px-4 py-3 text-gray-600">{m.lgas?.join(", ") || "—"}</td>
                     <td className="px-4 py-3">
                       <Badge variant={m.role === UserRole.ADMIN ? "destructive" : "secondary"}>

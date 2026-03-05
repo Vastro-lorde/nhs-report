@@ -16,12 +16,13 @@ interface BulkMentorInput {
     name: string;
     email: string;
     phone?: string;
-    state?: string;
+    states?: string;
     lgas?: string;
 }
 
 interface BulkMentorBody {
     mentors: BulkMentorInput[];
+    coordinatorId?: string;
 }
 
 // Generate a random 8-character password
@@ -46,17 +47,25 @@ export async function POST(request: NextRequest) {
 
         await connectDB();
 
-        let coordinatorId = null;
+        let coordinatorId = body.coordinatorId || null;
         if (session?.user.role === UserRole.COORDINATOR) {
             const coordinatorDoc = await Coordinator.findOne({ authId: session.user.id });
             if (coordinatorDoc) {
-                coordinatorId = coordinatorDoc._id;
+                coordinatorId = coordinatorDoc._id.toString(); // enforce their own ID
             } else {
                 return jsonError("Coordinator profile not found for this user.");
             }
+        } else if (session?.user.role === UserRole.ADMIN) {
+            if (!coordinatorId) {
+                return jsonError("Admins must provide a coordinatorId to assign these mentors to.");
+            }
+            // Optional: verify the coordinator exists
+            const coordinatorExists = await Coordinator.findById(coordinatorId);
+            if (!coordinatorExists) {
+                return jsonError("The selected coordinator does not exist.");
+            }
         } else {
-            // If Admin uploads, we might need a fallback or prevent it. For now, require coordinator.
-            return jsonError("Only Coordinators can bulk upload Mentors currently, as they must be assigned to the uploading Coordinator.");
+            return jsonError("Unauthorized to bulk upload mentors.");
         }
 
         const results = {
@@ -87,6 +96,10 @@ export async function POST(request: NextRequest) {
                     ? mentorInput.lgas.split(",").map((lga) => lga.trim().toUpperCase()).filter(Boolean)
                     : [];
 
+                const statesArray = mentorInput.states
+                    ? mentorInput.states.split(",").map((st) => st.trim().toUpperCase()).filter(Boolean)
+                    : [];
+
                 const newUser = await User.create({
                     name: mentorInput.name.trim(),
                     email: email,
@@ -99,7 +112,7 @@ export async function POST(request: NextRequest) {
                 await Mentor.create({
                     authId: newUser._id,
                     coordinator: coordinatorId,
-                    state: mentorInput.state?.trim().toUpperCase() || "",
+                    states: statesArray,
                     lgas: lgasArray,
                 });
 

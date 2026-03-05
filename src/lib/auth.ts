@@ -68,7 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           userState = coord?.states?.[0];
         } else if (user.role === UserRole.MENTOR) {
           const mentor = await Mentor.findOne({ authId: user._id }).lean();
-          userState = mentor?.state;
+          userState = mentor?.states?.[0];
         } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
           const deskOfficer = await DeskOfficer.findOne({ authId: user._id }).lean();
           userState = deskOfficer?.states?.[0];

@@ -66,7 +66,7 @@ export const api = {
       request<Mentor>(`/api/mentors/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     deactivate: (id: string) =>
       request(`/api/mentors/${id}`, { method: "DELETE" }),
-    bulkCreate: (data: { mentors: BulkMentorInput[] }) =>
+    bulkCreate: (data: { mentors: BulkMentorInput[]; coordinatorId?: string }) =>
       request<{ successful: number; failed: number; errors: string[] }>("/api/mentors/bulk", {
         method: "POST",
         body: JSON.stringify(data),
@@ -244,7 +244,7 @@ export interface Mentor {
   email: string;
   phone?: string;
   role: string;
-  state?: string;
+  states?: string[];
   lgas: string[];
   active: boolean;
   createdAt: string;
@@ -255,7 +255,7 @@ export interface CreateMentorInput {
   email: string;
   password: string;
   phone?: string;
-  state?: string;
+  states?: string[];
   lgas?: string[];
 }
 
@@ -263,7 +263,7 @@ export interface BulkMentorInput {
   name: string;
   email: string;
   phone?: string;
-  state?: string;
+  states?: string;
   lgas?: string;
 }
 

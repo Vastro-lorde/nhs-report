@@ -82,7 +82,7 @@ export async function POST(_request: NextRequest) {
       await Mentor.create({
         authId: user._id,
         ...(coordinatorId ? { coordinator: coordinatorId } : {}),
-        state: seed.state ? seed.state.toUpperCase() : "",
+        states: seed.state ? [seed.state.toUpperCase()] : [],
         lgas: seed.lgas ? seed.lgas.map(l => l.toUpperCase()) : []
       });
     }
