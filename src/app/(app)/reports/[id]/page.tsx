@@ -11,7 +11,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Report } from "@/lib/api-client";
 import { format } from "date-fns";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft, FileDown, Pencil } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { UserRole } from "@/lib/constants";
+import { isoWeekKey } from "@/lib/date-helpers";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 
 const PDFDownloadButton = dynamic(
@@ -22,6 +26,7 @@ const PDFDownloadButton = dynamic(
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: session } = useSession();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -59,6 +64,18 @@ export default function ReportDetailPage() {
           <PDFDownloadButton report={report} size="sm">
             <FileDown className="h-4 w-4 mr-1" /> Download PDF
           </PDFDownloadButton>
+          {/* Edit — only within the same week, and only for the owning mentor or their coordinator */}
+          {report.weekKey === isoWeekKey(new Date()) &&
+            session?.user &&
+            (session.user.role === UserRole.MENTOR ||
+              session.user.role === UserRole.COORDINATOR ||
+              session.user.role === UserRole.ADMIN) && (
+              <Link href={`/reports/${report._id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="h-4 w-4 mr-1" /> Edit
+                </Button>
+              </Link>
+            )}
           <Badge>{report.status}</Badge>
         </div>
 
