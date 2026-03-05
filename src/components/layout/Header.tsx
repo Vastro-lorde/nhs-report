@@ -36,9 +36,27 @@ export function Header({ title, subtitle, children }: HeaderProps) {
       <div className="flex items-center gap-4">
         {children}
         {session?.user && (
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-gray-700">{session.user.name}</p>
-            <p className="text-xs text-gray-500 capitalize">{session.user.role}</p>
+          <div className="hidden sm:flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-700">{session.user.name}</p>
+              <p className="text-xs text-gray-500 capitalize">{session.user.role}</p>
+            </div>
+            {session.user.profileImage ? (
+              <img
+                src={session.user.profileImage}
+                alt={session.user.name}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-700 text-white text-xs font-semibold">
+                {session.user.name
+                  ?.split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </span>
+            )}
           </div>
         )}
       </div>

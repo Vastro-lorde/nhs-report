@@ -16,12 +16,14 @@ declare module "next-auth" {
       email: string;
       role: UserRole;
       state?: string;
+      profileImage?: string;
     };
   }
 
   interface User {
     role: UserRole;
     state?: string;
+    profileImage?: string;
   }
 }
 
@@ -30,6 +32,7 @@ declare module "next-auth" {
     id: string;
     role: UserRole;
     state?: string;
+    profileImage?: string;
   }
 }
 
@@ -74,6 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           role: user.role,
           state: userState,
+          profileImage: user.profileImage,
         };
       },
     }),
@@ -84,6 +88,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id as string;
         token.role = user.role;
         token.state = user.state;
+        token.profileImage = user.profileImage;
       }
       return token;
     },
@@ -91,6 +96,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.id = token.id as string;
       session.user.role = token.role as UserRole;
       session.user.state = token.state as string;
+      session.user.profileImage = token.profileImage as string | undefined;
       return session;
     },
   },

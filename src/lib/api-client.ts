@@ -59,6 +59,11 @@ export const api = {
         method: "DELETE",
         body: JSON.stringify(data),
       }),
+    sendReminders: () =>
+      request<{ weekKey: string; totalMentors: number; remindersSent: number; message: string; errors: string[] }>(
+        "/api/mentors/remind",
+        { method: "POST" },
+      ),
   },
 
   coordinators: {

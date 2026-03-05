@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
-import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, Download, Upload, Trash2 } from "lucide-react";
+import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, Download, Upload, Trash2, Bell } from "lucide-react";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
 import { faker } from "@faker-js/faker";
 import { exportToCSV } from "@/lib/export";
@@ -172,6 +172,7 @@ export default function MentorsPage() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [isSendingReminders, setIsSendingReminders] = useState(false);
 
   const fetchMentors = useCallback(async () => {
     setLoading(true);
@@ -221,6 +222,19 @@ export default function MentorsPage() {
       setSelectedIds((prev) => [...prev, id]);
     } else {
       setSelectedIds((prev) => prev.filter((item) => item !== id));
+    }
+  };
+
+  const handleSendReminders = async () => {
+    if (!window.confirm("Send report reminder emails to all mentors who haven't submitted this week?")) return;
+    setIsSendingReminders(true);
+    try {
+      const result = await api.mentors.sendReminders();
+      alert(result.message);
+    } catch (error) {
+      alert(`Failed to send reminders: ${(error as Error).message}`);
+    } finally {
+      setIsSendingReminders(false);
     }
   };
 
@@ -285,11 +299,22 @@ export default function MentorsPage() {
                 <Download className="h-4 w-4 mr-1" /> Export CSV
               </Button>
               {session?.user?.role && (session.user.role === UserRole.COORDINATOR || session.user.role === UserRole.ADMIN) && (
-                <Link href="/mentors/bulk-upload">
-                  <Button size="sm" variant="secondary">
-                    <Upload className="h-4 w-4 mr-1" /> Bulk Upload Mentors
+                <>
+                  <Link href="/mentors/bulk-upload">
+                    <Button size="sm" variant="secondary">
+                      <Upload className="h-4 w-4 mr-1" /> Bulk Upload Mentors
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleSendReminders}
+                    disabled={isSendingReminders}
+                  >
+                    <Bell className="h-4 w-4 mr-1" />
+                    {isSendingReminders ? "Sending…" : "Notify Mentors"}
                   </Button>
-                </Link>
+                </>
               )}
               {selectedIds.length > 0 && (
                 <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>

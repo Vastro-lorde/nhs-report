@@ -5,19 +5,29 @@ import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { User, Mentor } from "@/models";
 import { UserRole } from "@/lib/constants";
-import { requireRole } from "@/lib/auth-guard";
+import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 
 type Params = { params: Promise<{ id: string }> };
 
 // GET /api/mentors/:id
 export async function GET(_request: NextRequest, { params }: Params) {
-  const { error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR);
+  const { session, error } = await requireAuth();
   if (error) return error;
 
   const { id } = await params;
+  const targetId = id === "me" ? session.user.id : id;
+
+  const isSelf = session.user.id === targetId;
+  const allowedRoles: string[] = [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER];
+  const isAuthorized = isSelf || allowedRoles.includes(session.user.role as string);
+
+  if (!isAuthorized) {
+    return jsonError("Forbidden", 403);
+  }
+
   await connectDB();
-  const user = await User.findById(id).select("-password").lean();
+  const user = await User.findById(targetId).select("-password").lean();
   if (!user) return jsonError("Mentor not found", 404);
 
   const mentorDoc = await Mentor.findOne({ authId: user._id }).lean();

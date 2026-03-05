@@ -174,14 +174,32 @@ export function Sidebar() {
         {/* User info + Sign out */}
         <div className="border-t border-gray-200 p-4 pb-24 md:pb-4 shrink-0 bg-white relative z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           {session?.user && (
-            <div className="mb-3">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {session.user.name}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
-              <span className="inline-block mt-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 capitalize">
-                {session.user.role === UserRole.COORDINATOR ? "Zonal Coordinator" : session.user.role}
-              </span>
+            <div className="mb-3 flex items-start gap-3">
+              {session.user.profileImage ? (
+                <img
+                  src={session.user.profileImage}
+                  alt={session.user.name}
+                  className="h-10 w-10 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-700 text-white text-sm font-semibold shrink-0">
+                  {session.user.name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {session.user.name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+                <span className="inline-block mt-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 capitalize">
+                  {session.user.role === UserRole.COORDINATOR ? "Zonal Coordinator" : session.user.role}
+                </span>
+              </div>
             </div>
           )}
           <button
