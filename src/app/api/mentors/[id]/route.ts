@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User, Mentor } from "@/models";
+import { User, Mentor, Coordinator, DeskOfficer } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
@@ -31,6 +31,24 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (!user) return jsonError("Mentor not found", 404);
 
   const mentorDoc = await Mentor.findOne({ authId: user._id }).lean();
+  if (session.user.role === UserRole.COORDINATOR) {
+    const coordinator = await Coordinator.findOne({ authId: session.user.id }).lean();
+    if (!coordinator) return jsonError("Coordinator record not found", 404);
+    if (!mentorDoc || mentorDoc.coordinator.toString() !== coordinator._id.toString()) {
+      return jsonError("Mentor not found", 404);
+    }
+  }
+  if (session.user.role === UserRole.ZONAL_DESK_OFFICER) {
+    const deskOfficer = await DeskOfficer.findOne({ authId: session.user.id }).lean();
+    if (!deskOfficer) return jsonError("Desk officer record not found", 404);
+    const allowedStates = (deskOfficer.states || []).map((s) => s.toUpperCase().trim()).filter(Boolean);
+    if (!mentorDoc || !allowedStates.length) return jsonError("Mentor not found", 404);
+
+    const allowedSet = new Set(allowedStates);
+    const mentorStates = (mentorDoc.states || []).map((s) => String(s).toUpperCase().trim()).filter(Boolean);
+    const isInScope = mentorStates.some((s) => allowedSet.has(s));
+    if (!isInScope) return jsonError("Mentor not found", 404);
+  }
   const merged = {
     ...user,
     states: mentorDoc?.states || [],
@@ -62,9 +80,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (!updatedUser) return jsonError("Mentor not found", 404);
 
   // Update Mentor details
-  const mentorUpdate: any = {};
-  if (states !== undefined) mentorUpdate.states = Array.isArray(states) ? states.map(s => s.toUpperCase().trim()) : states;
-  if (lgas !== undefined) mentorUpdate.lgas = Array.isArray(lgas) ? lgas.map(l => l.toUpperCase().trim()) : lgas;
+  const mentorUpdate: Record<string, unknown> = {};
+  if (states !== undefined) mentorUpdate.states = Array.isArray(states) ? states.map(s => String(s).toUpperCase().trim()) : states;
+  if (lgas !== undefined) mentorUpdate.lgas = Array.isArray(lgas) ? lgas.map(l => String(l).toUpperCase().trim()) : lgas;
 
   const mentorDoc = await Mentor.findOneAndUpdate(
     { authId: id },

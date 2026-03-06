@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
 import { User, Mentor, Coordinator } from "@/models";
-import { UserRole, APP_NAME } from "@/lib/constants";
+import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody } from "@/lib/api-helpers";
 import { sendMail } from "@/lib/mailer";
@@ -138,9 +138,10 @@ export async function POST(request: NextRequest) {
         }
 
         return jsonCreated(results);
-    } catch (globalErr: any) {
+    } catch (globalErr: unknown) {
         console.error("Mentor Bulk Upload 500 Error:", globalErr);
-        return jsonError(`Internal Server Error: ${globalErr.message}`, 500);
+        const message = globalErr instanceof Error ? globalErr.message : String(globalErr);
+        return jsonError(`Internal Server Error: ${message}`, 500);
     }
 }
 
@@ -157,25 +158,40 @@ export async function DELETE(request: NextRequest) {
 
         await connectDB();
 
-        // Optional: Coordinators can only delete their own Mentors
-        // but for simplicity, allow any Coordinator or Admin to bulk delete for now.
-        // We can restrict it by adding `{ authId: { $in: body.ids }, coordinator: coordinatorId }` later.
+        let idsToDelete = body.ids;
+
+        if (session?.user.role === UserRole.COORDINATOR) {
+            const coordinatorDoc = await Coordinator.findOne({ authId: session.user.id }).lean();
+            if (!coordinatorDoc) return jsonError("Coordinator profile not found for this user.");
+
+            const mentorDocs = await Mentor.find({
+                authId: { $in: body.ids },
+                coordinator: coordinatorDoc._id,
+            }).select("authId").lean();
+
+            idsToDelete = mentorDocs.map((m) => m.authId.toString());
+        }
+
+        if (!idsToDelete.length) {
+            return jsonOk({ success: true, deletedCount: 0 });
+        }
 
         const deleteResult = await User.deleteMany({
-            _id: { $in: body.ids },
+            _id: { $in: idsToDelete },
             role: UserRole.MENTOR
         });
 
         await Mentor.deleteMany({
-            authId: { $in: body.ids }
+            authId: { $in: idsToDelete }
         });
 
         return jsonOk({
             success: true,
             deletedCount: deleteResult.deletedCount
         });
-    } catch (globalErr: any) {
+    } catch (globalErr: unknown) {
         console.error("Mentor Bulk Delete Error:", globalErr);
-        return jsonError(`Internal Server Error: ${globalErr.message}`, 500);
+        const message = globalErr instanceof Error ? globalErr.message : String(globalErr);
+        return jsonError(`Internal Server Error: ${message}`, 500);
     }
 }

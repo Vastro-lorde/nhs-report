@@ -4,14 +4,14 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User, Mentor, Coordinator } from "@/models";
+import { User, Mentor, Coordinator, DeskOfficer } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
 
 // GET /api/mentors — list mentors (admin/coordinator)
 export async function GET(request: NextRequest) {
-  const { error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR);
+  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER);
   if (error) return error;
 
   await connectDB();
@@ -25,7 +25,56 @@ export async function GET(request: NextRequest) {
   // Mentor-specific filters
   const mentorFilter: Record<string, unknown> = {};
   const states = url.searchParams.get("states");
-  if (states) mentorFilter.states = { $in: states.split(",") };
+  const requestedStates = states
+    ? states
+        .split(",")
+        .map((s) => s.toUpperCase().trim())
+        .filter(Boolean)
+    : [];
+
+  // Coordinators must only see mentors under their own scope
+  if (session?.user?.role === UserRole.COORDINATOR) {
+    const coordinator = await Coordinator.findOne({ authId: session.user.id }).lean();
+    if (!coordinator) return jsonError("Coordinator record not found", 404);
+
+    const allowedStates = (coordinator.states || []).map((s) => s.toUpperCase().trim()).filter(Boolean);
+    mentorFilter.coordinator = coordinator._id;
+
+    if (requestedStates.length) {
+      if (allowedStates.length) {
+        const allowedSet = new Set(allowedStates);
+        const intersection = requestedStates.filter((s) => allowedSet.has(s));
+        mentorFilter.states = { $in: intersection };
+      } else {
+        mentorFilter.states = { $in: requestedStates };
+      }
+    } else {
+      if (allowedStates.length) mentorFilter.states = { $in: allowedStates };
+    }
+  } else {
+    if (session?.user?.role === UserRole.ZONAL_DESK_OFFICER) {
+      const deskOfficer = await DeskOfficer.findOne({ authId: session.user.id }).lean();
+      if (!deskOfficer) return jsonError("Desk officer record not found", 404);
+
+      const allowedStates = (deskOfficer.states || []).map((s) => s.toUpperCase().trim()).filter(Boolean);
+      if (!allowedStates.length) {
+        return jsonOk({
+          data: [],
+          pagination: { page, limit, total: 0, totalPages: 0 },
+        });
+      }
+
+      if (requestedStates.length) {
+        const allowedSet = new Set(allowedStates);
+        const intersection = requestedStates.filter((s) => allowedSet.has(s));
+        mentorFilter.states = { $in: intersection };
+      } else {
+        mentorFilter.states = { $in: allowedStates };
+      }
+    } else {
+      if (requestedStates.length) mentorFilter.states = { $in: requestedStates };
+    }
+  }
 
   const active = url.searchParams.get("active");
   if (active !== null) filter.active = active === "true";
@@ -39,7 +88,7 @@ export async function GET(request: NextRequest) {
 
   // 1. Find matching users first
   const users = await User.find(filter).select("-password").sort({ name: 1 }).lean();
-  let userIds = users.map(u => u._id);
+  const userIds = users.map(u => u._id);
 
   // 2. Find matching mentor details linked to these users
   mentorFilter.authId = { $in: userIds };
@@ -114,10 +163,8 @@ export async function POST(request: NextRequest) {
     lgas: body.lgas ? body.lgas.map((lga: string) => lga.toUpperCase().trim()) : []
   });
 
-  const { password: _, ...userData } = user.toObject();
-  (userData as any).states = mentorDoc.states;
-  (userData as any).lgas = mentorDoc.lgas;
-
-  void _;
-  return jsonCreated(userData);
+  const userObj = user.toObject() as unknown as Record<string, unknown>;
+  const { password, ...safeUser } = userObj;
+  void password;
+  return jsonCreated({ ...safeUser, states: mentorDoc.states, lgas: mentorDoc.lgas });
 }

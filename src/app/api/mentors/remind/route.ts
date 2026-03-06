@@ -5,7 +5,7 @@
    haven't submitted for the current week.
    ────────────────────────────────────────── */
 import { connectDB } from "@/lib/db";
-import { User, WeeklyReport } from "@/models";
+import { User, WeeklyReport, Mentor, Coordinator } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
@@ -23,21 +23,30 @@ export async function POST() {
   const weekKey = currentWeekKey();
 
   // Mentors who already submitted this week
-  const submittedMentorIds = await WeeklyReport.find({ weekKey }).distinct("mentor");
+  const submittedMentorDocIds = await WeeklyReport.find({ weekKey }).distinct("mentor");
 
-  // Build filter — coordinators only see mentors in their states
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filter: Record<string, any> = {
-    role: UserRole.MENTOR,
-    active: true,
-    _id: { $nin: submittedMentorIds },
+  const mentorDocFilter: Record<string, unknown> = {
+    _id: { $nin: submittedMentorDocIds },
   };
 
-  if (session!.user.role === UserRole.COORDINATOR && session!.user.state) {
-    filter.states = { $in: [session!.user.state] };
+  if (session!.user.role === UserRole.COORDINATOR) {
+    const coordinator = await Coordinator.findOne({ authId: session!.user.id }).lean();
+    if (!coordinator) return jsonError("Coordinator record not found", 404);
+
+    mentorDocFilter.coordinator = coordinator._id;
+
+    const allowedStates = (coordinator.states || []).map((s) => s.toUpperCase().trim()).filter(Boolean);
+    if (allowedStates.length) mentorDocFilter.states = { $in: allowedStates };
   }
 
-  const mentorsToRemind = await User.find(filter).lean();
+  const mentorDocsToRemind = await Mentor.find(mentorDocFilter).select("authId").lean();
+  const mentorAuthIds = mentorDocsToRemind.map((m) => m.authId);
+
+  const mentorsToRemind = await User.find({
+    _id: { $in: mentorAuthIds },
+    role: UserRole.MENTOR,
+    active: true,
+  }).lean();
 
   if (mentorsToRemind.length === 0) {
     return jsonOk({

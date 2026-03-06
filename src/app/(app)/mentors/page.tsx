@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { LocationSelector } from "@/components/ui/LocationSelector";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { STATES, UserRole } from "@/lib/constants";
 import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, Download, Upload, Trash2, Bell } from "lucide-react";
@@ -151,6 +151,8 @@ export default function MentorsPage() {
   const [stateFilter, setStateFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
 
+  const [scopedStates, setScopedStates] = useState<string[]>([]);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   const [isSendingReminders, setIsSendingReminders] = useState(false);
@@ -171,6 +173,44 @@ export default function MentorsPage() {
       setLoading(false);
     }
   }, [page, search, stateFilter]);
+
+  useEffect(() => {
+    async function fetchScopedStates() {
+      const role = session?.user?.role;
+      if (role !== UserRole.COORDINATOR && role !== UserRole.ZONAL_DESK_OFFICER) {
+        setScopedStates([]);
+        return;
+      }
+      try {
+        const res = await fetch("/api/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        const states = (data?.roleDetails?.states ?? []) as string[];
+        const cleaned = Array.from(
+          new Set(
+            states
+              .map((s) => String(s).toUpperCase().trim())
+              .filter(Boolean),
+          ),
+        );
+        setScopedStates(cleaned);
+      } catch {
+        // no-op
+      }
+    }
+
+    fetchScopedStates();
+  }, [session?.user?.role]);
+
+  useEffect(() => {
+    const role = session?.user?.role;
+    if (role !== UserRole.COORDINATOR && role !== UserRole.ZONAL_DESK_OFFICER) return;
+    if (!stateFilter) return;
+    if (scopedStates.length && !scopedStates.includes(stateFilter)) {
+      setStateFilter("");
+      setPage(1);
+    }
+  }, [session?.user?.role, scopedStates, stateFilter]);
 
   useEffect(() => {
     fetchMentors();
@@ -262,7 +302,11 @@ export default function MentorsPage() {
                 }}
                 options={[
                   { label: "All States", value: "" },
-                  ...STATES.map((s) => ({ label: s, value: s })),
+                  ...(
+                    session?.user?.role === UserRole.COORDINATOR || session?.user?.role === UserRole.ZONAL_DESK_OFFICER
+                      ? scopedStates
+                      : STATES
+                  ).map((s) => ({ label: s, value: s })),
                 ]}
                 className="w-48"
               />
