@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { ArrowLeft, FileDown, Pencil } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
-import { isoWeekKey } from "@/lib/date-helpers";
+import { isoWeekKey, weekRangeLabelFromDate } from "@/lib/date-helpers";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
@@ -51,7 +51,7 @@ export default function ReportDetailPage() {
   return (
     <>
       <Header
-        title={`Report — ${report.weekKey}`}
+        title={`Report — ${weekRangeLabelFromDate(report.weekEnding)}`}
         subtitle={`${report.mentorName ?? "Mentor"} • ${report.state}`}
       />
 
@@ -88,7 +88,7 @@ export default function ReportDetailPage() {
             <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <dt className="text-gray-500">Week</dt>
-                <dd className="font-medium">{report.weekKey}</dd>
+                <dd className="font-medium">{weekRangeLabelFromDate(report.weekEnding)}</dd>
               </div>
               {report.weekNumber && (
                 <div>

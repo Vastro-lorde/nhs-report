@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Download } from "lucide-react";
 import { api, type DashboardData } from "@/lib/api-client";
 import { exportToCSV } from "@/lib/export";
+import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 import {
   LineChart,
   Line,
@@ -106,7 +107,7 @@ export default function AnalyticsPage() {
               {chartType === "line" ? (
                 <LineChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} />
+                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
                   <YAxis yAxisId="left" width={30} fontSize={10} tickMargin={5} />
                   <YAxis yAxisId="right" orientation="right" width={30} fontSize={10} tickMargin={5} />
                   <Tooltip />
@@ -131,7 +132,7 @@ export default function AnalyticsPage() {
               ) : (
                 <BarChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} />
+                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
                   <YAxis width={30} fontSize={10} tickMargin={5} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
@@ -210,7 +211,7 @@ export default function AnalyticsPage() {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={rollups} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} />
+                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
                 <YAxis width={30} fontSize={10} tickMargin={5} />
                 <Tooltip />
                 <Bar dataKey="urgentAlertsCount" fill="#dc2626" name="Urgent Alerts" radius={[4, 4, 0, 0]} />

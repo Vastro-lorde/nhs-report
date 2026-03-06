@@ -14,6 +14,7 @@ import {
 } from "@react-pdf/renderer";
 import type { Report, MentorshipSessionInput as Session } from "@/lib/api-client";
 import { APP_NAME } from "@/lib/constants";
+import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 
 /* ── Register a clean font (Helvetica built-in) ─── */
 Font.register({
@@ -287,7 +288,7 @@ export function MonthlyReportPDF({ reports, monthLabel }: MonthlyReportPDFProps)
                 <Page key={idx} size="A4" style={s.page}>
                     <Text style={s.sessionHeader}>Mentorship Session Report</Text>
                     <Text style={s.sessionWeek}>
-                        Mentorship Session from Week: {weekKey}
+                        Mentorship Session from Week: {weekRangeLabelFromWeekKey(weekKey)}
                     </Text>
 
                     <View style={s.hr} />

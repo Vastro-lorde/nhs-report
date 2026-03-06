@@ -2,13 +2,15 @@
    Email templates (single source of truth)
    ────────────────────────────────────────── */
 import { APP_NAME } from "./constants";
+import { weekRangeLabelFromWeekKey } from "./date-helpers";
 
 export function reminderEmailTemplate(mentorName: string, weekKey: string, appUrl: string) {
-  const subject = `Weekly Mentor Report Reminder (${weekKey})`;
+  const weekLabel = weekRangeLabelFromWeekKey(weekKey);
+  const subject = `Weekly Mentor Report Reminder (${weekLabel})`;
 
   const text = `Hello ${mentorName},
 
-This is a reminder to submit your weekly mentor report for ${weekKey}.
+This is a reminder to submit your weekly mentor report for ${weekLabel}.
 
 Submit here: ${appUrl}/reports/new
 
@@ -21,7 +23,7 @@ ${APP_NAME}`;
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
       <h2 style="color: #1a7f37;">Weekly Report Reminder</h2>
       <p>Hello <strong>${mentorName}</strong>,</p>
-      <p>This is a reminder to submit your weekly mentor report for <strong>${weekKey}</strong>.</p>
+      <p>This is a reminder to submit your weekly mentor report for <strong>${weekLabel}</strong>.</p>
       <p>
         <a href="${appUrl}/reports/new"
            style="display: inline-block; padding: 12px 24px; background: #1a7f37;
@@ -51,14 +53,15 @@ interface DigestData {
 }
 
 export function weeklyDigestTemplate(data: DigestData) {
-  const subject = `Weekly Mentor Report Digest (${data.weekKey})`;
+  const weekLabel = weekRangeLabelFromWeekKey(data.weekKey);
+  const subject = `Weekly Mentor Report Digest (${weekLabel})`;
   const pct = Math.round(data.submissionRate * 100);
 
   const urgentLines = data.urgentAlerts.length
     ? data.urgentAlerts.map((a) => `• ${a.mentor} (${a.state}): ${a.details}`).join("\n")
     : "None";
 
-  const text = `Weekly summary for ${data.weekKey}
+  const text = `Weekly summary for ${weekLabel}
 
 Reports submitted: ${data.submitted} of ${data.expected} (${pct}%)
 Total sessions: ${data.totalSessions}
@@ -82,7 +85,7 @@ ${urgentLines}`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
-      <h2 style="color: #1a7f37;">Weekly Digest — ${data.weekKey}</h2>
+      <h2 style="color: #1a7f37;">Weekly Digest — ${weekLabel}</h2>
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
         <tr>
           <td style="padding: 8px; border: 1px solid #e5e7eb;"><strong>Reports Submitted</strong></td>

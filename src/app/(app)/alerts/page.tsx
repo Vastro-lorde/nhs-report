@@ -14,6 +14,7 @@ import { api, type AlertItem } from "@/lib/api-client";
 import { AlertStatus } from "@/lib/constants";
 import { format } from "date-fns";
 import { AlertTriangle, CheckCircle, Clock, MessageSquare } from "lucide-react";
+import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 
 const STATUS_OPTIONS = [
   { label: "All", value: "" },
@@ -122,7 +123,7 @@ export default function AlertsPage() {
                           {alert.status}
                         </Badge>
                         <span className="text-sm text-gray-500 font-mono">
-                          {alert.weekKey}
+                          {weekRangeLabelFromWeekKey(alert.weekKey)}
                         </span>
                         <span className="text-sm text-gray-500">
                           {alert.state}

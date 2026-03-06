@@ -7,6 +7,7 @@
 import React from "react";
 import { format, parseISO } from "date-fns";
 import { APP_NAME } from "@/lib/constants";
+import { weekRangeLabelFromDate } from "@/lib/date-helpers";
 
 import {
   Document,
@@ -186,17 +187,17 @@ export function WeeklyReportPDF({ report }: ReportPDFProps) {
     report.mentor?.name ??
     ((report.mentor as any)?.authId?.name as string | undefined) ??
     "Mentor";
-  const weekNum = report.weekNumber ?? report.weekKey;
+  const weekLabel = weekRangeLabelFromDate(report.weekEnding);
 
   return (
     <Document
-      title={`Week ${weekNum} Mentorship Sessions Report`}
+      title={`Week ${weekLabel} Mentorship Sessions Report`}
       author={mentorName}
     >
       {/* ── Cover Page ──────────────────── */}
       <Page size="A4" style={s.page}>
         <Text style={s.coverTitle}>
-          Week {weekNum} Mentorship Sessions Report
+          Week {weekLabel} Mentorship Sessions Report
         </Text>
         <Text style={s.coverDate}>{fmtDate(report.weekEnding)}</Text>
 
@@ -260,7 +261,7 @@ export function WeeklyReportPDF({ report }: ReportPDFProps) {
         <Page key={idx} size="A4" style={s.page}>
           <Text style={s.sessionHeader}>Mentorship Session Report</Text>
           <Text style={s.sessionWeek}>
-            Mentorship Session Report for Week: {weekNum}
+            Mentorship Session Report for Week: {weekLabel}
           </Text>
 
           <View style={s.hr} />

@@ -51,4 +51,52 @@ export function formatDate(date: Date | string, fmt = "dd MMM yyyy"): string {
   return format(new Date(date), fmt);
 }
 
+function weekRangeLabelFromRange(start: Date, end: Date): string {
+  // Examples:
+  // - Same month/year: 03-09 Mar 2026
+  // - Diff month, same year: 28 Feb-06 Mar 2026
+  // - Diff year: 29 Dec 2025-04 Jan 2026
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+
+  if (sameMonth) {
+    return `${format(start, "dd")}-${format(end, "dd MMM yyyy")}`;
+  }
+
+  if (sameYear) {
+    return `${format(start, "dd MMM")}-${format(end, "dd MMM yyyy")}`;
+  }
+
+  return `${format(start, "dd MMM yyyy")}-${format(end, "dd MMM yyyy")}`;
+}
+
+/**
+ * Display label for the ISO week containing `date`.
+ * Intended for UI titles (keeps `weekKey` as internal identifier).
+ */
+export function weekRangeLabelFromDate(date: Date | string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return String(date);
+  return weekRangeLabelFromRange(startOfISOWeek(d), endOfISOWeek(d));
+}
+
+/** Display label for an ISO `weekKey` like "2026-W08". */
+export function weekRangeLabelFromWeekKey(weekKey: string): string {
+  const monday = parseWeekKey(weekKey);
+  if (!monday) return weekKey;
+  return weekRangeLabelFromRange(monday, endOfISOWeek(monday));
+}
+
+/** Filename-safe version of `weekRangeLabelFromDate`. */
+export function weekRangeFilenameCodeFromDate(date: Date | string): string {
+  return weekRangeLabelFromDate(date).replace(/\s+/g, "_").replace(/[^A-Za-z0-9_-]/g, "-");
+}
+
+/** Filename-safe version of `weekRangeLabelFromWeekKey`. */
+export function weekRangeFilenameCodeFromWeekKey(weekKey: string): string {
+  return weekRangeLabelFromWeekKey(weekKey)
+    .replace(/\s+/g, "_")
+    .replace(/[^A-Za-z0-9_-]/g, "-");
+}
+
 export { startOfISOWeek, endOfISOWeek, subWeeks, addDays };

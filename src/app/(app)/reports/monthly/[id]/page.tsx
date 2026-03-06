@@ -14,6 +14,7 @@ import { ChevronLeft, FileDown, Eye, Calendar, MapPin, User, Download } from "lu
 import Link from "next/link";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { weekRangeLabelFromDate } from "@/lib/date-helpers";
 
 export default function MonthlyReportDetailPage() {
     const { id } = useParams() as { id: string };
@@ -127,7 +128,7 @@ export default function MonthlyReportDetailPage() {
                                             <div>
                                                 <p className="font-semibold text-gray-900">{wr.mentorName || (wr.mentor as any)?.authId?.name || (wr.mentor as any)?.name || "Unknown Mentor"}</p>
                                                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                                                    <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {wr.weekKey}</span>
+                                                    <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {weekRangeLabelFromDate(wr.weekEnding)}</span>
                                                     <span>•</span>
                                                     <span className="flex items-center"><User className="h-3 w-3 mr-1" /> {wr.sessionsCount} Sessions</span>
                                                 </div>

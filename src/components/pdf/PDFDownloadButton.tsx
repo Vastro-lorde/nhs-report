@@ -12,6 +12,7 @@ import { Download } from "lucide-react";
 import type { Report } from "@/lib/api-client";
 import type { VariantProps } from "class-variance-authority";
 import type { buttonVariants } from "@/components/ui/Button";
+import { weekRangeFilenameCodeFromDate } from "@/lib/date-helpers";
 
 interface PDFDownloadButtonProps extends VariantProps<typeof buttonVariants>, React.ButtonHTMLAttributes<HTMLButtonElement> {
   report: Report;
@@ -29,7 +30,8 @@ export function PDFDownloadButton({ report, className, children, variant = "outl
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Mentorship_Report_${report.weekKey}_${report.mentor?.name?.replace(/\s+/g, "_") ?? "report"}.pdf`;
+      const weekCode = weekRangeFilenameCodeFromDate(report.weekEnding);
+      link.download = `Mentorship_Report_${weekCode}_${report.mentor?.name?.replace(/\s+/g, "_") ?? "report"}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -23,6 +23,7 @@ import {
   Legend,
 } from "recharts";
 import { useSession } from "next-auth/react";
+import { weekRangeFilenameCodeFromWeekKey, weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 
 function AdminDashboard({ data }: { data: DashboardData }) {
   const { data: session } = useSession();
@@ -44,7 +45,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Dashboard_Export_Week_${data.currentWeekKey}.pdf`);
+      pdf.save(`Dashboard_Export_Week_${weekRangeFilenameCodeFromWeekKey(data.currentWeekKey)}.pdf`);
     } catch (error) {
       console.error("Failed to export dashboard:", error);
       alert("Failed to export dashboard.");
@@ -84,7 +85,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
     <>
       <Header
         title="Dashboard"
-        subtitle={`Week ${data.currentWeekKey} Overview`}
+        subtitle={`Week ${weekRangeLabelFromWeekKey(data.currentWeekKey)} Overview`}
       >
         {isDeskOfficer && (
           <Button
@@ -143,7 +144,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={rollupChartData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" fontSize={12} />
+                    <XAxis dataKey="week" fontSize={12} tickFormatter={weekRangeLabelFromWeekKey} />
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" />
                     <Tooltip />
