@@ -1,28 +1,25 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { api, type BulkFellowInput, type Mentor } from "@/lib/api-client";
+import { api, type BulkFellowInput } from "@/lib/api-client";
 import { Upload, Download, Trash2, Loader2 } from "lucide-react";
 import Papa from "papaparse";
 import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 
 /* ─── CSV Columns ──────────────────────────── */
 const EXPECTED_HEADERS = ["Name", "State", "LGA", "Phone Number", "Gender"];
 
 export default function BulkUploadFellowsPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const user = session?.user;
 
     const [fellows, setFellows] = useState<BulkFellowInput[]>([]);
-    const [mentors, setMentors] = useState<Mentor[]>([]);
 
     const [loading, setLoading] = useState(false);
-    const [loadingMentors, setLoadingMentors] = useState(true);
 
     const [error, setError] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
@@ -30,29 +27,27 @@ export default function BulkUploadFellowsPage() {
     const itemsPerPage = 10;
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Fetch mentors on mount so we can auto-assign by LGA
-    useEffect(() => {
-        async function fetchMentors() {
-            try {
-                // Fetch all mentors that belong to this coordinator
-                const res = await api.mentors.list({ limit: "500" });
-                setMentors(res.data);
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load mentors for assignment mapping.");
-            } finally {
-                setLoadingMentors(false);
-            }
-        }
-        if (user && user.role === "coordinator") {
-            fetchMentors();
-        }
-    }, [user]);
+    if (status === "loading") {
+        return (
+            <div className="p-6 flex items-center space-x-2">
+                <Loader2 className="animate-spin w-5 h-5 text-gray-500" />
+                <span>Loading...</span>
+            </div>
+        );
+    }
 
-    if (user?.role !== "coordinator") {
+    if (!user) {
         return (
             <div className="p-6">
-                <p className="text-red-600">You are not authorized to view this page. Only Coordinators can upload fellows.</p>
+                <p className="text-red-600">You are not authorized to view this page.</p>
+            </div>
+        );
+    }
+
+    if (user.role !== "mentor") {
+        return (
+            <div className="p-6">
+                <p className="text-red-600">You are not authorized to view this page.</p>
             </div>
         );
     }
@@ -97,19 +92,7 @@ export default function BulkUploadFellowsPage() {
                     const gender = row["Gender"] || row["gender"] || "";
 
                     if (name && lga) {
-                        // Auto Assign Logic
-                        const upperLga = lga.trim().toUpperCase();
-                        let assignedMentorId = "";
-
-                        // Find first mentor that has this LGA
-                        const matchedMentor = mentors.find(m =>
-                            m.lgas.some(mlga => mlga.trim().toUpperCase() === upperLga)
-                        );
-                        if (matchedMentor) {
-                            assignedMentorId = matchedMentor._id;
-                        }
-
-                        parsedFellows.push({ name, state, lga, phone, gender, mentorId: assignedMentorId });
+                        parsedFellows.push({ name, state, lga, phone, gender, mentorId: "self" });
                     }
                 }
 
@@ -155,31 +138,11 @@ export default function BulkUploadFellowsPage() {
         const realIndex = (page - 1) * itemsPerPage + index;
         newFellows[realIndex] = { ...newFellows[realIndex], [field]: value };
 
-        // Dynamic re-assignment if LGA changes
-        if (field === "lga") {
-            const upperLga = value.trim().toUpperCase();
-            const matchedMentor = mentors.find(m =>
-                m.lgas.some(mlga => mlga.trim().toUpperCase() === upperLga)
-            );
-            if (matchedMentor) {
-                newFellows[realIndex].mentorId = matchedMentor._id;
-            } else {
-                newFellows[realIndex].mentorId = ""; // Unassign if no match
-            }
-        }
-
         setFellows(newFellows);
     };
 
     const handleUploadToBackend = async () => {
         if (fellows.length === 0) return;
-
-        // Validation - prevent uploading hanging fellows
-        const hangingFellow = fellows.find(f => !f.mentorId);
-        if (hangingFellow) {
-            setError(`Cannot upload: Fellow "${hangingFellow.name}" is not assigned to any mentor. Please assign them a mentor.`);
-            return;
-        }
 
         setLoading(true);
         setError("");
@@ -211,16 +174,9 @@ export default function BulkUploadFellowsPage() {
     const totalPages = Math.ceil(fellows.length / itemsPerPage);
     const currentFellows = fellows.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
-    const mentorOptions = [
-        { label: "Unassigned", value: "" },
-        ...mentors.map(m => ({ label: m.name, value: m._id }))
-    ];
-
-    if (loadingMentors) return <div className="p-6 flex items-center space-x-2"><Loader2 className="animate-spin w-5 h-5 text-gray-500" /><span>Loading mentors...</span></div>;
-
     return (
         <>
-            <Header title="Bulk Upload Fellows" subtitle="Import via CSV, auto-assign to Mentors based on LGA" />
+            <Header title="Bulk Upload Fellows" subtitle="Import via CSV" />
 
             <div className="p-6 space-y-4">
                 {error && (
@@ -277,7 +233,6 @@ export default function BulkUploadFellowsPage() {
                                     <th className="px-4 py-3 font-medium text-gray-600">State</th>
                                     <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
                                     <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
-                                    <th className="px-4 py-3 font-medium text-gray-600 w-48">Mentor Assignment</th>
                                     <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -318,15 +273,6 @@ export default function BulkUploadFellowsPage() {
                                                 onChange={(e) => handleEditFellow(idx, "phone", e.target.value)}
                                                 className="h-8 w-32"
                                             />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <div className="w-48">
-                                                <Select
-                                                    value={f.mentorId}
-                                                    onChange={(e) => handleEditFellow(idx, "mentorId", e.target.value)}
-                                                    options={mentorOptions}
-                                                />
-                                            </div>
                                         </td>
                                         <td className="px-4 py-2 text-right">
                                             <Button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useSession } from "next-auth/react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -8,12 +9,14 @@ import { api, type DocumentType, type Fellow, type FellowDocument } from "@/lib/
 import { FileUp, Trash2, ArrowLeft, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/Select";
+import { UserRole } from "@/lib/constants";
 
 export default function FellowDocumentUploadPage({
     params,
 }: {
     params: Promise<{ id: string }>;
 }) {
+    const { data: session } = useSession();
     const router = useRouter();
     const { id } = use(params);
 
@@ -27,6 +30,14 @@ export default function FellowDocumentUploadPage({
     const [success, setSuccess] = useState("");
 
     const [filesToUpload, setFilesToUpload] = useState<{ file: File; typeId: string; }[]>([]);
+
+    if (session?.user && session.user.role !== UserRole.MENTOR) {
+        return (
+            <div className="p-6">
+                <p className="text-red-600">You are not authorized to view this page.</p>
+            </div>
+        );
+    }
 
     useEffect(() => {
         Promise.all([

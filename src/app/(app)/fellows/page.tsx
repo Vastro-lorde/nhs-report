@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
 import { UserRole } from "@/lib/constants";
 import { api, type Fellow } from "@/lib/api-client";
-import { Plus, UserMinus, Upload, FileCheck, FileDown, Loader2, FileUp, Trash2 } from "lucide-react";
+import { Plus, UserMinus, FileDown, Trash2, FileUp } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
 import Link from "next/link";
 
@@ -121,7 +121,7 @@ export default function FellowsPage() {
     }, [fetchFellows]);
 
     // Mentors only
-    if (session?.user && ![UserRole.MENTOR, UserRole.COORDINATOR, UserRole.ADMIN].includes(session.user.role as any)) {
+    if (session?.user && session.user.role !== UserRole.MENTOR) {
         return (
             <div className="p-12 text-center text-gray-500">
                 You do not have permission to view this page. Fellows are managed directly by Mentors.
@@ -197,13 +197,6 @@ export default function FellowsPage() {
                             >
                                 <FileDown className="h-4 w-4 mr-1" /> Export CSV
                             </Button>
-                            {session?.user?.role === UserRole.COORDINATOR && (
-                                <Link href="/fellows/bulk-upload">
-                                    <Button size="sm" variant="secondary">
-                                        <Upload className="h-4 w-4 mr-1" /> Bulk Upload Fellows
-                                    </Button>
-                                </Link>
-                            )}
                             {selectedIds.length > 0 && (
                                 <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
                                     <Trash2 className="h-4 w-4 mr-1" />
