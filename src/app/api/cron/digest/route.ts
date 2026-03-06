@@ -11,7 +11,7 @@ import { previousWeekKey } from "@/lib/date-helpers";
 import { getRollup, getAlertsForWeek } from "@/services/rollup.service";
 import { env } from "@/lib/env";
 
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
   if (!validateCronSecret(request)) {
     return jsonError("Unauthorized", 401);
   }
@@ -56,4 +56,14 @@ export async function POST(request: NextRequest) {
   }
 
   return jsonOk({ weekKey, digestsSent: sent, errors });
+}
+
+// Vercel Cron Jobs trigger via GET
+export async function GET(request: NextRequest) {
+  return handle(request);
+}
+
+// Keep POST for manual runs/tools
+export async function POST(request: NextRequest) {
+  return handle(request);
 }

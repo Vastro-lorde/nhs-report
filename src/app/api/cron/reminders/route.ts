@@ -4,7 +4,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User, WeeklyReport } from "@/models";
+import { User, WeeklyReport, Mentor } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { validateCronSecret } from "@/lib/auth-guard";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
@@ -13,7 +13,7 @@ import { reminderEmailTemplate } from "@/lib/email-templates";
 import { currentWeekKey } from "@/lib/date-helpers";
 import { env } from "@/lib/env";
 
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
   if (!validateCronSecret(request)) {
     return jsonError("Unauthorized", 401);
   }
@@ -23,11 +23,16 @@ export async function POST(request: NextRequest) {
   const weekKey = currentWeekKey();
 
   // Find mentors who have NOT submitted for this week
-  const submittedMentorIds = await WeeklyReport.find({ weekKey }).distinct("mentor");
+  const submittedMentorDocIds = await WeeklyReport.find({ weekKey }).distinct("mentor");
+  const mentorDocsToRemind = await Mentor.find({
+    _id: { $nin: submittedMentorDocIds },
+  }).select("authId").lean();
+
+  const mentorAuthIds = mentorDocsToRemind.map((m) => m.authId);
   const mentorsToRemind = await User.find({
+    _id: { $in: mentorAuthIds },
     role: UserRole.MENTOR,
     active: true,
-    _id: { $nin: submittedMentorIds },
   }).lean();
 
   const appUrl = env.NEXTAUTH_URL();
@@ -50,4 +55,14 @@ export async function POST(request: NextRequest) {
     remindersSent: sent,
     errors,
   });
+}
+
+// Vercel Cron Jobs trigger via GET
+export async function GET(request: NextRequest) {
+  return handle(request);
+}
+
+// Keep POST for manual runs/tools
+export async function POST(request: NextRequest) {
+  return handle(request);
 }
