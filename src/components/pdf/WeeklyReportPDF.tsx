@@ -181,7 +181,11 @@ interface ReportPDFProps {
 }
 
 export function WeeklyReportPDF({ report }: ReportPDFProps) {
-  const mentorName = report.mentor?.name ?? "Mentor";
+  const mentorName =
+    report.mentorName ??
+    report.mentor?.name ??
+    ((report.mentor as any)?.authId?.name as string | undefined) ??
+    "Mentor";
   const weekNum = report.weekNumber ?? report.weekKey;
 
   return (

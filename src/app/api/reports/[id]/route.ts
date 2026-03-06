@@ -21,7 +21,11 @@ export async function GET(_request: NextRequest, { params }: Params) {
   await connectDB();
 
   const report = await WeeklyReport.findById(id)
-    .populate("mentor", "name email state lgas")
+    .populate({
+      path: "mentor",
+      populate: { path: "authId", select: "name email phone active" },
+      select: "states lgas coordinator",
+    })
     .lean();
 
   if (!report) return jsonError("Report not found", 404);
@@ -37,7 +41,25 @@ export async function GET(_request: NextRequest, { params }: Params) {
     }
   }
 
-  return jsonOk(report);
+  const mentorDoc: any = (report as any).mentor;
+  const mentorUser = mentorDoc?.authId;
+  const mentorName = mentorUser?.name;
+  const mentorEmail = mentorUser?.email;
+  const mentorState = mentorDoc?.states?.[0] ?? (report as any).state ?? "";
+
+  return jsonOk({
+    ...(report as any),
+    state: mentorState,
+    mentorName,
+    mentor: mentorDoc
+      ? {
+          _id: mentorDoc._id,
+          name: mentorName,
+          email: mentorEmail,
+          state: mentorState,
+        }
+      : (report as any).mentor,
+  });
 }
 
 // PATCH /api/reports/:id — update report (mentor can edit own; coordinator of that mentor; admin)

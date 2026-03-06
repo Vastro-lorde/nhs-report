@@ -101,8 +101,30 @@ export async function GET(request: NextRequest) {
     WeeklyReport.countDocuments(filter),
   ]);
 
+  const normalized = reports.map((report: any) => {
+    const mentorDoc = report.mentor;
+    const mentorUser = mentorDoc?.authId;
+    const mentorName = mentorUser?.name;
+    const mentorEmail = mentorUser?.email;
+    const mentorState = mentorDoc?.states?.[0] ?? report.state ?? "";
+
+    return {
+      ...report,
+      state: mentorState,
+      mentorName,
+      mentor: mentorDoc
+        ? {
+            _id: mentorDoc._id,
+            name: mentorName,
+            email: mentorEmail,
+            state: mentorState,
+          }
+        : report.mentor,
+    };
+  });
+
   return jsonOk({
-    data: reports,
+    data: normalized,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
 }

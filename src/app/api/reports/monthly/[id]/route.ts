@@ -50,7 +50,32 @@ export async function GET(
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
-        return NextResponse.json(report);
+        const normalizedWeeklyReports = ((report as any).weeklyReports ?? []).map((wr: any) => {
+            const mentorDoc = wr?.mentor;
+            const mentorUser = mentorDoc?.authId;
+            const mentorName = mentorUser?.name;
+            const mentorEmail = mentorUser?.email;
+            const mentorState = mentorDoc?.states?.[0] ?? wr?.state ?? "";
+
+            return {
+                ...wr,
+                state: mentorState,
+                mentorName,
+                mentor: mentorDoc
+                    ? {
+                        _id: mentorDoc._id,
+                        name: mentorName,
+                        email: mentorEmail,
+                        state: mentorState,
+                    }
+                    : wr?.mentor,
+            };
+        });
+
+        return NextResponse.json({
+            ...(report as any),
+            weeklyReports: normalizedWeeklyReports,
+        });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

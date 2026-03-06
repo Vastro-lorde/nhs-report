@@ -203,7 +203,11 @@ export function MonthlyReportPDF({ reports, monthLabel }: MonthlyReportPDFProps)
     // Aggregate info
     const firstReport = reports[reports.length - 1]; // oldest first assuming sorted DESC, wait, backend sorts DESC
     // let's just pick mentor from the first available
-    const mentorName = reports[0]?.mentor?.name ?? "Mentor";
+    const mentorName =
+        reports[0]?.mentorName ??
+        reports[0]?.mentor?.name ??
+        ((reports[0]?.mentor as any)?.authId?.name as string | undefined) ??
+        "Mentor";
 
     // Combine fellows across all reports uniquely
     const allFellows = reports.flatMap(r => r.fellows || []);
