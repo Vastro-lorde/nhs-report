@@ -292,6 +292,7 @@ export interface Coordinator {
   states: string[];
   active: boolean;
   createdAt: string;
+  coordinatorId?: string;
 }
 
 export interface CreateCoordinatorInput {

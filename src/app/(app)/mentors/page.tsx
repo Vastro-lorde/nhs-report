@@ -126,7 +126,7 @@ function CreateMentorModal({
                 placeholder="Search and select coordinator…"
                 value={form.coordinatorId}
                 onChange={(value) => setForm({ ...form, coordinatorId: value })}
-                options={coordinators.map((c) => ({ value: c._id, label: `${c.name} (${c.email})` }))}
+                options={coordinators.map((c) => ({ value: c.coordinatorId ?? c._id, label: `${c.name} (${c.email})` }))}
               />
             )}
             <LocationSelector
