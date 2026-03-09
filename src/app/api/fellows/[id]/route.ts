@@ -46,6 +46,7 @@ export async function PATCH(
         if (body.name !== undefined) fellow.name = body.name;
         if (body.gender !== undefined) fellow.gender = body.gender;
         if (body.lga !== undefined) fellow.lga = body.lga;
+        if (body.profession !== undefined) fellow.profession = body.profession;
 
         await fellow.save();
 

@@ -10,6 +10,7 @@ type BulkCreateFellowInput = {
     name?: string;
     gender?: string;
     lga?: string;
+    profession?: string;
     // extra fields may exist in CSV payload; we ignore them server-side
     state?: string;
     phone?: string;
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
             const name = (row.name ?? "").trim();
             const gender = (row.gender ?? "").trim();
             const lga = (row.lga ?? "").trim();
+            const profession = (row.profession ?? "").trim();
 
             if (!name || !gender || !lga) {
                 failed++;
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
                     name,
                     gender,
                     lga,
+                    ...(profession ? { profession } : {}),
                 });
                 successful++;
             } catch (e: any) {

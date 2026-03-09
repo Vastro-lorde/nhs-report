@@ -355,6 +355,7 @@ export interface Fellow {
   name: string;
   gender: string;
   lga: string;
+  profession?: string;
   createdAt: string;
 }
 
@@ -362,6 +363,7 @@ export interface CreateFellowInput {
   name: string;
   gender: string;
   lga: string;
+  profession?: string;
 }
 
 export interface BulkFellowInput {
@@ -370,6 +372,7 @@ export interface BulkFellowInput {
   lga: string;
   phone: string;
   gender: string;
+  profession?: string;
   mentorId: string;
 }
 

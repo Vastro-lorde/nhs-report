@@ -26,7 +26,7 @@ function AddFellowModal({
     onClose: () => void;
     onAdded: () => void;
 }) {
-    const [form, setForm] = useState({ name: "", gender: "Male", lga: "" });
+    const [form, setForm] = useState({ name: "", gender: "Male", lga: "", profession: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -40,7 +40,7 @@ function AddFellowModal({
             await api.fellows.create(form);
             onAdded();
             onClose();
-            setForm({ name: "", gender: "Male", lga: "" });
+            setForm({ name: "", gender: "Male", lga: "", profession: "" });
         } catch (err) {
             setError((err as Error).message);
         } finally {
@@ -77,6 +77,11 @@ function AddFellowModal({
                             value={form.lga}
                             onChange={(e) => setForm({ ...form, lga: e.target.value })}
                             required
+                        />
+                        <Input
+                            label="Profession"
+                            value={form.profession}
+                            onChange={(e) => setForm({ ...form, profession: e.target.value })}
                         />
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
@@ -241,6 +246,7 @@ export default function FellowsPage() {
                                         Name: f.name,
                                         Gender: f.gender,
                                         LGA: f.lga,
+                                        Profession: f.profession || "",
                                     }));
                                     exportToCSV(data, role === UserRole.ADMIN ? "fellows" : "my-fellows");
                                 }}
@@ -277,6 +283,7 @@ export default function FellowsPage() {
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Gender</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
+                                <th className="px-4 py-3 font-medium text-gray-600">Profession</th>
 
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
                             </tr>
@@ -284,11 +291,11 @@ export default function FellowsPage() {
                         <tbody className="divide-y">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading…</td>
+                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">Loading…</td>
                                 </tr>
                             ) : !fellows.length ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">No fellows added yet.</td>
+                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">No fellows added yet.</td>
                                 </tr>
                             ) : (
                                 fellows.map((f) => (
@@ -304,6 +311,7 @@ export default function FellowsPage() {
                                         <td className="px-4 py-3 font-medium">{f.name}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
+                                        <td className="px-4 py-3 text-gray-600">{f.profession || "—"}</td>
 
                                         <td className="px-4 py-3 text-right space-x-2">
                                             {session?.user?.role === UserRole.MENTOR && (
