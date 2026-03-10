@@ -32,6 +32,7 @@ export default function ReportDetailPage() {
   const [comments, setComments] = useState<ReportComment[]>([]);
   const [commentBody, setCommentBody] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   const canComment =
     session?.user &&
@@ -61,12 +62,13 @@ export default function ReportDetailPage() {
   const handleAddComment = async () => {
     if (!id || !commentBody.trim()) return;
     setCommentLoading(true);
+    setCommentError("");
     try {
       const added = await api.reports.comments.add(id, commentBody.trim());
       setComments((prev) => [...prev, added]);
       setCommentBody("");
     } catch {
-      // silently ignore
+      setCommentError("Failed to post comment. Please try again.");
     } finally {
       setCommentLoading(false);
     }
@@ -403,26 +405,31 @@ export default function ReportDetailPage() {
             )}
 
             {canComment && (
-              <div className="flex gap-2">
-                <textarea
-                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  rows={2}
-                  placeholder="Write a comment…"
-                  value={commentBody}
-                  onChange={(e) => setCommentBody(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                      handleAddComment();
-                    }
-                  }}
-                />
-                <Button
-                  size="sm"
-                  disabled={commentLoading || !commentBody.trim()}
-                  onClick={handleAddComment}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+              <div className="space-y-2">
+                {commentError && (
+                  <p className="text-sm text-red-600">{commentError}</p>
+                )}
+                <div className="flex gap-2">
+                  <textarea
+                    className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows={2}
+                    placeholder="Write a comment…"
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        handleAddComment();
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    disabled={commentLoading || !commentBody.trim()}
+                    onClick={handleAddComment}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
