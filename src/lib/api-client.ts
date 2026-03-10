@@ -157,6 +157,16 @@ export const api = {
     update: (id: string, data: Partial<Report>) =>
       request<Report>(`/api/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 
+    comments: {
+      list: (reportId: string) =>
+        request<ReportComment[]>(`/api/reports/${reportId}/comments`),
+      add: (reportId: string, body: string) =>
+        request<ReportComment>(`/api/reports/${reportId}/comments`, {
+          method: "POST",
+          body: JSON.stringify({ body }),
+        }),
+    },
+
     monthly: {
       list: (params?: URLSearchParams | Record<string, string>) =>
         request<PaginatedResponse<MonthlyReport>>(`/api/reports/monthly?${new URLSearchParams(params).toString()}`),
@@ -428,6 +438,16 @@ export interface Report {
   createdAt: string;
   /** Convenience — populated from mentor.name or virtual */
   mentorName?: string;
+  comments?: ReportComment[];
+}
+
+export interface ReportComment {
+  _id: string;
+  author: string;
+  authorName: string;
+  authorRole: string;
+  body: string;
+  createdAt: string;
 }
 
 export interface CreateReportInput {

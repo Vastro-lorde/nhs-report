@@ -4,6 +4,16 @@
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { ReportStatus, OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
 
+// ─── Report comment sub-document ────────────
+export interface IReportComment {
+  _id?: Types.ObjectId;
+  author: Types.ObjectId;
+  authorName: string;
+  authorRole: string;
+  body: string;
+  createdAt: Date;
+}
+
 // ─── Per-mentee session sub-document ────────
 export interface IMentorshipSession {
   menteeName: string;
@@ -48,6 +58,7 @@ export interface IWeeklyReport extends Document {
   dataQualityFlags: string[];
   reviewedBy?: Types.ObjectId;
   reviewNotes?: string;
+  comments: IReportComment[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +70,17 @@ const FellowSchema = new Schema(
     lga: { type: String, trim: true, default: "" },
   },
   { _id: false }
+);
+
+const ReportCommentSchema = new Schema(
+  {
+    author: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    authorName: { type: String, required: true, trim: true },
+    authorRole: { type: String, required: true, trim: true },
+    body: { type: String, required: true, trim: true },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: true }
 );
 
 const MentorshipSessionSchema = new Schema(
@@ -115,6 +137,7 @@ const WeeklyReportSchema = new Schema<IWeeklyReport>(
     dataQualityFlags: { type: [String], default: [] },
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
     reviewNotes: { type: String, trim: true },
+    comments: { type: [ReportCommentSchema], default: [] },
   },
   { timestamps: true }
 );

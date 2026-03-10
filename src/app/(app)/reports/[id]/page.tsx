@@ -3,15 +3,15 @@
    ────────────────────────────────────────── */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { api, type Report } from "@/lib/api-client";
+import { api, type Report, type ReportComment } from "@/lib/api-client";
 import { format } from "date-fns";
-import { ArrowLeft, FileDown, Pencil } from "lucide-react";
+import { ArrowLeft, FileDown, Pencil, Send, MessageSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 import { isoWeekKey, weekRangeLabelFromDate } from "@/lib/date-helpers";
@@ -29,15 +29,48 @@ export default function ReportDetailPage() {
   const { data: session } = useSession();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<ReportComment[]>([]);
+  const [commentBody, setCommentBody] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+
+  const canComment =
+    session?.user &&
+    (session.user.role === UserRole.COORDINATOR ||
+      session.user.role === UserRole.MENTOR ||
+      session.user.role === UserRole.ADMIN);
+
+  const loadComments = useCallback(
+    (reportId: string) => {
+      api.reports.comments.list(reportId).then(setComments).catch(() => {});
+    },
+    []
+  );
 
   useEffect(() => {
     if (!id) return;
     api.reports
       .get(id)
-      .then(setReport)
+      .then((r) => {
+        setReport(r);
+        loadComments(id);
+      })
       .catch(() => router.push("/reports"))
       .finally(() => setLoading(false));
-  }, [id, router]);
+  }, [id, router, loadComments]);
+
+  const handleAddComment = async () => {
+    if (!id || !commentBody.trim()) return;
+    setCommentLoading(true);
+    try {
+      const added = await api.reports.comments.add(id, commentBody.trim());
+      setComments((prev) => [...prev, added]);
+      setCommentBody("");
+    } catch {
+      // silently ignore
+    } finally {
+      setCommentLoading(false);
+    }
+  };
 
   if (loading)
     return (
@@ -332,6 +365,68 @@ export default function ReportDetailPage() {
             </CardContent>
           </Card>
         )}
+        {/* Comments / Conversation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" /> Comments
+              {comments.length > 0 && (
+                <Badge variant="secondary">{comments.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {comments.length === 0 && (
+              <p className="text-sm text-gray-400">No comments yet.</p>
+            )}
+
+            {comments.length > 0 && (
+              <div className="space-y-4 mb-6">
+                {comments.map((c) => (
+                  <div
+                    key={c._id}
+                    className="rounded-lg border border-gray-200 p-3 text-sm"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium">{c.authorName}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {c.authorRole}
+                      </Badge>
+                      <span className="text-gray-400 text-xs ml-auto">
+                        {format(new Date(c.createdAt), "MMM d, yyyy hh:mm a")}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap text-gray-700">{c.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {canComment && (
+              <div className="flex gap-2">
+                <textarea
+                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  rows={2}
+                  placeholder="Write a comment…"
+                  value={commentBody}
+                  onChange={(e) => setCommentBody(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      handleAddComment();
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  disabled={commentLoading || !commentBody.trim()}
+                  onClick={handleAddComment}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </>
   );
