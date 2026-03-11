@@ -75,7 +75,7 @@ export async function GET(_request: NextRequest) {
       user.role === UserRole.ADMIN
         ? WeeklyRollup.find().sort({ weekKey: -1 }).limit(12).lean()
         : isZoneScoped
-          ? buildZoneScopedRollups(mentorDocIds ?? [], mentorAuthIds?.length ?? 0)
+          ? buildZoneScopedRollups(mentorDocIds ?? [], mentorDocIds?.length ?? 0)
           : Promise.resolve([]),
     ]);
 
@@ -141,6 +141,15 @@ async function buildZoneScopedRollups(mentorDocIds: string[], scopedMentorCount:
   const rawRollups = await WeeklyReport.aggregate([
     { $match: { mentor: { $in: mentorObjectIds } } },
     {
+      $lookup: {
+        from: "mentors",
+        localField: "mentor",
+        foreignField: "_id",
+        as: "mentorData",
+      },
+    },
+    { $unwind: { path: "$mentorData", preserveNullAndEmptyArrays: true } },
+    {
       $group: {
         _id: "$weekKey",
         reportsSubmitted: { $sum: 1 },
@@ -148,6 +157,7 @@ async function buildZoneScopedRollups(mentorDocIds: string[], scopedMentorCount:
         totalCheckins: { $sum: "$menteesCheckedIn" },
         urgentAlertsCount: { $sum: { $cond: ["$urgentAlert", 1, 0] } },
         allChallenges: { $push: "$challenges" },
+        allStates: { $push: "$mentorData.states" },
       },
     },
     { $sort: { _id: -1 } },
@@ -167,6 +177,20 @@ async function buildZoneScopedRollups(mentorDocIds: string[], scopedMentorCount:
       .slice(0, 5)
       .map(([name, count]) => ({ name, count }));
 
+    // Flatten states (array of arrays) and compute top 5 by frequency
+    const stateFreq: Record<string, number> = {};
+    for (const arr of r.allStates) {
+      if (Array.isArray(arr)) {
+        for (const s of arr) {
+          if (s) stateFreq[s] = (stateFreq[s] || 0) + 1;
+        }
+      }
+    }
+    const topStates = Object.entries(stateFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+
     return {
       weekKey: r._id,
       reportsSubmitted: r.reportsSubmitted,
@@ -176,7 +200,7 @@ async function buildZoneScopedRollups(mentorDocIds: string[], scopedMentorCount:
       totalCheckins: r.totalCheckins,
       urgentAlertsCount: r.urgentAlertsCount,
       topChallenges,
-      topStates: [],
+      topStates,
       generatedAt: new Date(),
     };
   });

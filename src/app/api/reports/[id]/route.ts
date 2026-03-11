@@ -33,6 +33,8 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   const mentorDoc: any = (report as any).mentor;
 
+  if (!mentorDoc) return jsonError("Report mentor data not found", 404);
+
   // Mentors can only view their own
   if (session!.user.role === UserRole.MENTOR) {
     const myMentorDoc = await Mentor.findOne({ authId: session!.user.id });
