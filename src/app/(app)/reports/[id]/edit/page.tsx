@@ -149,8 +149,14 @@ export default function EditReportPage() {
   // ─── Duration helper ─────────────────
   const computeDuration = (startTime: string, endTime: string): string => {
     if (!startTime || !endTime) return "";
-    const [sh, sm] = startTime.split(":").map(Number);
-    const [eh, em] = endTime.split(":").map(Number);
+    const startParts = startTime.split(":");
+    const endParts = endTime.split(":");
+    if (startParts.length < 2 || endParts.length < 2) return "";
+    const sh = Number(startParts[0]);
+    const sm = Number(startParts[1]);
+    const eh = Number(endParts[0]);
+    const em = Number(endParts[1]);
+    if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return "";
     const diffMin = (eh * 60 + em) - (sh * 60 + sm);
     if (diffMin <= 0) return "";
     const hours = Math.floor(diffMin / 60);
