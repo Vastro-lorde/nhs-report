@@ -273,14 +273,16 @@ export default function FellowsPage() {
         setPage(1);
     };
 
-    // Mentors + Admins only
-    if (session?.user && session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN) {
+    // Mentors + Admins + ME Officers only
+    if (session?.user && session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER) {
         return (
             <div className="p-12 text-center text-gray-500">
                 You do not have permission to view this page. Fellows are managed directly by Mentors.
             </div>
         );
     }
+
+    const canWrite = role === UserRole.MENTOR || role === UserRole.ADMIN;
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to remove this fellow?")) return;
@@ -328,10 +330,10 @@ export default function FellowsPage() {
     return (
         <>
             <Header
-                title={role === UserRole.ADMIN ? "Fellows" : "My Fellows"}
+                title={role === UserRole.ADMIN || role === UserRole.ME_OFFICER ? "Fellows" : "My Fellows"}
                 subtitle={
-                    role === UserRole.ADMIN
-                        ? `Managing ${total} fellow${total === 1 ? "" : "s"}`
+                    role === UserRole.ADMIN || role === UserRole.ME_OFFICER
+                        ? `${role === UserRole.ME_OFFICER ? "Viewing" : "Managing"} ${total} fellow${total === 1 ? "" : "s"}`
                         : `Managing ${total} assigned fellow${total === 1 ? "" : "s"}`
                 }
             />
@@ -358,7 +360,9 @@ export default function FellowsPage() {
                 <Card>
                     <CardContent className="pt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-600 max-w-2xl">
-                            {role === UserRole.ADMIN
+                            {role === UserRole.ME_OFFICER
+                                ? "View fellows and their details here. You have read-only access."
+                                : role === UserRole.ADMIN
                                 ? "View and manage fellows here."
                                 : "Keep track of your assigned mentees here. You can also securely manage their documents."}
                         </div>
@@ -373,12 +377,12 @@ export default function FellowsPage() {
                                         LGA: f.lga,
                                         Profession: f.profession || "",
                                     }));
-                                    exportToCSV(data, role === UserRole.ADMIN ? "fellows" : "my-fellows");
+                                    exportToCSV(data, role === UserRole.ADMIN || role === UserRole.ME_OFFICER ? "fellows" : "my-fellows");
                                 }}
                             >
                                 <FileDown className="h-4 w-4 mr-1" /> Export CSV
                             </Button>
-                            {selectedIds.length > 0 && (
+                            {canWrite && selectedIds.length > 0 && (
                                 <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
                                     <Trash2 className="h-4 w-4 mr-1" />
                                     {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
@@ -398,19 +402,23 @@ export default function FellowsPage() {
                         <thead className="bg-gray-50 text-left">
                             <tr>
                                 <th className="px-4 py-3 font-medium text-gray-600 w-10">
+                                    {canWrite && (
                                     <input
                                         type="checkbox"
                                         className="rounded border-gray-300"
                                         checked={fellows.length > 0 && selectedIds.length === fellows.length}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                     />
+                                    )}
                                 </th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Gender</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Profession</th>
 
+                                {canWrite && (
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
+                                )}
                             </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -426,18 +434,21 @@ export default function FellowsPage() {
                                 fellows.map((f) => (
                                     <tr key={f._id} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
+                                            {canWrite && (
                                             <input
                                                 type="checkbox"
                                                 className="rounded border-gray-300"
                                                 checked={selectedIds.includes(f._id)}
                                                 onChange={(e) => handleSelectOne(f._id, e.target.checked)}
                                             />
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 font-medium">{f.name}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.profession || "—"}</td>
 
+                                        {canWrite && (
                                         <td className="px-4 py-3 text-right space-x-2">
                                             {session?.user?.role === UserRole.MENTOR && (
                                                 <>
@@ -468,6 +479,7 @@ export default function FellowsPage() {
                                                 <UserMinus className="h-4 w-4" />
                                             </Button>
                                         </td>
+                                        )}
                                     </tr>
                                 ))
                             )}

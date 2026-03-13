@@ -51,12 +51,12 @@ export default function MentorDetailsPage({
     }, [id]);
 
     useEffect(() => {
-        if (user?.role === "admin" || user?.role === "coordinator") {
+        if (user?.role === "admin" || user?.role === "coordinator" || user?.role === "me_officer") {
             fetchMentor();
         }
     }, [fetchMentor, user]);
 
-    if (user?.role !== "admin" && user?.role !== "coordinator") {
+    if (user?.role !== "admin" && user?.role !== "coordinator" && user?.role !== "me_officer") {
         return (
             <div className="p-6">
                 <p className="text-red-600">You are not authorized to view this page.</p>
@@ -160,6 +160,7 @@ export default function MentorDetailsPage({
                             </CardContent>
                         </Card>
 
+                        {(user?.role === "admin" || user?.role === "coordinator") && (
                         <Card>
                             <CardHeader>
                                 <CardTitle>Actions</CardTitle>
@@ -215,6 +216,7 @@ export default function MentorDetailsPage({
                                 )}
                             </CardContent>
                         </Card>
+                        )}
                     </div>
                 ) : null}
             </div>
