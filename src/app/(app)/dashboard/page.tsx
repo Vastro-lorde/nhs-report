@@ -9,7 +9,7 @@ import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button } from "@/c
 import { api, type DashboardData, type Mentor, type Fellow } from "@/lib/api-client";
 import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download } from "lucide-react";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import {
   BarChart,
   Bar,
@@ -38,13 +38,18 @@ function AdminDashboard({ data }: { data: DashboardData }) {
       const element = document.getElementById("dashboard-export-area");
       if (!element) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const canvas = await html2canvas(element, { scale: 2 } as any);
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = await toPng(element, { pixelRatio: 2 });
+
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
+        img.src = imgData;
+      });
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Dashboard_Export_Week_${weekRangeFilenameCodeFromWeekKey(data.currentWeekKey)}.pdf`);

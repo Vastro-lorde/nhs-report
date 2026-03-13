@@ -12,7 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type MonthlyReport, type Report } from "@/lib/api-client";
 import { ChevronLeft, FileDown, Eye, Calendar, MapPin, User, Download } from "lucide-react";
 import Link from "next/link";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { weekRangeLabelFromDate } from "@/lib/date-helpers";
 
@@ -47,12 +47,18 @@ export default function MonthlyReportDetailPage() {
 
         try {
             const element = contentRef.current;
-            const canvas = await html2canvas(element, { scale: 2, useCORS: true } as any);
-            const imgData = canvas.toDataURL("image/png");
+            const imgData = await toPng(element, { pixelRatio: 2 });
+
+            const img = new Image();
+            await new Promise<void>((resolve, reject) => {
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
+                img.src = imgData;
+            });
 
             const pdf = new jsPDF("p", "mm", "a4");
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
 
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
             pdf.save(`Monthly_Report_${report.state}_${report.month}.pdf`);
