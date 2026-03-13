@@ -123,7 +123,7 @@ function MEOfficerModal({
                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         />
                         <div className="space-y-1">
-                            <label className="block text-sm font-medium text-gray-700">Zones Supervised *</label>
+                            <label className="block text-sm font-medium text-gray-700">Zones Supervised</label>
                             <LocationSelector
                                 selectedStates={form.states}
                                 onChangeStates={(states) => setForm({ ...form, states })}
