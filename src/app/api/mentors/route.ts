@@ -12,7 +12,7 @@ import { logActivity } from "@/lib/activity-logger";
 
 // GET /api/mentors — list mentors (admin/coordinator)
 export async function GET(request: NextRequest) {
-  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER);
+  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER);
   if (error) return error;
 
   await connectDB();

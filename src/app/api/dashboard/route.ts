@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer } from "@/models";
+import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer, MEOfficer } from "@/models";
 import mongoose from "mongoose";
 import { UserRole, AlertStatus } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
@@ -71,8 +71,8 @@ export async function GET(_request: NextRequest) {
       User.countDocuments(activeMentorFilter),
       WeeklyReport.countDocuments(reportFilter),
       Alert.countDocuments(alertFilter),
-      // Admins get pre-computed global rollups; coordinators/desk officers get zone-scoped rollups
-      user.role === UserRole.ADMIN
+      // Admins and M&E Officers get pre-computed global rollups; coordinators/desk officers get zone-scoped rollups
+      user.role === UserRole.ADMIN || user.role === UserRole.ME_OFFICER
         ? WeeklyRollup.find().sort({ weekKey: -1 }).limit(12).lean()
         : isZoneScoped
           ? buildZoneScopedRollups(mentorDocIds ?? [], mentorDocIds?.length ?? 0)

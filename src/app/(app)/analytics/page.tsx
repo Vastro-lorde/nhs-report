@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/Button";
 import { Download } from "lucide-react";
 import { api, type DashboardData } from "@/lib/api-client";
 import { exportToCSV } from "@/lib/export";
-import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
+import { weekRangeLabelFromWeekKey, weekRangeFilenameCodeFromWeekKey } from "@/lib/date-helpers";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import {
   LineChart,
   Line,
@@ -38,6 +40,7 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     api.dashboard
@@ -45,6 +48,45 @@ export default function AnalyticsPage() {
       .then(setData)
       .finally(() => setLoading(false));
   }, []);
+
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const element = document.getElementById("analytics-export-area");
+      if (!element) return;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const canvas = await html2canvas(element, { scale: 2 } as any);
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      // Handle multi-page if content is taller than one page
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      if (pdfHeight <= pageHeight) {
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      } else {
+        let position = 0;
+        let remaining = pdfHeight;
+        while (remaining > 0) {
+          pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+          remaining -= pageHeight;
+          position -= pageHeight;
+          if (remaining > 0) pdf.addPage();
+        }
+      }
+
+      const weekCode = data?.currentWeekKey ? weekRangeFilenameCodeFromWeekKey(data.currentWeekKey) : "export";
+      pdf.save(`Analytics_Export_Week_${weekCode}.pdf`);
+    } catch (error) {
+      console.error("Failed to export analytics:", error);
+      alert("Failed to export analytics as PDF.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading)
     return (
@@ -82,9 +124,20 @@ export default function AnalyticsPage() {
 
   return (
     <>
-      <Header title="Analytics" subtitle="Deep-dive into reporting trends" />
+      <Header title="Analytics" subtitle="Deep-dive into reporting trends">
+        <Button
+          onClick={handleExportPDF}
+          disabled={exporting}
+          size="sm"
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          {exporting ? "Exporting..." : "Export as PDF"}
+        </Button>
+      </Header>
 
-      <div className="p-6 space-y-6">
+      <div id="analytics-export-area" className="p-6 space-y-6 bg-gray-50">
         {/* Toggle */}
         <Select
           label="Trend Chart Type"

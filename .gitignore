@@ -42,3 +42,5 @@ next-env.d.ts
 
 # test scripts
 test-dashboard.ts
+node_modules/
+.next/

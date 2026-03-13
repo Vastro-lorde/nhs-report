@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { connectDB } from "@/lib/db";
-import { User, Mentor, Coordinator, DeskOfficer } from "@/models";
+import { User, Mentor, Coordinator, DeskOfficer, MEOfficer } from "@/models";
 import { UserRole } from "@/lib/constants";
 
 export async function GET() {
@@ -39,6 +39,8 @@ export async function GET() {
     roleDetails = await Coordinator.findOne({ authId: user._id }).lean();
   } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
     roleDetails = await DeskOfficer.findOne({ authId: user._id }).lean();
+  } else if (user.role === UserRole.ME_OFFICER) {
+    roleDetails = await MEOfficer.findOne({ authId: user._id }).lean();
   }
 
   return jsonOk({ ...user, roleDetails });

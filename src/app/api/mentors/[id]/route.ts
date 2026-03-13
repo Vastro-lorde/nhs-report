@@ -20,7 +20,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const targetId = id === "me" ? session.user.id : id;
 
   const isSelf = session.user.id === targetId;
-  const allowedRoles: string[] = [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER];
+  const allowedRoles: string[] = [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER];
   const isAuthorized = isSelf || allowedRoles.includes(session.user.role as string);
 
   if (!isAuthorized) {

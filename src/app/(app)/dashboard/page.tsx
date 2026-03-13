@@ -28,6 +28,8 @@ import { weekRangeFilenameCodeFromWeekKey, weekRangeLabelFromWeekKey } from "@/l
 function AdminDashboard({ data }: { data: DashboardData }) {
   const { data: session } = useSession();
   const isDeskOfficer = session?.user?.role === "zonal_desk_officer";
+  const isMEOfficer = session?.user?.role === "me_officer";
+  const canExportPDF = isDeskOfficer || isMEOfficer;
   const [exporting, setExporting] = useState(false);
 
   const handleExportPDF = async () => {
@@ -87,7 +89,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
         title="Dashboard"
         subtitle={`Week ${weekRangeLabelFromWeekKey(data.currentWeekKey)} Overview`}
       >
-        {isDeskOfficer && (
+        {canExportPDF && (
           <Button
             onClick={handleExportPDF}
             disabled={exporting}

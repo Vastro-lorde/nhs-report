@@ -148,6 +148,28 @@ export const api = {
       }),
   },
 
+  meOfficers: {
+    list: (params?: URLSearchParams | Record<string, string>) =>
+      request<PaginatedResponse<MEOfficer>>(`/api/me-officers?${new URLSearchParams(params).toString()}`),
+    get: (id: string) => request<MEOfficer>(`/api/me-officers/${id}`),
+    create: (data: CreateMEOfficerInput) =>
+      request<MEOfficer>("/api/me-officers", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<MEOfficer>) =>
+      request<MEOfficer>(`/api/me-officers/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    deactivate: (id: string) =>
+      request(`/api/me-officers/${id}`, { method: "DELETE" }),
+    resetPassword: (id: string, newPassword: string) =>
+      request<{ success: boolean; message: string }>(`/api/me-officers/${id}/reset-password`, {
+        method: "POST",
+        body: JSON.stringify({ password: newPassword }),
+      }),
+    bulkDelete: (data: { ids: string[] }) =>
+      request<{ success: boolean; deletedCount: number }>("/api/me-officers/bulk", {
+        method: "DELETE",
+        body: JSON.stringify(data),
+      }),
+  },
+
   reports: {
     list: (params?: URLSearchParams | Record<string, string>) =>
       request<PaginatedResponse<Report>>(`/api/reports?${new URLSearchParams(params).toString()}`),
@@ -357,6 +379,23 @@ export interface CreateDeskOfficerInput {
   password: string;
   phone?: string;
   states?: string[];
+}
+
+export interface MEOfficer {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateMEOfficerInput {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
 }
 
 export interface Fellow {
