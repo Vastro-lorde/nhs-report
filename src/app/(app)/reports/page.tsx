@@ -28,6 +28,24 @@ const PDFDownloadButton = dynamic(
 export default function ReportsListPage() {
   const { data: session } = useSession();
   const isMentor = session?.user?.role === UserRole.MENTOR;
+  const userRole = session?.user?.role;
+
+  const hasAssignedStates =
+    userRole === UserRole.MENTOR ||
+    userRole === UserRole.COORDINATOR ||
+    userRole === UserRole.ZONAL_DESK_OFFICER;
+
+  const stateOptions = (() => {
+    if (hasAssignedStates && session?.user?.states?.length) {
+      return session.user.states.map((s) => {
+        const formatted = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        const matched = STATES.find((st) => st.toUpperCase() === s.toUpperCase());
+        const label = matched ?? formatted;
+        return { label, value: label };
+      });
+    }
+    return STATES.map((s) => ({ label: s, value: s }));
+  })();
 
   const [reports, setReports] = useState<Report[]>([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
@@ -89,8 +107,7 @@ export default function ReportsListPage() {
                 }}
                 className="w-40"
               />
-              {!isMentor && (
-                <Select
+              <Select
                   label="State"
                   value={state}
                   onChange={(e) => {
@@ -99,11 +116,10 @@ export default function ReportsListPage() {
                   }}
                   options={[
                     { label: "All States", value: "" },
-                    ...STATES.map((s) => ({ label: s, value: s })),
+                    ...stateOptions,
                   ]}
                   className="w-48"
                 />
-              )}
               {isMentor && (
                 <Link href="/reports/new">
                   <Button size="sm">

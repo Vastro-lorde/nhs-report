@@ -17,6 +17,7 @@ declare module "next-auth" {
       role: UserRole;
       rootAdmin?: boolean;
       state?: string;
+      states?: string[];
       profileImage?: string;
     };
   }
@@ -25,6 +26,7 @@ declare module "next-auth" {
     role: UserRole;
     rootAdmin?: boolean;
     state?: string;
+    states?: string[];
     profileImage?: string;
   }
 }
@@ -35,6 +37,7 @@ declare module "next-auth" {
     role: UserRole;
     rootAdmin?: boolean;
     state?: string;
+    states?: string[];
     profileImage?: string;
   }
 }
@@ -66,16 +69,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
         if (!isValid) return null;
 
-        let userState: string | undefined = undefined;
+        let userStates: string[] | undefined = undefined;
         if (user.role === UserRole.COORDINATOR) {
           const coord = await Coordinator.findOne({ authId: user._id }).lean();
-          userState = coord?.states?.[0];
+          userStates = coord?.states;
         } else if (user.role === UserRole.MENTOR) {
           const mentor = await Mentor.findOne({ authId: user._id }).lean();
-          userState = mentor?.states?.[0];
+          userStates = mentor?.states;
         } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
           const deskOfficer = await DeskOfficer.findOne({ authId: user._id }).lean();
-          userState = deskOfficer?.states?.[0];
+          userStates = deskOfficer?.states;
         }
 
         return {
@@ -84,7 +87,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           role: user.role,
           rootAdmin: user.rootAdmin,
-          state: userState,
+          state: userStates?.[0],
+          states: userStates,
           profileImage: user.profileImage,
         };
       },
@@ -97,6 +101,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = user.role;
         token.rootAdmin = user.rootAdmin;
         token.state = user.state;
+        token.states = user.states;
         token.profileImage = user.profileImage;
       }
 
@@ -121,6 +126,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.role = token.role as UserRole;
       session.user.rootAdmin = token.rootAdmin as boolean | undefined;
       session.user.state = token.state as string;
+      session.user.states = token.states as string[] | undefined;
       session.user.profileImage = token.profileImage as string | undefined;
       return session;
     },
