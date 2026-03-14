@@ -13,7 +13,7 @@ import { api, type DashboardData } from "@/lib/api-client";
 import { exportToCSV } from "@/lib/export";
 import { weekRangeLabelFromWeekKey, weekRangeFilenameCodeFromWeekKey } from "@/lib/date-helpers";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import {
   LineChart,
   Line,
@@ -55,13 +55,18 @@ export default function AnalyticsPage() {
       const element = document.getElementById("analytics-export-area");
       if (!element) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const canvas = await html2canvas(element, { scale: 2 } as any);
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = await toPng(element, { pixelRatio: 2 });
+
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
+        img.src = imgData;
+      });
 
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
 
       // Handle multi-page if content is taller than one page
       const pageHeight = pdf.internal.pageSize.getHeight();

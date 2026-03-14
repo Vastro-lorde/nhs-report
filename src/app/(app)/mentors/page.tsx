@@ -243,6 +243,8 @@ function CreateMentorModal({
 /* ─── Main Page ────────────────────────── */
 export default function MentorsPage() {
   const { data: session } = useSession();
+  const userRole = session?.user?.role;
+  const canWrite = userRole === UserRole.ADMIN || userRole === UserRole.COORDINATOR;
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -455,15 +457,17 @@ export default function MentorsPage() {
                   </Button>
                 </>
               )}
-              {selectedIds.length > 0 && (
+              {canWrite && selectedIds.length > 0 && (
                 <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
                 </Button>
               )}
+              {canWrite && (
               <Button size="sm" onClick={() => setShowCreate(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Add Mentor
               </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -474,12 +478,14 @@ export default function MentorsPage() {
             <thead className="bg-gray-50 text-left">
               <tr>
                 <th className="px-4 py-3 font-medium text-gray-600 w-10">
+                  {canWrite && (
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
                     checked={mentors.length > 0 && selectedIds.length === mentors.length}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
+                  )}
                 </th>
                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
@@ -509,12 +515,14 @@ export default function MentorsPage() {
                 mentors.map((m) => (
                   <tr key={m._id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
+                      {canWrite && (
                       <input
                         type="checkbox"
                         className="rounded border-gray-300"
                         checked={selectedIds.includes(m._id)}
                         onChange={(e) => handleSelectOne(m._id, e.target.checked)}
                       />
+                      )}
                     </td>
                     <td className="px-4 py-3 font-medium">{m.name}</td>
                     <td className="px-4 py-3 text-gray-600">{m.email}</td>
@@ -540,6 +548,7 @@ export default function MentorsPage() {
                           View
                         </Button>
                       </Link>
+                      {canWrite && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -553,6 +562,7 @@ export default function MentorsPage() {
                           <UserCheck className="h-4 w-4 text-green-600" />
                         )}
                       </Button>
+                      )}
                       {session?.user?.role === UserRole.ADMIN && (
                         <>
                           <Button
