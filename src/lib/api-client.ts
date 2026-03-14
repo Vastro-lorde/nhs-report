@@ -593,13 +593,23 @@ export interface DashboardData {
 
 export interface MonthlyReport {
   _id: string;
-  coordinator: { _id: string; name: string; email: string; state: string };
+  type: "mentor" | "zonal";
+  coordinator?: { _id: string; name: string; email: string; state: string };
+  mentor?: { _id: string; name: string; email: string; state?: string };
   state: string;
   month: string;
   summaryText: string;
   weeklyReports: Report[];
   status: string;
   createdAt: string;
+}
+
+/** Derive display author name from a monthly report */
+export function monthlyReportAuthorName(r: MonthlyReport): string {
+  if (r.type === "mentor") {
+    return r.mentor?.name || "Unknown Mentor";
+  }
+  return r.coordinator?.name || "Unknown Coordinator";
 }
 
 export interface CreateMonthlyReportInput {

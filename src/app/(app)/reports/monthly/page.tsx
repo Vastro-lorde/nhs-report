@@ -1,5 +1,6 @@
 /* ──────────────────────────────────────────
-   Monthly Reports List Page (Coordinators)
+   Monthly Reports List Page
+   Shows Mentor and Zonal monthly reports
    ────────────────────────────────────────── */
 "use client";
 
@@ -9,7 +10,7 @@ import { format, parseISO } from "date-fns";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { api, type MonthlyReport } from "@/lib/api-client";
+import { api, type MonthlyReport, monthlyReportAuthorName } from "@/lib/api-client";
 import { Plus, Eye, FileText } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
@@ -21,7 +22,7 @@ export default function MonthlyReportsPage() {
 
     const { data: session } = useSession();
     const userRole = session?.user?.role;
-    const hideCreateAction = userRole === UserRole.COORDINATOR || userRole === UserRole.ZONAL_DESK_OFFICER || userRole === UserRole.ME_OFFICER || userRole === UserRole.TEAM_RESEARCH_LEAD;
+    const canCreate = userRole === UserRole.MENTOR || userRole === UserRole.COORDINATOR;
 
     const fetchReports = useCallback(async () => {
         setLoading(true);
@@ -50,7 +51,7 @@ export default function MonthlyReportsPage() {
                         <div className="text-sm text-gray-600">
                             {total} report{total === 1 ? "" : "s"} found.
                         </div>
-                        {!hideCreateAction && (
+                        {canCreate && (
                             <Link href="/reports/monthly/new">
                                 <Button size="sm">
                                     <Plus className="h-4 w-4 mr-1" /> New Monthly Report
@@ -65,23 +66,25 @@ export default function MonthlyReportsPage() {
                         <thead className="bg-gray-50 text-left">
                             <tr>
                                 <th className="px-4 py-3 font-medium text-gray-600">Month</th>
+                                <th className="px-4 py-3 font-medium text-gray-600">Type</th>
+                                <th className="px-4 py-3 font-medium text-gray-600">Author</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">State</th>
-                                <th className="px-4 py-3 font-medium text-gray-600 w-1/2">Summary Preview</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 w-1/3">Summary Preview</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center text-gray-400">Loading reports…</td>
+                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">Loading reports…</td>
                                 </tr>
                             ) : !reports.length ? (
                                 <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                                         <div className="flex flex-col items-center justify-center space-y-2">
                                             <FileText className="h-8 w-8 text-gray-300" />
                                             <p>No monthly reports generated yet.</p>
-                                            {!hideCreateAction && (
+                                            {canCreate && (
                                                 <Link href="/reports/monthly/new">
                                                     <span className="text-green-600 hover:underline">Create your first monthly report</span>
                                                 </Link>
@@ -92,9 +95,16 @@ export default function MonthlyReportsPage() {
                             ) : (
                                 reports.map((r) => {
                                     const displayMonth = format(parseISO(`${r.month}-01`), "MMMM yyyy");
+                                    const authorName = monthlyReportAuthorName(r);
                                     return (
                                         <tr key={r._id} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 font-medium">{displayMonth}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.type === "zonal" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"}`}>
+                                                    {r.type === "zonal" ? "Zonal" : "Mentor"}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600">{authorName}</td>
                                             <td className="px-4 py-3 text-gray-600">{r.state}</td>
                                             <td className="px-4 py-3 text-gray-600 truncate max-w-[200px]">
                                                 {r.summaryText}

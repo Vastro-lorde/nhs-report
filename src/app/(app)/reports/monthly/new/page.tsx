@@ -1,5 +1,6 @@
 /* ──────────────────────────────────────────
    Create Monthly Report Page
+   Supports Mentor and Coordinator roles
    ────────────────────────────────────────── */
 "use client";
 
@@ -13,9 +14,14 @@ import { api } from "@/lib/api-client";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react";
+import { UserRole } from "@/lib/constants";
 
 export default function NewMonthlyReportPage() {
     const router = useRouter();
+    const { data: session } = useSession();
+    const userRole = session?.user?.role;
+    const isMentor = userRole === UserRole.MENTOR;
 
     // Default to current month e.g., "2025-08"
     const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -38,6 +44,11 @@ export default function NewMonthlyReportPage() {
         }
     };
 
+    const reportTypeLabel = isMentor ? "Mentor Monthly Report" : "Zonal Monthly Report";
+    const reportDescription = isMentor
+        ? "Compile your own weekly reports into a monthly summary"
+        : "Aggregate all mentors' weekly reports in your zone into a monthly summary";
+
     return (
         <>
             <div className="flex items-center gap-4 px-6 pt-6 -mb-2">
@@ -48,7 +59,7 @@ export default function NewMonthlyReportPage() {
                 </Link>
             </div>
 
-            <Header title="New Monthly Report" subtitle="Aggregate weekly data into a high-level summary" />
+            <Header title={`New ${reportTypeLabel}`} subtitle={reportDescription} />
 
             <form onSubmit={handleSubmit} className="p-6 max-w-2xl space-y-6">
                 {error && (
@@ -63,7 +74,7 @@ export default function NewMonthlyReportPage() {
                             <label className="text-sm font-medium text-gray-700">Target Month</label>
                             <p className="text-xs text-gray-500 mb-2">
                                 Select the month you want to summarize. This will automatically pull in all
-                                submitted weekly reports within this timeframe.
+                                submitted weekly reports{isMentor ? " from your sessions" : " from all mentors in your zone"} within this timeframe.
                             </p>
                             <Input
                                 type="month"
@@ -76,12 +87,15 @@ export default function NewMonthlyReportPage() {
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">Monthly Summary</label>
                             <p className="text-xs text-gray-500 mb-2">
-                                Write a high-level overview of the mentoring activities, successes, and challenges
-                                observed for the entire month.
+                                {isMentor
+                                    ? "Write a high-level overview of your mentoring activities, successes, and challenges for the month."
+                                    : "Write a high-level overview of the mentoring activities, successes, and challenges observed across your zone for the month."}
                             </p>
                             <textarea
                                 className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                                placeholder="Our state saw tremendous growth in mentee check-ins this month..."
+                                placeholder={isMentor
+                                    ? "This month I focused on building rapport with my mentees..."
+                                    : "Our state saw tremendous growth in mentee check-ins this month..."}
                                 value={summaryText}
                                 onChange={(e) => setSummaryText(e.target.value)}
                                 required
@@ -97,7 +111,7 @@ export default function NewMonthlyReportPage() {
 
                 <div className="flex justify-end pt-4">
                     <Button type="submit" size="lg" disabled={loading}>
-                        {loading ? "Aggregating Data..." : "Generate Monthly Report"}
+                        {loading ? "Aggregating Data..." : `Generate ${reportTypeLabel}`}
                     </Button>
                 </div>
             </form>

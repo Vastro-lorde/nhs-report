@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { MonthlyReport } from "@/models/MonthlyReport";
+import { Mentor } from "@/models/Mentor";
+import { Coordinator } from "@/models/Coordinator";
+import { DeskOfficer } from "@/models/DeskOfficer";
 import { UserRole } from "@/lib/constants";
 
 export async function GET(
@@ -25,6 +28,13 @@ export async function GET(
                 }
             })
             .populate({
+                path: "mentor",
+                populate: [
+                    { path: "authId", select: "name email state" },
+                    { path: "coordinator" },
+                ]
+            })
+            .populate({
                 path: "weeklyReports",
                 populate: {
                     path: "mentor",
@@ -41,14 +51,43 @@ export async function GET(
         }
 
         // Role-based access control
-        const coordAuthId = (report.coordinator as any)?.authId?._id?.toString() || report.coordinator?.toString();
+        const role = session.user.role;
 
-        if (session.user.role === UserRole.COORDINATOR && session.user.id !== coordAuthId && session.user.state !== report.state) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        if (role === UserRole.MENTOR) {
+            const mentorDoc = await Mentor.findOne({ authId: session.user.id });
+            if (!mentorDoc) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            }
+            // Mentors can see their own mentor reports and their coordinator's zonal reports
+            const isMentorReport = report.type === "mentor" && report.mentor?.toString() === mentorDoc._id.toString();
+            const isCoordZonalReport = report.type === "zonal" && report.coordinator?.toString() === mentorDoc.coordinator?.toString();
+            if (!isMentorReport && !isCoordZonalReport) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            }
         }
-        if (session.user.role === UserRole.MENTOR && session.user.id !== coordAuthId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+
+        if (role === UserRole.COORDINATOR) {
+            const coordDoc = await Coordinator.findOne({ authId: session.user.id });
+            if (!coordDoc) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            }
+            // Coordinators can see their own zonal reports and mentor reports from their mentors
+            const isOwnZonal = report.type === "zonal" && report.coordinator?.toString() === coordDoc._id.toString();
+            const isMentorUnderThem = report.type === "mentor"
+                && (report as any).mentor?.coordinator?.toString() === coordDoc._id.toString();
+            if (!isOwnZonal && !isMentorUnderThem) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            }
         }
+
+        if (role === UserRole.ZONAL_DESK_OFFICER) {
+            const deskDoc = await DeskOfficer.findOne({ authId: session.user.id });
+            if (!deskDoc || !deskDoc.states?.includes(report.state)) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+            }
+        }
+
+        // Admin, ME Officer, Team Research Lead — unrestricted access
 
         const normalizedWeeklyReports = ((report as any).weeklyReports ?? []).map((wr: any) => {
             const mentorDoc = wr?.mentor;
@@ -72,10 +111,30 @@ export async function GET(
             };
         });
 
-        return NextResponse.json({
-            ...(report as any),
-            weeklyReports: normalizedWeeklyReports,
-        });
+        // Normalize the top-level mentor/coordinator for client
+        const normalized: any = { ...(report as any), weeklyReports: normalizedWeeklyReports };
+
+        if (report.type === "mentor" && (report as any).mentor?.authId) {
+            const m = (report as any).mentor;
+            normalized.mentor = {
+                _id: m._id,
+                name: m.authId?.name,
+                email: m.authId?.email,
+                state: m.states?.[0] ?? "",
+            };
+        }
+
+        if ((report as any).coordinator?.authId) {
+            const c = (report as any).coordinator;
+            normalized.coordinator = {
+                _id: c._id,
+                name: c.authId?.name,
+                email: c.authId?.email,
+                state: c.states?.[0] ?? "",
+            };
+        }
+
+        return NextResponse.json(normalized);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
