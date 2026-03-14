@@ -59,8 +59,8 @@ export async function GET(
                 return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
             }
             // Mentors can see their own mentor reports and their coordinator's zonal reports
-            const isMentorReport = report.type === "mentor" && report.mentor?.toString() === mentorDoc._id.toString();
-            const isCoordZonalReport = report.type === "zonal" && report.coordinator?.toString() === mentorDoc.coordinator?.toString();
+            const isMentorReport = report.type === "mentor" && (report as any).mentor?._id?.toString() === mentorDoc._id.toString();
+            const isCoordZonalReport = report.type === "zonal" && (report as any).coordinator?._id?.toString() === mentorDoc.coordinator?.toString();
             if (!isMentorReport && !isCoordZonalReport) {
                 return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
             }
@@ -72,9 +72,9 @@ export async function GET(
                 return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
             }
             // Coordinators can see their own zonal reports and mentor reports from their mentors
-            const isOwnZonal = report.type === "zonal" && report.coordinator?.toString() === coordDoc._id.toString();
+            const isOwnZonal = report.type === "zonal" && (report as any).coordinator?._id?.toString() === coordDoc._id.toString();
             const isMentorUnderThem = report.type === "mentor"
-                && (report as any).mentor?.coordinator?.toString() === coordDoc._id.toString();
+                && (report as any).mentor?.coordinator?._id?.toString() === coordDoc._id.toString();
             if (!isOwnZonal && !isMentorUnderThem) {
                 return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
             }
