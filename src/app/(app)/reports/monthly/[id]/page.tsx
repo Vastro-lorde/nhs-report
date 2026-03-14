@@ -59,9 +59,23 @@ export default function MonthlyReportDetailPage() {
 
             const pdf = new jsPDF("p", "mm", "a4");
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
+            const pdfPageHeight = pdf.internal.pageSize.getHeight();
+            const imgHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
 
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            let heightLeft = imgHeight;
+            let yOffset = 0;
+
+            // First page
+            pdf.addImage(imgData, "PNG", 0, yOffset, pdfWidth, imgHeight);
+            heightLeft -= pdfPageHeight;
+
+            // Add subsequent pages if content overflows
+            while (heightLeft > 0) {
+                yOffset -= pdfPageHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, "PNG", 0, yOffset, pdfWidth, imgHeight);
+                heightLeft -= pdfPageHeight;
+            }
 
             const typeLabel = report.type === "zonal" ? "Zonal" : "Mentor";
             pdf.save(`${typeLabel}_Monthly_Report_${report.state}_${report.month}.pdf`);
