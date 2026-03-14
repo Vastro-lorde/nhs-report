@@ -245,6 +245,7 @@ export default function SettingsPage() {
                 {profile.role === UserRole.COORDINATOR && "Coordinator Details"}
                 {profile.role === UserRole.ZONAL_DESK_OFFICER && "Desk Officer Details"}
                 {profile.role === UserRole.ME_OFFICER && "M&E Officer Details"}
+                {profile.role === UserRole.TEAM_RESEARCH_LEAD && "Team Research Lead Details"}
               </CardTitle>
             </CardHeader>
             <CardContent>

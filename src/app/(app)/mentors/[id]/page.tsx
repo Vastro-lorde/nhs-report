@@ -58,12 +58,12 @@ export default function MentorDetailsPage({
     }, [id]);
 
     useEffect(() => {
-        if (user?.role === "admin" || user?.role === "coordinator" || user?.role === "me_officer") {
+        if (user?.role === "admin" || user?.role === "coordinator" || user?.role === "me_officer" || user?.role === "team_research_lead") {
             fetchMentor();
         }
     }, [fetchMentor, user]);
 
-    if (user?.role !== "admin" && user?.role !== "coordinator" && user?.role !== "me_officer") {
+    if (user?.role !== "admin" && user?.role !== "coordinator" && user?.role !== "me_officer" && user?.role !== "team_research_lead") {
         return (
             <div className="p-6">
                 <p className="text-red-600">You are not authorized to view this page.</p>

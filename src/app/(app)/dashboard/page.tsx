@@ -29,7 +29,8 @@ function AdminDashboard({ data }: { data: DashboardData }) {
   const { data: session } = useSession();
   const isDeskOfficer = session?.user?.role === "zonal_desk_officer";
   const isMEOfficer = session?.user?.role === "me_officer";
-  const canExportPDF = isDeskOfficer || isMEOfficer;
+  const isTeamResearchLead = session?.user?.role === "team_research_lead";
+  const canExportPDF = isDeskOfficer || isMEOfficer || isTeamResearchLead;
   const [exporting, setExporting] = useState(false);
 
   const handleExportPDF = async () => {

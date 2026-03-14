@@ -21,7 +21,7 @@ export default function MonthlyReportsPage() {
 
     const { data: session } = useSession();
     const userRole = session?.user?.role;
-    const hideCreateAction = userRole === UserRole.COORDINATOR || userRole === UserRole.ZONAL_DESK_OFFICER || userRole === UserRole.ME_OFFICER;
+    const hideCreateAction = userRole === UserRole.COORDINATOR || userRole === UserRole.ZONAL_DESK_OFFICER || userRole === UserRole.ME_OFFICER || userRole === UserRole.TEAM_RESEARCH_LEAD;
 
     const fetchReports = useCallback(async () => {
         setLoading(true);

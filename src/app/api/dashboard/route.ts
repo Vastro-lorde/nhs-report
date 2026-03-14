@@ -71,8 +71,8 @@ export async function GET(_request: NextRequest) {
       User.countDocuments(activeMentorFilter),
       WeeklyReport.countDocuments(reportFilter),
       Alert.countDocuments(alertFilter),
-      // Admins & ME Officers get pre-computed global rollups; zone-scoped roles get zone-scoped rollups
-      user.role === UserRole.ADMIN || user.role === UserRole.ME_OFFICER
+      // Admins, ME Officers & Team Research Leads get pre-computed global rollups; zone-scoped roles get zone-scoped rollups
+      user.role === UserRole.ADMIN || user.role === UserRole.ME_OFFICER || user.role === UserRole.TEAM_RESEARCH_LEAD
         ? WeeklyRollup.find().sort({ weekKey: -1 }).limit(12).lean()
         : isZoneScoped
           ? buildZoneScopedRollups(mentorDocIds ?? [], mentorDocIds?.length ?? 0)

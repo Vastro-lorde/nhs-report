@@ -10,7 +10,7 @@ import { jsonOk, parsePagination } from "@/lib/api-helpers";
 
 // GET /api/alerts
 export async function GET(request: NextRequest) {
-  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER);
+  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD);
   if (error) return error;
 
   await connectDB();

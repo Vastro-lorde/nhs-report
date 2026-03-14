@@ -14,7 +14,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER && session.user.role !== UserRole.ZONAL_DESK_OFFICER) {
+        if (session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER && session.user.role !== UserRole.ZONAL_DESK_OFFICER && session.user.role !== UserRole.TEAM_RESEARCH_LEAD) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
         const search = searchParams.get("search") || "";
         const filter: Record<string, unknown> = {};
 
-        // Mentors only see their own fellows; admins and ME officers can see all; desk officers see zone-scoped
+        // Mentors only see their own fellows; admins, ME officers and Team Research Leads can see all; desk officers see zone-scoped
         if (session.user.role === UserRole.MENTOR) {
             const mentorDoc = await Mentor.findOne({ authId: session.user.id }).lean();
             if (!mentorDoc) {

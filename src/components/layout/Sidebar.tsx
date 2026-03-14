@@ -25,7 +25,7 @@ const NAV_ITEMS = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Submit Report",
@@ -37,25 +37,25 @@ const NAV_ITEMS = [
     label: "Reports",
     href: "/reports",
     icon: FileText,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Monthly Report",
     href: "/reports/monthly",
     icon: FileText,
-    roles: [UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER],
+    roles: [UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Fellows",
     href: "/fellows",
     icon: Users,
-    roles: [UserRole.ADMIN, UserRole.MENTOR, UserRole.ME_OFFICER, UserRole.ZONAL_DESK_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.MENTOR, UserRole.ME_OFFICER, UserRole.ZONAL_DESK_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Mentors Management",
     href: "/mentors",
     icon: Users,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ME_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Admins Management",
@@ -82,10 +82,16 @@ const NAV_ITEMS = [
     roles: [UserRole.ADMIN],
   },
   {
+    label: "Team Research Leads Management",
+    href: "/admin/team-research-leads",
+    icon: Users,
+    roles: [UserRole.ADMIN],
+  },
+  {
     label: "Alerts",
     href: "/alerts",
     icon: AlertTriangle,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Document Types",
@@ -103,7 +109,7 @@ const NAV_ITEMS = [
     label: "Analytics",
     href: "/analytics",
     icon: BarChart3,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ME_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Activity Logs",
@@ -115,7 +121,7 @@ const NAV_ITEMS = [
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ME_OFFICER],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
 ] satisfies { label: string; href: string; icon: typeof LayoutDashboard; roles: string[] }[];
 
@@ -123,6 +129,7 @@ const ROLE_DISPLAY_NAMES: Record<string, string> = {
   [UserRole.COORDINATOR]: "Zonal Coordinator",
   [UserRole.ME_OFFICER]: "M&E Officer",
   [UserRole.ZONAL_DESK_OFFICER]: "Desk Officer",
+  [UserRole.TEAM_RESEARCH_LEAD]: "Team Research Lead",
 };
 
 export function Sidebar() {

@@ -277,6 +277,46 @@ ${APP_NAME}`;
   return { subject, text, html };
 }
 
+export function newTeamResearchLeadEmailTemplate(name: string, email: string, tempPassword: string, appUrl: string) {
+  const subject = `Welcome to ${APP_NAME} - Team Research Lead Account Created`;
+
+  const text = `Hello ${name},
+
+An administrator has created a Team Research Lead account for you on ${APP_NAME}.
+
+Your login credentials are:
+Email: ${email}
+Password: ${tempPassword}
+
+Please log in at ${appUrl}/login and change your password immediately.
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">Welcome to ${APP_NAME}</h2>
+      <p>Hello <strong>${name}</strong>,</p>
+      <p>An administrator has created a Team Research Lead account for you.</p>
+      <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+        <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${email}</p>
+        <p style="margin: 0;"><strong>Temporary Password:</strong> ${tempPassword}</p>
+      </div>
+      <p>Please log in and change your password immediately.</p>
+      <p>
+        <a href="${appUrl}/login"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          Log In Now
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
 export function coordinatorEmailChangedTemplate(name: string, email: string, tempPassword: string, appUrl: string) {
   const subject = `Your ${APP_NAME} login email was updated`;
 

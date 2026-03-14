@@ -12,7 +12,7 @@ import { logActivity } from "@/lib/activity-logger";
 
 // GET /api/mentors — list mentors (admin/coordinator)
 export async function GET(request: NextRequest) {
-  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER);
+  const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD);
   if (error) return error;
 
   await connectDB();
@@ -74,6 +74,9 @@ export async function GET(request: NextRequest) {
       }
     } else if (session?.user?.role === UserRole.ME_OFFICER) {
       // ME officers see all mentors (no zone restriction)
+      if (requestedStates.length) mentorFilter.states = { $in: requestedStates };
+    } else if (session?.user?.role === UserRole.TEAM_RESEARCH_LEAD) {
+      // Team Research Leads see all mentors (no zone restriction)
       if (requestedStates.length) mentorFilter.states = { $in: requestedStates };
     } else {
       if (requestedStates.length) mentorFilter.states = { $in: requestedStates };
