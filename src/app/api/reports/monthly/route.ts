@@ -84,8 +84,29 @@ export async function GET(request: Request) {
             MonthlyReport.countDocuments(filter),
         ]);
 
+        const normalizedData = data.map((report: any) => {
+            const normalized: any = { ...report };
+            if (report.coordinator?.authId) {
+                normalized.coordinator = {
+                    _id: report.coordinator._id,
+                    name: report.coordinator.authId.name,
+                    email: report.coordinator.authId.email,
+                    state: report.coordinator.states?.[0] ?? "",
+                };
+            }
+            if (report.mentor?.authId) {
+                normalized.mentor = {
+                    _id: report.mentor._id,
+                    name: report.mentor.authId.name,
+                    email: report.mentor.authId.email,
+                    state: report.mentor.states?.[0] ?? "",
+                };
+            }
+            return normalized;
+        });
+
         return NextResponse.json({
-            data,
+            data: normalizedData,
             pagination: {
                 page,
                 limit,
