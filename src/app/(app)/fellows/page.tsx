@@ -331,10 +331,12 @@ export default function FellowsPage() {
     return (
         <>
             <Header
-                title={role === UserRole.ADMIN || role === UserRole.ME_OFFICER ? "Fellows" : "My Fellows"}
+                title={role === UserRole.ADMIN || isReadOnly ? "Fellows" : "My Fellows"}
                 subtitle={
-                    role === UserRole.ADMIN || role === UserRole.ME_OFFICER
-                        ? `${role === UserRole.ME_OFFICER ? "Viewing" : "Managing"} ${total} fellow${total === 1 ? "" : "s"}`
+                    isReadOnly
+                        ? `Viewing ${total} fellow${total === 1 ? "" : "s"}`
+                        : role === UserRole.ADMIN
+                        ? `Managing ${total} fellow${total === 1 ? "" : "s"}`
                         : `Managing ${total} assigned fellow${total === 1 ? "" : "s"}`
                 }
             />
@@ -361,7 +363,7 @@ export default function FellowsPage() {
                 <Card>
                     <CardContent className="pt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-600 max-w-2xl">
-                            {role === UserRole.ME_OFFICER
+                            {isReadOnly
                                 ? "View fellows and their details here. You have read-only access."
                                 : role === UserRole.ADMIN
                                 ? "View and manage fellows here."
