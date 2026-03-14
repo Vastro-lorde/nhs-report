@@ -11,7 +11,7 @@ import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { api, type MonthlyReport, monthlyReportAuthorName } from "@/lib/api-client";
-import { Plus, Eye, FileText } from "lucide-react";
+import { Plus, Eye, FileText, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 
@@ -23,6 +23,17 @@ export default function MonthlyReportsPage() {
     const { data: session } = useSession();
     const userRole = session?.user?.role;
     const canCreate = userRole === UserRole.MENTOR || userRole === UserRole.COORDINATOR;
+    const canDelete = userRole === UserRole.COORDINATOR;
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Are you sure you want to delete this monthly report? This action cannot be undone.")) return;
+        try {
+            await api.reports.monthly.delete(id);
+            fetchReports();
+        } catch (err: any) {
+            alert(`Failed to delete: ${err.message}`);
+        }
+    };
 
     const fetchReports = useCallback(async () => {
         setLoading(true);
@@ -110,11 +121,23 @@ export default function MonthlyReportsPage() {
                                                 {r.summaryText}
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                                <Link href={`/reports/monthly/${r._id}`}>
-                                                    <Button variant="ghost" size="icon" aria-label="View Report">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
+                                                <div className="flex justify-end gap-1">
+                                                    <Link href={`/reports/monthly/${r._id}`}>
+                                                        <Button variant="ghost" size="icon" aria-label="View Report">
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    </Link>
+                                                    {canDelete && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            aria-label="Delete Report"
+                                                            onClick={() => handleDelete(r._id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     )

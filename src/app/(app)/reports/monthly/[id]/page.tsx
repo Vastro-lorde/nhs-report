@@ -5,24 +5,30 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type MonthlyReport, type Report, monthlyReportAuthorName } from "@/lib/api-client";
-import { ChevronLeft, FileDown, Eye, Calendar, User } from "lucide-react";
+import { ChevronLeft, FileDown, Eye, Calendar, User, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import { weekRangeLabelFromDate } from "@/lib/date-helpers";
+import { useSession } from "next-auth/react";
+import { UserRole } from "@/lib/constants";
 
 export default function MonthlyReportDetailPage() {
     const { id } = useParams() as { id: string };
+    const router = useRouter();
     const [report, setReport] = useState<MonthlyReport | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [exporting, setExporting] = useState(false);
+
+    const { data: session } = useSession();
+    const canDelete = session?.user?.role === UserRole.COORDINATOR;
 
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +93,16 @@ export default function MonthlyReportDetailPage() {
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete this monthly report? This action cannot be undone.")) return;
+        try {
+            await api.reports.monthly.delete(id);
+            router.push("/reports/monthly");
+        } catch (err: any) {
+            alert(`Failed to delete: ${err.message}`);
+        }
+    };
+
     if (loading) {
         return <div className="p-8 text-center text-gray-500">Loading Report…</div>;
     }
@@ -108,10 +124,18 @@ export default function MonthlyReportDetailPage() {
                         <ChevronLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                 </Link>
-                <Button onClick={handleExportPDF} disabled={exporting}>
-                    <FileDown className="h-4 w-4 mr-2" />
-                    {exporting ? "Generating PDF..." : "Export as PDF"}
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={handleExportPDF} disabled={exporting}>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        {exporting ? "Generating PDF..." : "Export as PDF"}
+                    </Button>
+                    {canDelete && (
+                        <Button variant="destructive" onClick={handleDelete}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    )}
+                </div>
             </div>
 
             <Header title={isZonal ? `Zonal Monthly Summary: ${report.state}` : `Monthly Summary: ${report.state}`} />

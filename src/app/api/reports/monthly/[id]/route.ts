@@ -139,3 +139,53 @@ export async function GET(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+
+export async function DELETE(
+    _request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    try {
+        const session = await auth();
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        if (session.user.role !== UserRole.COORDINATOR) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        await connectDB();
+
+        const report = await MonthlyReport.findById(id).lean();
+        if (!report) {
+            return NextResponse.json({ error: "Report not found" }, { status: 404 });
+        }
+
+        const coordDoc = await Coordinator.findOne({ authId: session.user.id });
+        if (!coordDoc) {
+            return NextResponse.json({ error: "Coordinator profile not found" }, { status: 403 });
+        }
+
+        // Coordinators can delete their own zonal reports
+        const isOwnZonal = report.type === "zonal"
+            && report.coordinator?.toString() === coordDoc._id.toString();
+
+        // Coordinators can delete mentor reports from mentors assigned to them
+        let isMentorUnderThem = false;
+        if (report.type === "mentor" && report.mentor) {
+            const mentorDoc = await Mentor.findById(report.mentor).lean();
+            isMentorUnderThem = mentorDoc?.coordinator?.toString() === coordDoc._id.toString();
+        }
+
+        if (!isOwnZonal && !isMentorUnderThem) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        await MonthlyReport.findByIdAndDelete(id);
+
+        return NextResponse.json({ message: "Monthly report deleted" });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

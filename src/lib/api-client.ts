@@ -217,6 +217,8 @@ export const api = {
       get: (id: string) => request<MonthlyReport>(`/api/reports/monthly/${id}`),
       create: (data: CreateMonthlyReportInput) =>
         request<MonthlyReport>("/api/reports/monthly", { method: "POST", body: JSON.stringify(data) }),
+      delete: (id: string) =>
+        request<{ message: string }>(`/api/reports/monthly/${id}`, { method: "DELETE" }),
     }
   },
 
