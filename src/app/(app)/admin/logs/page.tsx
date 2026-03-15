@@ -80,7 +80,7 @@ function DateRange({
   from: string; to: string;
   onChange: (field: "from" | "to", val: string) => void;
 }) {
-  const cls = "h-10 rounded-md border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-600";
+  const cls = "h-10 rounded-md border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-600";
   return (
     <>
       <div className="space-y-1">
@@ -488,7 +488,7 @@ export default function LogsPage() {
               className={[
                 "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-md transition-colors",
                 activeTab === id
-                  ? "border border-b-white border-gray-200 bg-white text-green-700 -mb-px"
+                  ? "border border-b-white border-gray-200 bg-white text-orange-700 -mb-px"
                   : "text-gray-500 hover:text-gray-700",
               ].join(" ")}
             >

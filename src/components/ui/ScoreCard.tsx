@@ -26,7 +26,7 @@ export function ScoreCard({ title, value, subtitle, icon: Icon, trend, className
               <p
                 className={cn(
                   "text-sm mt-1",
-                  trend === "up" && "text-green-600",
+                  trend === "up" && "text-orange-600",
                   trend === "down" && "text-red-600",
                   (!trend || trend === "neutral") && "text-gray-500"
                 )}
@@ -36,8 +36,8 @@ export function ScoreCard({ title, value, subtitle, icon: Icon, trend, className
             )}
           </div>
           {Icon && (
-            <div className="p-3 bg-green-50 rounded-full">
-              <Icon className="h-6 w-6 text-green-700" />
+            <div className="p-3 bg-orange-50 rounded-full">
+              <Icon className="h-6 w-6 text-orange-700" />
             </div>
           )}
         </div>

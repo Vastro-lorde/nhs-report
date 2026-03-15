@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
-import { APP_NAME } from "@/lib/constants";
+import { APP_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 function LoginForm() {
   const router = useRouter();
@@ -46,9 +46,7 @@ function LoginForm() {
       <div className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="mx-auto h-14 w-14 rounded-xl bg-green-700 flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-xl">CWCR</span>
-          </div>
+          <img src={APP_LOGO_URL} alt="CWC Research" className="mx-auto h-14 w-14 rounded-xl object-cover mb-4" />
           <h1 className="text-2xl font-bold text-gray-900">
             {APP_NAME.replace("CWCR-", "")}
           </h1>

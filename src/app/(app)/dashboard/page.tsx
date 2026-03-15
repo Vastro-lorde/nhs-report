@@ -161,7 +161,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
                       yAxisId="left"
                       type="monotone"
                       dataKey="Submission Rate (%)"
-                      stroke="#15803d"
+                      stroke="#c2410c"
                       strokeWidth={2}
                     />
                     <Line
@@ -192,7 +192,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
                     <XAxis dataKey="state" fontSize={12} />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="reports" fill="#15803d" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="reports" fill="#c2410c" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -251,7 +251,7 @@ function MentorDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-700" />
       </div>
     );
   }
@@ -277,7 +277,7 @@ function MentorDashboard() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-green-700" />
+                <UserCheck className="h-5 w-5 text-orange-700" />
                 My Profile
               </CardTitle>
             </CardHeader>
@@ -322,7 +322,7 @@ function MentorDashboard() {
 
                 <div className="w-full mt-6 bg-gray-50 rounded-lg p-4 border grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-green-700">
+                    <p className="text-2xl font-bold text-orange-700">
                       {fellows.filter(f => f.gender.toLowerCase() === 'male' || f.gender.toLowerCase() === 'm').length}
                     </p>
                     <p className="text-xs text-gray-500 uppercase mt-1">Male</p>
@@ -364,7 +364,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-700" />
       </div>
     );
   }

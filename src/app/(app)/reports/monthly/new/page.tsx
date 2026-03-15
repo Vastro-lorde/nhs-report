@@ -92,7 +92,7 @@ export default function NewMonthlyReportPage() {
                                     : "Write a high-level overview of the mentoring activities, successes, and challenges observed across your zone for the month."}
                             </p>
                             <textarea
-                                className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                                 placeholder={isMentor
                                     ? "This month I focused on building rapport with my mentees..."
                                     : "Our state saw tremendous growth in mentee check-ins this month..."}

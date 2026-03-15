@@ -290,7 +290,7 @@ export default function MentorDetailsPage({
                                 <p className="text-sm text-gray-600">Enter a new password for {mentor?.name}.</p>
 
                                 {resetError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{resetError}</p>}
-                                {resetSuccess && <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{resetSuccess}</p>}
+                                {resetSuccess && <p className="text-sm text-orange-700 bg-orange-50 p-2 rounded">{resetSuccess}</p>}
 
                                 <Input
                                     label="New Password"
@@ -330,7 +330,7 @@ export default function MentorDetailsPage({
                                 </p>
 
                                 {changeEmailError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{changeEmailError}</p>}
-                                {changeEmailSuccess && <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{changeEmailSuccess}</p>}
+                                {changeEmailSuccess && <p className="text-sm text-orange-700 bg-orange-50 p-2 rounded">{changeEmailSuccess}</p>}
 
                                 <Input
                                     label="New Email"
@@ -373,7 +373,7 @@ export default function MentorDetailsPage({
                                 <p className="text-sm text-gray-600">Update the mentor&apos;s name, phone, states, and LGAs.</p>
 
                                 {editError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{editError}</p>}
-                                {editSuccess && <p className="text-sm text-green-700 bg-green-50 p-2 rounded">{editSuccess}</p>}
+                                {editSuccess && <p className="text-sm text-orange-700 bg-orange-50 p-2 rounded">{editSuccess}</p>}
 
                                 <Input
                                     label="Full Name *"

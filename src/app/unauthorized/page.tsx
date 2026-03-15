@@ -23,7 +23,7 @@ export default function UnauthorizedPage() {
 
                 <div className="pt-4 flex justify-center">
                     <Link href="/dashboard" className="w-full sm:w-auto">
-                        <Button className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white">
+                        <Button className="w-full sm:w-auto bg-orange-700 hover:bg-orange-800 text-white">
                             <Home className="mr-2 h-4 w-4" />
                             Return to Dashboard
                         </Button>

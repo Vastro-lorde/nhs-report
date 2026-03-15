@@ -130,7 +130,7 @@ export default function FellowDocumentUploadPage({
                 </Button>
 
                 {error && <div className="bg-red-50 text-red-600 p-4 rounded-md">{error}</div>}
-                {success && <div className="bg-green-50 text-green-700 p-4 rounded-md">{success}</div>}
+                {success && <div className="bg-orange-50 text-orange-700 p-4 rounded-md">{success}</div>}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Upload Section */}
@@ -218,7 +218,7 @@ export default function FellowDocumentUploadPage({
                                                 href={doc.url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-sm text-green-700 hover:underline font-medium px-2"
+                                                className="text-sm text-orange-700 hover:underline font-medium px-2"
                                             >
                                                 View
                                             </a>

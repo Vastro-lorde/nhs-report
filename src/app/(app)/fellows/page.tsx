@@ -351,7 +351,7 @@ export default function FellowsPage() {
                             placeholder="Search by name or LGA…"
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="w-full pl-9 pr-4 h-10 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+                            className="w-full pl-9 pr-4 h-10 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-600"
                         />
                     </div>
                     <Button type="submit" size="sm" variant="outline">Search</Button>

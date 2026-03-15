@@ -31,7 +31,7 @@ const statusIcon = (status: string) => {
     case AlertStatus.IN_REVIEW:
       return <Clock className="h-4 w-4 text-yellow-500" />;
     case AlertStatus.RESOLVED:
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
+      return <CheckCircle className="h-4 w-4 text-orange-500" />;
     default:
       return null;
   }

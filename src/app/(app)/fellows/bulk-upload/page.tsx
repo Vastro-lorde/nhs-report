@@ -187,7 +187,7 @@ export default function BulkUploadFellowsPage() {
                 )}
 
                 {successMsg && (
-                    <div className="bg-green-50 text-green-700 p-4 rounded-md">
+                    <div className="bg-orange-50 text-orange-700 p-4 rounded-md">
                         {successMsg}
                     </div>
                 )}

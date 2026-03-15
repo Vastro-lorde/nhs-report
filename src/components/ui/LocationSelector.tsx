@@ -128,7 +128,7 @@ export function LocationSelector({
                             <button
                                 key={state}
                                 type="button"
-                                className="px-3 py-1 text-xs bg-green-50 text-green-700 rounded-full border border-green-200 hover:bg-green-100 transition-colors"
+                                className="px-3 py-1 text-xs bg-orange-50 text-orange-700 rounded-full border border-orange-200 hover:bg-orange-100 transition-colors"
                                 onClick={() => handleAddState(state)}
                             >
                                 + {state}
@@ -143,7 +143,7 @@ export function LocationSelector({
                     value={stateSearch}
                     onChange={(e) => setStateSearch(e.target.value)}
                     placeholder="Type to search and add states..."
-                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent"
                 />
             </div>
 
@@ -192,7 +192,7 @@ export function LocationSelector({
                         value={lgaSearch}
                         onChange={(e) => setLgaSearch(e.target.value)}
                         placeholder="Type to search and add LGAs..."
-                        className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                        className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent"
                     />
                 </div>
             )}

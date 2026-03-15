@@ -3,6 +3,7 @@
    ────────────────────────────────────────── */
 // ─── App Constants ──────────────────────────
 export const APP_NAME = "CWCR-NHF Mentors Reporting";
+export const APP_LOGO_URL = "/logo.png";
 
 // ─── User Roles ─────────────────────────────
 export const UserRole = {

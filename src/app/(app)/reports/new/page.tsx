@@ -573,7 +573,7 @@ export default function NewReportPage() {
                               : prev.filter((t) => t !== type)
                           );
                         }}
-                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       {type}
                     </label>
@@ -605,7 +605,7 @@ export default function NewReportPage() {
                               : prev.filter((t) => t !== type)
                           );
                         }}
-                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       {type}
                     </label>
@@ -674,7 +674,7 @@ export default function NewReportPage() {
             <div className="space-y-3">
               {evidenceUrls.map((url, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className="text-green-600">✓</span>
+                  <span className="text-orange-600">✓</span>
                   <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-md">
                     {url.split("/").pop()}
                   </a>

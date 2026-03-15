@@ -97,7 +97,7 @@ export default function MonthlyReportsPage() {
                                             <p>No monthly reports generated yet.</p>
                                             {canCreate && (
                                                 <Link href="/reports/monthly/new">
-                                                    <span className="text-green-600 hover:underline">Create your first monthly report</span>
+                                                    <span className="text-orange-600 hover:underline">Create your first monthly report</span>
                                                 </Link>
                                             )}
                                         </div>
@@ -111,7 +111,7 @@ export default function MonthlyReportsPage() {
                                         <tr key={r._id} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 font-medium">{displayMonth}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.type === "zonal" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"}`}>
+                                                <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${r.type === "zonal" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}`}>
                                                     {r.type === "zonal" ? "Zonal" : "Mentor"}
                                                 </span>
                                             </td>

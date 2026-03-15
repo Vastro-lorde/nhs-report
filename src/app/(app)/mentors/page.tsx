@@ -559,7 +559,7 @@ export default function MentorsPage() {
                         {m.active ? (
                           <UserX className="h-4 w-4 text-red-500" />
                         ) : (
-                          <UserCheck className="h-4 w-4 text-green-600" />
+                          <UserCheck className="h-4 w-4 text-orange-600" />
                         )}
                       </Button>
                       )}

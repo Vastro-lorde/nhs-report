@@ -17,7 +17,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
-import { APP_NAME, UserRole } from "@/lib/constants";
+import { APP_NAME, APP_LOGO_URL, UserRole } from "@/lib/constants";
 import { useSidebar } from "./SidebarContext";
 
 const NAV_ITEMS = [
@@ -171,9 +171,7 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-200 px-6">
-          <div className="h-8 w-8 rounded-lg bg-green-700 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">CWCR</span>
-          </div>
+          <img src={APP_LOGO_URL} alt="CWC Research" className="h-8 w-8 rounded-lg object-cover" />
           <span className="font-semibold text-gray-900">{APP_NAME.replace("CWCR-", "")}</span>
         </div>
 
@@ -190,7 +188,7 @@ export function Sidebar() {
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-green-50 text-green-700"
+                        ? "bg-orange-50 text-orange-700"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     )}
                   >
@@ -214,7 +212,7 @@ export function Sidebar() {
                   className="h-10 w-10 rounded-full object-cover shrink-0"
                 />
               ) : (
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-700 text-white text-sm font-semibold shrink-0">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-700 text-white text-sm font-semibold shrink-0">
                   {session.user.name
                     ?.split(" ")
                     .map((n) => n[0])
@@ -228,7 +226,7 @@ export function Sidebar() {
                   {session.user.name}
                 </p>
                 <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
-                <span className="inline-block mt-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 capitalize">
+                <span className="inline-block mt-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 capitalize">
                   {ROLE_DISPLAY_NAMES[session.user.role] ?? session.user.role}
                 </span>
               </div>

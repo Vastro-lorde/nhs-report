@@ -48,7 +48,7 @@ export function Header({ title, subtitle, children }: HeaderProps) {
                 className="h-9 w-9 rounded-full object-cover"
               />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-700 text-white text-xs font-semibold">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-700 text-white text-xs font-semibold">
                 {session.user.name
                   ?.split(" ")
                   .map((n: string) => n[0])

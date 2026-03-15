@@ -50,7 +50,7 @@ export function SearchableSelect({
             {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
             <div
                 className={cn(
-                    "flex min-h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 cursor-pointer focus-within:ring-2 focus-within:ring-green-600 focus-within:border-transparent",
+                    "flex min-h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 cursor-pointer focus-within:ring-2 focus-within:ring-orange-600 focus-within:border-transparent",
                     error && "border-red-500 focus-within:ring-red-500",
                     className
                 )}
@@ -98,8 +98,8 @@ export function SearchableSelect({
                             <div
                                 key={opt.value}
                                 className={cn(
-                                    "relative flex cursor-pointer select-none items-center py-2 pl-3 pr-9 hover:bg-green-50 hover:text-green-900",
-                                    value === opt.value ? "bg-green-50 font-medium text-green-900" : "text-gray-900"
+                                    "relative flex cursor-pointer select-none items-center py-2 pl-3 pr-9 hover:bg-orange-50 hover:text-orange-900",
+                                    value === opt.value ? "bg-orange-50 font-medium text-orange-900" : "text-gray-900"
                                 )}
                                 onClick={() => {
                                     onChange(opt.value);
@@ -109,7 +109,7 @@ export function SearchableSelect({
                             >
                                 <span className="block truncate">{opt.label}</span>
                                 {value === opt.value ? (
-                                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-green-600">
+                                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-orange-600">
                                         <Check className="h-4 w-4" />
                                     </span>
                                 ) : null}

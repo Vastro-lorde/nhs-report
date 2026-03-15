@@ -32,7 +32,7 @@ import {
 } from "recharts";
 
 const COLORS = [
-  "#16a34a", "#2563eb", "#d97706", "#dc2626",
+  "#ea580c", "#2563eb", "#d97706", "#dc2626",
   "#7c3aed", "#0891b2", "#db2777", "#65a30d",
 ];
 
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
                     yAxisId="left"
                     type="monotone"
                     dataKey="submissionRate"
-                    stroke="#16a34a"
+                    stroke="#ea580c"
                     name="Submit %"
                     strokeWidth={2}
                   />
@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
                   <YAxis width={30} fontSize={10} tickMargin={5} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                  <Bar dataKey="reportsSubmitted" fill="#16a34a" name="Reports" />
+                  <Bar dataKey="reportsSubmitted" fill="#ea580c" name="Reports" />
                   <Bar dataKey="totalSessions" fill="#2563eb" name="Sessions" />
                 </BarChart>
               )}
@@ -215,7 +215,7 @@ export default function AnalyticsPage() {
                   <XAxis type="number" fontSize={10} tickMargin={5} />
                   <YAxis dataKey="_id" type="category" width={80} fontSize={10} tickMargin={5} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#16a34a" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="#ea580c" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

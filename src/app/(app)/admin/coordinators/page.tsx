@@ -206,10 +206,10 @@ function ChangeEmailModal({
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
                 {success ? (
                     <div className="p-6 text-center space-y-4">
-                        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                        <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
                             <UserCheck className="w-6 h-6" />
                         </div>
-                        <h2 className="text-lg font-semibold text-green-700">Email Updated</h2>
+                        <h2 className="text-lg font-semibold text-orange-700">Email Updated</h2>
                         <p className="text-sm text-gray-600">
                             A temporary password was sent to the new email.
                         </p>
@@ -288,10 +288,10 @@ function ResetPasswordModal({
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
                 {success ? (
                     <div className="p-6 text-center space-y-4">
-                        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                        <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
                             <UserCheck className="w-6 h-6" />
                         </div>
-                        <h2 className="text-lg font-semibold text-green-700">Password Reset Successful!</h2>
+                        <h2 className="text-lg font-semibold text-orange-700">Password Reset Successful!</h2>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
@@ -563,7 +563,7 @@ export default function CoordinatorsPage() {
                                                 {c.active ? (
                                                     <UserX className="h-4 w-4 text-red-500" />
                                                 ) : (
-                                                    <UserCheck className="h-4 w-4 text-green-600" />
+                                                    <UserCheck className="h-4 w-4 text-orange-600" />
                                                 )}
                                             </Button>
                                             <Button

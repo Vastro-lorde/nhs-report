@@ -31,7 +31,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             id={id}
             className={cn(
-              "flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
+              "flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
               isPassword && "pr-10",
               error && "border-red-500 focus:ring-red-500",
               className
@@ -48,7 +48,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               disabled={props.disabled}
               className={cn(
                 "absolute right-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500",
-                "hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600",
+                "hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-600",
                 props.disabled && "pointer-events-none opacity-50"
               )}
               onMouseDown={(e) => e.preventDefault()}

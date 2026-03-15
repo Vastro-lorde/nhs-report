@@ -41,7 +41,7 @@ export default function GlobalError({
                         Try Again
                     </Button>
                     <Link href="/dashboard" className="w-full sm:w-auto">
-                        <Button className="w-full bg-green-700 hover:bg-green-800 text-white">
+                        <Button className="w-full bg-orange-700 hover:bg-orange-800 text-white">
                             <Home className="mr-2 h-4 w-4" />
                             Go to Dashboard
                         </Button>

@@ -84,7 +84,7 @@ const s = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 16,
-    color: "#15803d",
+    color: "#c2410c",
   },
   sessionWeek: {
     fontSize: 12,
@@ -108,7 +108,7 @@ const s = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 12,
     marginBottom: 4,
-    color: "#15803d",
+    color: "#c2410c",
   },
   bulletItem: {
     paddingLeft: 14,

@@ -144,19 +144,19 @@ export default function MonthlyReportDetailPage() {
             <div ref={contentRef} className="p-6 max-w-4xl space-y-8 bg-gray-50" style={{ padding: '2rem' }}>
 
                 <Card className="border-none shadow-sm">
-                    <CardHeader className={`text-white rounded-t-xl pb-6 ${isZonal ? "bg-blue-700" : "bg-green-700"}`}>
+                    <CardHeader className={`text-white rounded-t-xl pb-6 ${isZonal ? "bg-blue-700" : "bg-orange-700"}`}>
                         <div className="flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${isZonal ? "bg-blue-200 text-blue-900" : "bg-green-200 text-green-900"}`}>
+                                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${isZonal ? "bg-blue-200 text-blue-900" : "bg-orange-200 text-orange-900"}`}>
                                         {isZonal ? "Zonal Report" : "Mentor Report"}
                                     </span>
                                 </div>
                                 <CardTitle className="text-2xl mb-1">{displayMonth} Overview</CardTitle>
-                                <p className={`font-medium ${isZonal ? "text-blue-100" : "text-green-100"}`}>{authorRole}: {authorName}</p>
+                                <p className={`font-medium ${isZonal ? "text-blue-100" : "text-orange-100"}`}>{authorRole}: {authorName}</p>
                             </div>
                             <div className="text-right">
-                                <p className={`text-xs uppercase tracking-wider font-semibold mb-1 ${isZonal ? "text-blue-200" : "text-green-200"}`}>Total Reports Aggregated</p>
+                                <p className={`text-xs uppercase tracking-wider font-semibold mb-1 ${isZonal ? "text-blue-200" : "text-orange-200"}`}>Total Reports Aggregated</p>
                                 <p className="text-3xl font-bold">{report.weeklyReports.length}</p>
                             </div>
                         </div>
@@ -198,8 +198,8 @@ export default function MonthlyReportDetailPage() {
 
                                     <div className="grid grid-cols-2 gap-4 text-sm mt-4">
                                         {wr.keyWins && (
-                                            <div className="bg-green-50 p-3 rounded-md">
-                                                <p className="font-semibold text-green-800 mb-1">Key Wins</p>
+                                            <div className="bg-orange-50 p-3 rounded-md">
+                                                <p className="font-semibold text-orange-800 mb-1">Key Wins</p>
                                                 <p className="text-gray-700 whitespace-pre-wrap">{wr.keyWins}</p>
                                             </div>
                                         )}
