@@ -42,6 +42,6 @@ export const config = {
     /*
      * Match all routes except static assets and _next
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|logo\\.png).*)",
   ],
 };
