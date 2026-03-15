@@ -6,6 +6,7 @@ import { Mentor } from "@/models/Mentor";
 import { Coordinator } from "@/models/Coordinator";
 import { DeskOfficer } from "@/models/DeskOfficer";
 import { UserRole } from "@/lib/constants";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function GET(
     request: Request,
@@ -151,7 +152,9 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (session.user.role !== UserRole.COORDINATOR) {
+        const role = session.user.role;
+
+        if (role !== UserRole.ADMIN && role !== UserRole.COORDINATOR) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -162,28 +165,32 @@ export async function DELETE(
             return NextResponse.json({ error: "Report not found" }, { status: 404 });
         }
 
-        const coordDoc = await Coordinator.findOne({ authId: session.user.id });
-        if (!coordDoc) {
-            return NextResponse.json({ error: "Coordinator profile not found" }, { status: 403 });
-        }
+        // Admins can delete any report; coordinators need ownership checks
+        if (role === UserRole.COORDINATOR) {
+            const coordDoc = await Coordinator.findOne({ authId: session.user.id });
+            if (!coordDoc) {
+                return NextResponse.json({ error: "Coordinator profile not found" }, { status: 403 });
+            }
 
-        // Coordinators can delete their own zonal reports
-        const isOwnZonal = report.type === "zonal"
-            && report.coordinator?.toString() === coordDoc._id.toString();
+            // Coordinators can delete their own zonal reports
+            const isOwnZonal = report.type === "zonal"
+                && report.coordinator?.toString() === coordDoc._id.toString();
 
-        // Coordinators can delete mentor reports from mentors assigned to them
-        let isMentorUnderThem = false;
-        if (report.type === "mentor" && report.mentor) {
-            const mentorDoc = await Mentor.findById(report.mentor).lean();
-            isMentorUnderThem = mentorDoc?.coordinator?.toString() === coordDoc._id.toString();
-        }
+            // Coordinators can delete mentor reports from mentors assigned to them
+            let isMentorUnderThem = false;
+            if (report.type === "mentor" && report.mentor) {
+                const mentorDoc = await Mentor.findById(report.mentor).lean();
+                isMentorUnderThem = mentorDoc?.coordinator?.toString() === coordDoc._id.toString();
+            }
 
-        if (!isOwnZonal && !isMentorUnderThem) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            if (!isOwnZonal && !isMentorUnderThem) {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            }
         }
 
         await MonthlyReport.findByIdAndDelete(id);
 
+        void logActivity({ session, action: "DELETE_MONTHLY_REPORT", targetType: "MonthlyReport", targetId: id, targetName: report.month });
         return NextResponse.json({ message: "Monthly report deleted" });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

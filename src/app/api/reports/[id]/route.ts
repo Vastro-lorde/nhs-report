@@ -133,3 +133,28 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   void logActivity({ session, action: "UPDATE_REPORT", targetType: "Report", targetId: id, targetName: report.weekKey });
   return jsonOk(report);
 }
+
+// DELETE /api/reports/:id — admin can delete any weekly report
+export async function DELETE(_request: NextRequest, { params }: Params) {
+  const { session, error } = await requireAuth();
+  if (error) return error;
+
+  if (session!.user.role !== UserRole.ADMIN) {
+    return jsonError("Forbidden", 403);
+  }
+
+  const { id } = await params;
+  await connectDB();
+
+  const report = await WeeklyReport.findById(id);
+  if (!report) return jsonError("Report not found", 404);
+
+  const weekKey = report.weekKey;
+  await WeeklyReport.findByIdAndDelete(id);
+
+  // Rebuild rollup after deletion
+  await rebuildRollupForWeek(weekKey);
+
+  void logActivity({ session, action: "DELETE_REPORT", targetType: "Report", targetId: id, targetName: weekKey });
+  return jsonOk({ message: "Weekly report deleted" });
+}
