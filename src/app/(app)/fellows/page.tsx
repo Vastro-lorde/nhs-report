@@ -274,8 +274,8 @@ export default function FellowsPage() {
     };
 
     // Mentors + Admins + ME Officers + Desk Officers + Team Research Leads only
-    const isReadOnly = role === UserRole.ME_OFFICER || role === UserRole.ZONAL_DESK_OFFICER || role === UserRole.TEAM_RESEARCH_LEAD;
-    if (session?.user && session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER && session.user.role !== UserRole.ZONAL_DESK_OFFICER && session.user.role !== UserRole.TEAM_RESEARCH_LEAD) {
+    const isReadOnly = role === UserRole.ME_OFFICER || role === UserRole.ZONAL_DESK_OFFICER || role === UserRole.TEAM_RESEARCH_LEAD || role === UserRole.COORDINATOR;
+    if (session?.user && session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER && session.user.role !== UserRole.ZONAL_DESK_OFFICER && session.user.role !== UserRole.TEAM_RESEARCH_LEAD && session.user.role !== UserRole.COORDINATOR) {
         return (
             <div className="p-12 text-center text-gray-500">
                 You do not have permission to view this page. Fellows are managed directly by Mentors.

@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { Fellow } from "@/models/Fellow";
 import { Mentor } from "@/models/Mentor";
 import { DeskOfficer } from "@/models/DeskOfficer";
+import { Coordinator } from "@/models/Coordinator";
 import { UserRole } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
 
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER && session.user.role !== UserRole.ZONAL_DESK_OFFICER && session.user.role !== UserRole.TEAM_RESEARCH_LEAD) {
+        if (session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.ME_OFFICER && session.user.role !== UserRole.ZONAL_DESK_OFFICER && session.user.role !== UserRole.TEAM_RESEARCH_LEAD && session.user.role !== UserRole.COORDINATOR) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -38,6 +39,14 @@ export async function GET(request: Request) {
             const deskOfficerDoc = await DeskOfficer.findOne({ authId: session.user.id }).lean();
             if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
                 const mentorIds = await Mentor.find({ states: { $in: deskOfficerDoc.states } }).distinct("_id");
+                filter.mentor = { $in: mentorIds };
+            } else {
+                return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+            }
+        } else if (session.user.role === UserRole.COORDINATOR) {
+            const coordinatorDoc = await Coordinator.findOne({ authId: session.user.id }).lean();
+            if (coordinatorDoc) {
+                const mentorIds = await Mentor.find({ coordinator: coordinatorDoc._id }).distinct("_id");
                 filter.mentor = { $in: mentorIds };
             } else {
                 return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
