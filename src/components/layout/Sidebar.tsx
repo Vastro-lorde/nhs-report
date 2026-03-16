@@ -19,6 +19,8 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { APP_NAME, APP_LOGO_URL, UserRole } from "@/lib/constants";
 import { useSidebar } from "./SidebarContext";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api-client";
 
 const NAV_ITEMS = [
   {
@@ -137,9 +139,23 @@ export function Sidebar() {
   const { data: session, status } = useSession();
   const role = session?.user?.role as UserRole | undefined;
   const { isSidebarOpen, setSidebarOpen } = useSidebar();
+  const [hasCurrentWeekReport, setHasCurrentWeekReport] = useState(false);
+
+  useEffect(() => {
+    if (role !== UserRole.MENTOR) return;
+    api.reports.checkCurrentWeek()
+      .then((data) => {
+        if (data.hasReport) setHasCurrentWeekReport(true);
+      })
+      .catch(() => {});
+  }, [role]);
 
   const visibleItems = NAV_ITEMS.filter(
-    (item) => !role || item.roles.includes(role)
+    (item) => {
+      if (role && !item.roles.includes(role)) return false;
+      if (item.label === "Submit Report" && hasCurrentWeekReport) return false;
+      return true;
+    }
   );
 
   if (status === "loading") {

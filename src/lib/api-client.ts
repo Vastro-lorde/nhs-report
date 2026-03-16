@@ -202,6 +202,8 @@ export const api = {
       request<Report>(`/api/reports/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     delete: (id: string) =>
       request<{ message: string }>(`/api/reports/${id}`, { method: "DELETE" }),
+    checkCurrentWeek: () =>
+      request<{ hasReport: boolean }>("/api/reports/check-current-week"),
 
     comments: {
       list: (reportId: string) =>
