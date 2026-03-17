@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { FellowMonthlyReport } from "@/models/FellowMonthlyReport";
+import { Fellow } from "@/models/Fellow";
 import { Mentor } from "@/models/Mentor";
 import { Coordinator } from "@/models/Coordinator";
 import { DeskOfficer } from "@/models/DeskOfficer";
@@ -70,14 +71,23 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
-        const report = await FellowMonthlyReport.create({ ...body, mentor: mentorDoc._id });
+        const fellowDoc = await Fellow.findById(body.fellow).lean();
+        if (!fellowDoc) return NextResponse.json({ error: "Fellow not found." }, { status: 400 });
+
+        const report = await FellowMonthlyReport.create({
+            ...body,
+            mentor: mentorDoc._id,
+            fellowName: fellowDoc.name,
+            fellowLGA: fellowDoc.lga ?? "",
+            fellowQualification: fellowDoc.qualification ?? "",
+        });
 
         void logActivity({
             session,
             action: "CREATE_FELLOW_MONTHLY_REPORT",
             targetType: "FellowMonthlyReport",
             targetId: String(report._id),
-            targetName: `${body.fellowName} – ${body.month}`,
+            targetName: `${fellowDoc.name} – ${body.month}`,
         });
 
         return NextResponse.json(report, { status: 201 });
