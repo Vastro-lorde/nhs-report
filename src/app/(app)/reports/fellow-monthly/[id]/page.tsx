@@ -12,12 +12,12 @@ import { pdf } from "@react-pdf/renderer";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { api, type FellowMonthlyReport } from "@/lib/api-client";
+import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
 import { ArrowLeft, Trash2, Loader2, Download } from "lucide-react";
 
-const FellowMonthlyReportPDF = dynamic(
-  () => import("@/components/pdf/FellowMonthlyReportPDF").then(m => m.FellowMonthlyReportPDF),
+const MentorMonthlyReportPDF = dynamic(
+  () => import("@/components/pdf/MentorMonthlyReportPDF").then(m => m.MentorMonthlyReportPDF),
   { ssr: false }
 );
 
@@ -60,13 +60,13 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-export default function FellowMonthlyReportDetailPage() {
+export default function MentorMonthlyReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = useSession();
   const userRole = session?.user?.role;
 
-  const [report, setReport] = useState<FellowMonthlyReport | null>(null);
+  const [report, setReport] = useState<MentorMonthlyReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -92,7 +92,7 @@ export default function FellowMonthlyReportDetailPage() {
     if (!report) return;
     setDownloading(true);
     try {
-      const { FellowMonthlyReportPDF: PDFDoc } = await import("@/components/pdf/FellowMonthlyReportPDF");
+      const { MentorMonthlyReportPDF: PDFDoc } = await import("@/components/pdf/MentorMonthlyReportPDF");
       const displayMonth = format(parseISO(`${report.month}-01`), "MMMM yyyy");
       const mentorName = (report.mentor as any)?.authId?.name as string | undefined;
       const blob = await pdf(
@@ -101,7 +101,7 @@ export default function FellowMonthlyReportDetailPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `FellowMonthlyReport_${report.month}_${report.fellowName.replace(/\s+/g, "_")}.pdf`;
+      link.download = `MentorMonthlyReport_${report.month}_${report.fellowName.replace(/\s+/g, "_")}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

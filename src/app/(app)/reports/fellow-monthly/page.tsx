@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { api, type FellowMonthlyReport } from "@/lib/api-client";
+import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
 import { Eye, FileText, Plus, Trash2 } from "lucide-react";
 
@@ -21,13 +21,13 @@ const RATING_COLORS: Record<string, string> = {
   "Needs Improvement": "bg-red-100 text-red-800",
 };
 
-export default function FellowMonthlyReportsPage() {
+export default function MentorMonthlyReportsPage() {
   const { data: session } = useSession();
   const userRole = session?.user?.role;
   const canCreate = userRole === UserRole.MENTOR;
   const canDelete = userRole === UserRole.MENTOR || userRole === UserRole.ADMIN;
 
-  const [reports, setReports] = useState<FellowMonthlyReport[]>([]);
+  const [reports, setReports] = useState<MentorMonthlyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 

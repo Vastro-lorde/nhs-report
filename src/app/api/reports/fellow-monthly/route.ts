@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import { FellowMonthlyReport } from "@/models/FellowMonthlyReport";
+import { MentorMonthlyReport } from "@/models/MentorMonthlyReport";
 import { Fellow } from "@/models/Fellow";
 import { Mentor } from "@/models/Mentor";
 import { Coordinator } from "@/models/Coordinator";
@@ -42,14 +42,14 @@ export async function GET(request: Request) {
         // Admin, ME Officer, Team Research Lead see all
 
         const [data, total] = await Promise.all([
-            FellowMonthlyReport.find(filter)
+            MentorMonthlyReport.find(filter)
                 .populate({ path: "mentor", populate: { path: "authId", select: "name email" } })
                 .populate({ path: "fellow", select: "name lga qualification" })
                 .sort({ month: -1, createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .lean(),
-            FellowMonthlyReport.countDocuments(filter),
+            MentorMonthlyReport.countDocuments(filter),
         ]);
 
         return NextResponse.json({ data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         const fellowDoc = await Fellow.findById(body.fellow).lean();
         if (!fellowDoc) return NextResponse.json({ error: "Fellow not found." }, { status: 400 });
 
-        const report = await FellowMonthlyReport.create({
+        const report = await MentorMonthlyReport.create({
             ...body,
             mentor: mentorDoc._id,
             fellowName: fellowDoc.name,
@@ -84,8 +84,8 @@ export async function POST(request: Request) {
 
         void logActivity({
             session,
-            action: "CREATE_FELLOW_MONTHLY_REPORT",
-            targetType: "FellowMonthlyReport",
+            action: "CREATE_MENTOR_MONTHLY_REPORT",
+            targetType: "MentorMonthlyReport",
             targetId: String(report._id),
             targetName: `${fellowDoc.name} – ${body.month}`,
         });

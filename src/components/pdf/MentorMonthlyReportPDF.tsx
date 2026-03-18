@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────
-   PDF Template: Fellow Monthly Report
+   PDF Template: Mentor Monthly Report
    Per-fellow progress report for NHF mentors
    ────────────────────────────────────────── */
 "use client";
@@ -12,7 +12,7 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
-import type { FellowMonthlyReport } from "@/lib/api-client";
+import type { MentorMonthlyReport } from "@/lib/api-client";
 import { APP_NAME } from "@/lib/constants";
 
 Font.register({
@@ -154,13 +154,13 @@ function PageFooter() {
   );
 }
 
-interface FellowMonthlyReportPDFProps {
-  report: FellowMonthlyReport;
+interface MentorMonthlyReportPDFProps {
+  report: MentorMonthlyReport;
   mentorName?: string;
   monthLabel: string; // e.g. "March 2026"
 }
 
-export function FellowMonthlyReportPDF({ report, mentorName, monthLabel }: FellowMonthlyReportPDFProps) {
+export function MentorMonthlyReportPDF({ report, mentorName, monthLabel }: MentorMonthlyReportPDFProps) {
   const attendancePct =
     report.sessionsHeld > 0
       ? Math.round((report.sessionsAttended / report.sessionsHeld) * 100)

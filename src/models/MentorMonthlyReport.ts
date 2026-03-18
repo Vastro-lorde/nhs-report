@@ -1,12 +1,12 @@
 /* ──────────────────────────────────────────
-   Model: FellowMonthlyReport
+   Model: MentorMonthlyReport
    Per-fellow monthly report submitted by a mentor.
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 
 export type ProgressRating = "Excellent" | "Good" | "Fair" | "Needs Improvement" | "";
 
-export interface IFellowMonthlyReport extends Document {
+export interface IMentorMonthlyReport extends Document {
     mentor: Types.ObjectId;
     fellow: Types.ObjectId;
     month: string; // e.g. "2026-03"
@@ -43,7 +43,7 @@ export interface IFellowMonthlyReport extends Document {
     updatedAt: Date;
 }
 
-const FellowMonthlyReportSchema = new Schema<IFellowMonthlyReport>(
+const MentorMonthlyReportSchema = new Schema<IMentorMonthlyReport>(
     {
         mentor: { type: Schema.Types.ObjectId, ref: "Mentor", required: true, index: true },
         fellow: { type: Schema.Types.ObjectId, ref: "Fellow", required: true, index: true },
@@ -80,11 +80,11 @@ const FellowMonthlyReportSchema = new Schema<IFellowMonthlyReport>(
 );
 
 // One report per mentor per fellow per month
-FellowMonthlyReportSchema.index(
+MentorMonthlyReportSchema.index(
     { mentor: 1, fellow: 1, month: 1 },
     { unique: true }
 );
 
-export const FellowMonthlyReport: Model<IFellowMonthlyReport> =
-    models.FellowMonthlyReport ||
-    mongoose.model<IFellowMonthlyReport>("FellowMonthlyReport", FellowMonthlyReportSchema);
+export const MentorMonthlyReport: Model<IMentorMonthlyReport> =
+    models.MentorMonthlyReport ||
+    mongoose.model<IMentorMonthlyReport>("MentorMonthlyReport", MentorMonthlyReportSchema);

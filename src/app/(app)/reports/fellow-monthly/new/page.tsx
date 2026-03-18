@@ -13,12 +13,12 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
-import { api, type Fellow, type FellowMonthlyReportPrefill } from "@/lib/api-client";
+import { api, type Fellow, type MentorMonthlyReportPrefill } from "@/lib/api-client";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 const PROGRESS_RATINGS = ["Excellent", "Good", "Fair", "Needs Improvement"] as const;
 
-export default function NewFellowMonthlyReportPage() {
+export default function NewMentorMonthlyReportPage() {
   const router = useRouter();
 
   // ─── Data loading states ──────────────────
@@ -29,7 +29,7 @@ export default function NewFellowMonthlyReportPage() {
   // ─── Form state ───────────────────────────
   const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
   const [selectedFellowId, setSelectedFellowId] = useState("");
-  const [prefillData, setPrefillData] = useState<FellowMonthlyReportPrefill | null>(null);
+  const [prefillData, setPrefillData] = useState<MentorMonthlyReportPrefill | null>(null);
 
   // Section 1 – Fellow details (auto-filled, readonly)
   const [fellowName, setFellowName] = useState("");

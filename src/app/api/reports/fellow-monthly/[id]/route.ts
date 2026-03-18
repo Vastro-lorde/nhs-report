@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import { FellowMonthlyReport } from "@/models/FellowMonthlyReport";
+import { MentorMonthlyReport } from "@/models/MentorMonthlyReport";
 import { Mentor } from "@/models/Mentor";
 import { Coordinator } from "@/models/Coordinator";
 import { DeskOfficer } from "@/models/DeskOfficer";
@@ -18,7 +18,7 @@ export async function GET(
         if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         await connectDB();
-        const report = await FellowMonthlyReport.findById(id)
+        const report = await MentorMonthlyReport.findById(id)
             .populate({ path: "mentor", populate: { path: "authId", select: "name email" } })
             .populate({ path: "fellow", select: "name lga qualification" })
             .lean();
@@ -77,7 +77,7 @@ export async function DELETE(
         }
 
         await connectDB();
-        const report = await FellowMonthlyReport.findById(id).lean();
+        const report = await MentorMonthlyReport.findById(id).lean();
         if (!report) return NextResponse.json({ error: "Report not found." }, { status: 404 });
 
         if (role === UserRole.MENTOR) {
@@ -87,12 +87,12 @@ export async function DELETE(
             }
         }
 
-        await FellowMonthlyReport.findByIdAndDelete(id);
+        await MentorMonthlyReport.findByIdAndDelete(id);
 
         void logActivity({
             session,
-            action: "DELETE_FELLOW_MONTHLY_REPORT",
-            targetType: "FellowMonthlyReport",
+            action: "DELETE_MENTOR_MONTHLY_REPORT",
+            targetType: "MentorMonthlyReport",
             targetId: id,
             targetName: `${report.fellowName} – ${report.month}`,
         });

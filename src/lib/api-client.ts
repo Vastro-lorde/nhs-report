@@ -227,14 +227,14 @@ export const api = {
 
     fellowMonthly: {
       list: (params?: URLSearchParams | Record<string, string>) =>
-        request<PaginatedResponse<FellowMonthlyReport>>(`/api/reports/fellow-monthly?${new URLSearchParams(params).toString()}`),
-      get: (id: string) => request<FellowMonthlyReport>(`/api/reports/fellow-monthly/${id}`),
-      create: (data: CreateFellowMonthlyReportInput) =>
-        request<FellowMonthlyReport>("/api/reports/fellow-monthly", { method: "POST", body: JSON.stringify(data) }),
+        request<PaginatedResponse<MentorMonthlyReport>>(`/api/reports/fellow-monthly?${new URLSearchParams(params).toString()}`),
+      get: (id: string) => request<MentorMonthlyReport>(`/api/reports/fellow-monthly/${id}`),
+      create: (data: CreateMentorMonthlyReportInput) =>
+        request<MentorMonthlyReport>("/api/reports/fellow-monthly", { method: "POST", body: JSON.stringify(data) }),
       delete: (id: string) =>
         request<{ success: boolean }>(`/api/reports/fellow-monthly/${id}`, { method: "DELETE" }),
       prefill: (fellowId: string, month: string) =>
-        request<FellowMonthlyReportPrefill>(`/api/reports/fellow-monthly/prefill?fellowId=${fellowId}&month=${encodeURIComponent(month)}`),
+        request<MentorMonthlyReportPrefill>(`/api/reports/fellow-monthly/prefill?fellowId=${fellowId}&month=${encodeURIComponent(month)}`),
     },
   },
 
@@ -635,7 +635,7 @@ export interface CreateMonthlyReportInput {
   summaryText: string;
 }
 
-export interface FellowMonthlyReport {
+export interface MentorMonthlyReport {
   _id: string;
   mentor: { _id: string; authId?: { name: string; email: string } };
   fellow: { _id: string; name: string; lga: string; qualification?: string };
@@ -660,7 +660,7 @@ export interface FellowMonthlyReport {
   createdAt: string;
 }
 
-export interface CreateFellowMonthlyReportInput {
+export interface CreateMentorMonthlyReportInput {
   fellow: string;
   month: string;
   sessionsHeld: number;
@@ -678,7 +678,7 @@ export interface CreateFellowMonthlyReportInput {
   weeklyReportIds?: string[];
 }
 
-export interface FellowMonthlyReportPrefill {
+export interface MentorMonthlyReportPrefill {
   fellow: { _id: string; name: string; lga: string; qualification?: string };
   sessionsHeld: number;
   sessionsAttended: number;
