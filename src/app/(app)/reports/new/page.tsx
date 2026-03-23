@@ -50,22 +50,36 @@ export default function NewReportPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [fellowsRes, profileRes] = await Promise.all([
+        const [fellowsRes, profileRes, reportsRes] = await Promise.all([
           fetch("/api/fellows?limit=500"),
           fetch("/api/profile"),
+          fetch("/api/reports?limit=1"),
         ]);
         const fellowsJson = await fellowsRes.json();
         if (fellowsJson.data) {
-          setAssignedFellows(fellowsJson.data.map((f: any) => ({
+          const fetched = fellowsJson.data.map((f: any) => ({
             id: f._id,
             name: f.name,
             lga: f.lga,
             qualification: f.qualification,
-          })));
+          }));
+          setAssignedFellows(fetched);
+          // Auto-populate fellows list
+          if (fetched.length > 0) {
+            setFellows(fetched.map((f: any) => ({ name: f.name, lga: f.lga, qualification: f.qualification ?? "" })));
+          }
         }
         const profileJson = await profileRes.json();
         if (profileJson.roleDetails?.lgas) {
           setMentorLGAs(profileJson.roleDetails.lgas as string[]);
+        }
+        // Prefill week number from last report + 1
+        const reportsJson = await reportsRes.json();
+        if (reportsJson.data?.length) {
+          const lastWeek = reportsJson.data[0].weekNumber;
+          if (typeof lastWeek === "number") {
+            setWeekNumber(String(lastWeek + 1));
+          }
         }
       } catch (err) {
         console.error("Failed to load form data", err);
@@ -74,6 +88,19 @@ export default function NewReportPage() {
       }
     }
     fetchData();
+  }, []);
+
+  // Auto-set weekEnding to next Sunday (or today if Sunday)
+  useEffect(() => {
+    const today = new Date();
+    const day = today.getDay(); // 0 = Sunday
+    const daysUntilSunday = day === 0 ? 0 : 7 - day;
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + daysUntilSunday);
+    const yyyy = nextSunday.getFullYear();
+    const mm = String(nextSunday.getMonth() + 1).padStart(2, "0");
+    const dd = String(nextSunday.getDate()).padStart(2, "0");
+    setWeekEnding(`${yyyy}-${mm}-${dd}`);
   }, []);
 
   // ─── Form state ──────────────────────

@@ -39,7 +39,7 @@ export default function EditReportPage() {
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
   // Assigned Fellows (for dropdowns)
-  const [assignedFellows, setAssignedFellows] = useState<{ id: string; name: string; lga: string }[]>([]);
+  const [assignedFellows, setAssignedFellows] = useState<{ id: string; name: string; lga: string; qualification?: string }[]>([]);
   const [loadingFellows, setLoadingFellows] = useState(true);
 
   // Mentor's assigned LGAs
@@ -49,7 +49,7 @@ export default function EditReportPage() {
   const [weekEnding, setWeekEnding] = useState("");
   const [weekNumber, setWeekNumber] = useState("");
   const [coverNote, setCoverNote] = useState("");
-  const [fellows, setFellows] = useState<{ name: string; lga: string }[]>([{ name: "", lga: "" }]);
+  const [fellows, setFellows] = useState<{ name: string; lga: string; qualification?: string }[]>([{ name: "", lga: "" }]);
   const [sessions, setSessions] = useState<MentorshipSessionInput[]>([
     { ...EMPTY_SESSION, challenges: [""], solutions: [""], actionPlan: [""] },
   ]);
@@ -65,49 +65,43 @@ export default function EditReportPage() {
 
   // ─── Load existing report + fellows ──
   useEffect(() => {
-    async function fetchFellowsAndProfile() {
+    if (!id) return;
+    async function fetchAll() {
       try {
-        const [fellowsRes, profileRes] = await Promise.all([
+        const [fellowsRes, profileRes, report] = await Promise.all([
           fetch("/api/fellows?limit=500"),
           fetch("/api/profile"),
+          api.reports.get(id),
         ]);
         const fellowsJson = await fellowsRes.json();
+        let fetched: { id: string; name: string; lga: string; qualification?: string }[] = [];
         if (fellowsJson.data) {
-          setAssignedFellows(
-            fellowsJson.data.map((f: { _id: string; name: string; lga: string }) => ({
-              id: f._id,
-              name: f.name,
-              lga: f.lga,
-            }))
-          );
+          fetched = fellowsJson.data.map((f: any) => ({
+            id: f._id,
+            name: f.name,
+            lga: f.lga,
+            qualification: f.qualification,
+          }));
+          setAssignedFellows(fetched);
         }
         const profileJson = await profileRes.json();
         if (profileJson.roleDetails?.lgas) {
           setMentorLGAs(profileJson.roleDetails.lgas as string[]);
         }
-      } catch {
-        /* no-op */
-      } finally {
-        setLoadingFellows(false);
-      }
-    }
-    fetchFellowsAndProfile();
-  }, []);
 
-  useEffect(() => {
-    if (!id) return;
-    api.reports
-      .get(id)
-      .then((report: Report) => {
-        // Pre-fill all form fields
+        // Pre-fill all form fields from report
         setWeekEnding(report.weekEnding ? report.weekEnding.split("T")[0] : "");
         setWeekNumber(report.weekNumber ? String(report.weekNumber) : "");
         setCoverNote(report.coverNote ?? "");
-        setFellows(
-          report.fellows?.length
-            ? report.fellows.map((f) => ({ name: f.name, lga: f.lga }))
-            : [{ name: "", lga: "" }]
-        );
+
+        // Auto-populate fellows: use report fellows if present, otherwise use all assigned fellows
+        if (report.fellows?.length) {
+          setFellows(report.fellows.map((f) => ({ name: f.name, lga: f.lga, qualification: f.qualification ?? "" })));
+        } else if (fetched.length > 0) {
+          setFellows(fetched.map((f) => ({ name: f.name, lga: f.lga, qualification: f.qualification ?? "" })));
+        } else {
+          setFellows([{ name: "", lga: "" }]);
+        }
         setSessions(
           report.sessions?.length
             ? report.sessions.map((s) => ({
@@ -133,16 +127,21 @@ export default function EditReportPage() {
         setUrgentDetails(report.urgentDetails ?? "");
         setSupportNeeded(report.supportNeeded ?? "");
         setEvidenceUrls(report.evidenceUrls ?? []);
-      })
-      .catch(() => router.push("/reports"))
-      .finally(() => setFetching(false));
+      } catch {
+        router.push("/reports");
+      } finally {
+        setLoadingFellows(false);
+        setFetching(false);
+      }
+    }
+    fetchAll();
   }, [id, router]);
 
   // ─── Fellow helpers ──────────────────
-  const updateFellow = (idx: number, field: "name" | "lga", value: string) => {
+  const updateFellow = (idx: number, field: "name" | "lga" | "qualification", value: string) => {
     setFellows((prev) => prev.map((f, i) => (i === idx ? { ...f, [field]: value } : f)));
   };
-  const addFellow = () => setFellows((prev) => [...prev, { name: "", lga: "" }]);
+  const addFellow = () => setFellows((prev) => [...prev, { name: "", lga: "", qualification: "" }]);
   const removeFellow = (idx: number) =>
     setFellows((prev) => prev.filter((_, i) => i !== idx));
 
@@ -353,7 +352,10 @@ export default function EditReportPage() {
                         onChange={(e) => {
                           updateFellow(i, "name", e.target.value);
                           const matched = assignedFellows.find((af) => af.name === e.target.value);
-                          if (matched) updateFellow(i, "lga", matched.lga);
+                          if (matched) {
+                            updateFellow(i, "lga", matched.lga);
+                            updateFellow(i, "qualification", matched.qualification ?? "");
+                          }
                         }}
                         options={[
                           { label: "Select Fellow", value: "" },
@@ -371,6 +373,14 @@ export default function EditReportPage() {
                         { label: "Select LGA", value: "" },
                         ...mentorLGAs.map((l) => ({ label: l, value: l })),
                       ]}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      label={i === 0 ? "Qualification / Profession" : undefined}
+                      value={f.qualification ?? ""}
+                      onChange={(e) => updateFellow(i, "qualification", e.target.value)}
+                      placeholder="e.g. Nurse, Doctor"
                     />
                   </div>
                   {fellows.length > 1 && (
