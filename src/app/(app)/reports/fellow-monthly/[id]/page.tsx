@@ -198,6 +198,7 @@ export default function MentorMonthlyReportDetailPage() {
             <Field label="Full Name" value={report.fellowName} />
             <Field label="LGA" value={report.fellowLGA} />
             <Field label="Qualification" value={report.fellowQualification} />
+            <Field label="Mentor" value={report.mentor?.authId?.name} />
           </div>
         </Section>
 
