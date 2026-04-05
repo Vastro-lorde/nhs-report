@@ -5,7 +5,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { format, parseISO } from "date-fns";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { pdf } from "@react-pdf/renderer";
@@ -14,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
+import { safeFormatISO } from "@/lib/date-helpers";
 import { ArrowLeft, Trash2, Loader2, Download, Pencil, History } from "lucide-react";
 import Link from "next/link";
 
@@ -94,7 +94,7 @@ export default function MentorMonthlyReportDetailPage() {
     setDownloading(true);
     try {
       const { MentorMonthlyReportPDF: PDFDoc } = await import("@/components/pdf/MentorMonthlyReportPDF");
-      const displayMonth = format(parseISO(`${report.month}-01`), "MMMM yyyy");
+      const displayMonth = safeFormatISO(report.month ? `${report.month}-01` : null, "MMMM yyyy");
       const mentorName = (report.mentor as any)?.authId?.name as string | undefined;
       const blob = await pdf(
         <PDFDoc report={report} monthLabel={displayMonth} mentorName={mentorName} />
@@ -146,7 +146,7 @@ export default function MentorMonthlyReportDetailPage() {
     );
   }
 
-  const displayMonth = format(parseISO(`${report.month}-01`), "MMMM yyyy");
+  const displayMonth = safeFormatISO(report.month ? `${report.month}-01` : null, "MMMM yyyy");
   const attendancePct =
     report.sessionsHeld > 0
       ? Math.round((report.sessionsAttended / report.sessionsHeld) * 100)
@@ -271,7 +271,7 @@ export default function MentorMonthlyReportDetailPage() {
         </Section>
 
         <p className="text-xs text-gray-400 text-right">
-          Submitted {format(parseISO(report.createdAt), "dd MMM yyyy, HH:mm")}
+          Submitted {safeFormatISO(report.createdAt, "dd MMM yyyy, HH:mm")}
         </p>
       </div>
     </>

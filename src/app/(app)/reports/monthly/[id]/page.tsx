@@ -6,12 +6,12 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { format, parseISO } from "date-fns";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type MonthlyReport, type Report, monthlyReportAuthorName } from "@/lib/api-client";
 import { ChevronLeft, FileDown, Eye, Calendar, User, Trash2 } from "lucide-react";
+import { safeFormatISO } from "@/lib/date-helpers";
 import Link from "next/link";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
@@ -111,7 +111,7 @@ export default function MonthlyReportDetailPage() {
         return <div className="p-8 text-center text-red-500">{error || "Report not found"}</div>;
     }
 
-    const displayMonth = format(parseISO(`${report.month}-01`), "MMMM yyyy");
+    const displayMonth = safeFormatISO(report.month ? `${report.month}-01` : null, "MMMM yyyy");
     const isZonal = report.type === "zonal";
     const authorName = monthlyReportAuthorName(report);
     const authorRole = isZonal ? "Zonal Coordinator" : "Mentor";

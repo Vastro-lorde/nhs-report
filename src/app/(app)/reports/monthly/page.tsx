@@ -6,11 +6,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { api, type MonthlyReport, monthlyReportAuthorName } from "@/lib/api-client";
+import { safeFormatISO } from "@/lib/date-helpers";
 import { Plus, Eye, FileText, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
@@ -105,7 +105,7 @@ export default function MonthlyReportsPage() {
                                 </tr>
                             ) : (
                                 reports.map((r) => {
-                                    const displayMonth = format(parseISO(`${r.month}-01`), "MMMM yyyy");
+                                    const displayMonth = safeFormatISO(r.month ? `${r.month}-01` : null, "MMMM yyyy");
                                     const authorName = monthlyReportAuthorName(r);
                                     return (
                                         <tr key={r._id} className="hover:bg-gray-50">

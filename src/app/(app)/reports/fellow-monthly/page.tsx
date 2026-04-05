@@ -5,7 +5,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
 import { useSession } from "next-auth/react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
+import { safeFormatISO } from "@/lib/date-helpers";
 import { Eye, FileText, Plus, Trash2 } from "lucide-react";
 
 const RATING_COLORS: Record<string, string> = {
@@ -146,7 +146,7 @@ export default function MentorMonthlyReportsPage() {
                 </tr>
               ) : (
                 filteredReports.map(r => {
-                  const displayMonth = format(parseISO(`${r.month}-01`), "MMMM yyyy");
+                  const displayMonth = safeFormatISO(r.month ? `${r.month}-01` : null, "MMMM yyyy");
                   const attendancePct =
                     r.sessionsHeld > 0
                       ? Math.round((r.sessionsAttended / r.sessionsHeld) * 100)

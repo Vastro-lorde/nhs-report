@@ -5,13 +5,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { format, parseISO } from "date-fns";
 import { ArrowLeft, Clock, FilePlus, FileEdit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { api, type ReportHistoryEntry } from "@/lib/api-client";
+import { safeFormatISO } from "@/lib/date-helpers";
 
 const ACTION_META: Record<string, { label: string; icon: typeof FilePlus; color: string }> = {
   created: { label: "Created", icon: FilePlus, color: "bg-green-100 text-green-800" },
@@ -94,7 +94,7 @@ export default function WeeklyReportHistoryPage() {
                         </div>
                         <div className="flex items-center gap-1 text-xs text-gray-500">
                           <Clock className="h-3 w-3" />
-                          {format(parseISO(entry.createdAt), "dd MMM yyyy, HH:mm")}
+                          {safeFormatISO(entry.createdAt, "dd MMM yyyy, HH:mm")}
                         </div>
                       </div>
                     </CardHeader>

@@ -3,6 +3,7 @@
    ────────────────────────────────────────── */
 import {
   format,
+  parseISO,
   startOfISOWeek,
   endOfISOWeek,
   getISOWeek,
@@ -10,6 +11,25 @@ import {
   subWeeks,
   addDays,
 } from "date-fns";
+
+/**
+ * Safely format an ISO date string. Returns `fallback` if the value
+ * is missing, empty, or produces an invalid Date.
+ */
+export function safeFormatISO(
+  isoString: string | null | undefined,
+  fmt: string,
+  fallback = "—",
+): string {
+  if (!isoString) return fallback;
+  try {
+    const date = parseISO(isoString);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return format(date, fmt);
+  } catch {
+    return fallback;
+  }
+}
 
 /** e.g. "2026-W08" */
 export function isoWeekKey(date: Date): string {
