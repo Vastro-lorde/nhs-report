@@ -221,19 +221,19 @@ export default function AnalyticsPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="w-44"
+                className="w-full sm:w-44"
               />
               <Input
                 label="To"
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="w-44"
+                className="w-full sm:w-44"
               />
               <Button size="sm" onClick={handleDateChange} disabled={loading}>
                 {loading ? "Loading…" : "Apply"}
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={resetToCurrentWeek}>This Week</Button>
                 <Button size="sm" variant="outline" onClick={() => setPresetRange(28)}>Last 4 Weeks</Button>
                 <Button size="sm" variant="outline" onClick={() => setPresetRange(90)}>Last 3 Months</Button>
@@ -247,7 +247,7 @@ export default function AnalyticsPage() {
                   { label: "Line Chart", value: "line" },
                   { label: "Bar Chart", value: "bar" },
                 ]}
-                className="w-36"
+                className="w-full sm:w-36"
               />
             </div>
           </CardContent>
@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
                   <BarChart data={byState} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" fontSize={10} tickMargin={5} />
-                    <YAxis dataKey="name" type="category" width={100} fontSize={10} tickMargin={5} />
+                    <YAxis dataKey="name" type="category" width={70} fontSize={10} tickMargin={5} tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 10) + '…' : v} />
                     <Tooltip />
                     <Bar dataKey="value" fill="#ea580c" name="Reports" radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -346,7 +346,7 @@ export default function AnalyticsPage() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={130}
+                      outerRadius={100}
                       label={renderPieLabel}
                       labelLine
                     >
@@ -377,7 +377,7 @@ export default function AnalyticsPage() {
                 <BarChart data={distributionByState} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" fontSize={10} tickMargin={5} />
-                  <YAxis dataKey="state" type="category" width={100} fontSize={10} tickMargin={5} />
+                  <YAxis dataKey="state" type="category" width={70} fontSize={10} tickMargin={5} tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 10) + '…' : v} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: '12px' }} />
                   <Bar dataKey="fellows" fill="#ea580c" name="Fellows" radius={[0, 4, 4, 0]} />
@@ -406,7 +406,7 @@ export default function AnalyticsPage() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={120}
+                      outerRadius={90}
                       label={renderPieLabel}
                       labelLine
                     >
@@ -434,7 +434,7 @@ export default function AnalyticsPage() {
                   <BarChart data={qualifications} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" fontSize={10} tickMargin={5} />
-                    <YAxis dataKey="name" type="category" width={120} fontSize={10} tickMargin={5} />
+                    <YAxis dataKey="name" type="category" width={70} fontSize={10} tickMargin={5} tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 10) + '…' : v} />
                     <Tooltip />
                     <Bar dataKey="value" fill="#7c3aed" name="Fellows" radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -474,7 +474,7 @@ export default function AnalyticsPage() {
               <BarChart data={byState} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" fontSize={10} tickMargin={5} />
-                <YAxis dataKey="name" type="category" width={80} fontSize={10} tickMargin={5} />
+                <YAxis dataKey="name" type="category" width={60} fontSize={10} tickMargin={5} tickFormatter={(v: string) => v.length > 10 ? v.slice(0, 10) + '…' : v} />
                 <Tooltip />
                 <Bar dataKey="value" fill="#ea580c" name="Reports" radius={[0, 4, 4, 0]} />
               </BarChart>

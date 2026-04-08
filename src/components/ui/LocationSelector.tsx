@@ -129,7 +129,7 @@ export function LocationSelector({
 
                 {/* State Suggestions */}
                 {suggestedStates.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-2">
+                    <div className="flex flex-wrap gap-2 mb-2 max-h-32 overflow-y-auto">
                         {suggestedStates.map((state) => (
                             <button
                                 key={state}
@@ -178,7 +178,7 @@ export function LocationSelector({
 
                     {/* LGA Suggestions */}
                     {suggestedLgas.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-2">
+                        <div className="flex flex-wrap gap-2 mb-2 max-h-32 overflow-y-auto">
                             {suggestedLgas.map((lga) => (
                                 <button
                                     key={lga}

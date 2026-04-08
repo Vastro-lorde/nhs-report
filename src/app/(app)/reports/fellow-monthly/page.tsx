@@ -95,7 +95,7 @@ export default function MentorMonthlyReportsPage() {
                   onChange={(e) => setStateFilter(e.target.value)}
                   placeholder="All States"
                   options={availableStates.map((s) => ({ value: s, label: s }))}
-                  className="w-48"
+                  className="w-full sm:w-48"
                 />
               )}
             </div>
@@ -115,9 +115,9 @@ export default function MentorMonthlyReportsPage() {
               <tr>
                 <th className="px-4 py-3 font-medium text-gray-600">Month</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Fellow</th>
-                <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
+                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">LGA</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Attendance</th>
-                <th className="px-4 py-3 font-medium text-gray-600">Progress</th>
+                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Progress</th>
                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
               </tr>
             </thead>
@@ -156,14 +156,14 @@ export default function MentorMonthlyReportsPage() {
                     <tr key={r._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium">{displayMonth}</td>
                       <td className="px-4 py-3">{r.fellowName}</td>
-                      <td className="px-4 py-3 text-gray-600">{r.fellowLGA}</td>
+                      <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{r.fellowLGA}</td>
                       <td className="px-4 py-3 text-gray-600">
                         {r.sessionsAttended}/{r.sessionsHeld}
                         {r.sessionsHeld > 0 && (
                           <span className="ml-1 text-xs text-gray-400">({attendancePct}%)</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 hidden sm:table-cell">
                         {r.progressRating ? (
                           <span
                             className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${RATING_COLORS[r.progressRating] ?? "bg-gray-100 text-gray-700"}`}

@@ -65,7 +65,7 @@ function ReassignMentorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">
             <h2 className="text-lg font-semibold">Reassign Mentor</h2>
@@ -156,7 +156,7 @@ function CreateMentorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">
             <h2 className="text-lg font-semibold">Add New Mentor</h2>
@@ -407,7 +407,7 @@ export default function MentorsPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="w-60"
+                className="w-full sm:w-60"
               />
               <Select
                 label="State Filter"
@@ -424,7 +424,7 @@ export default function MentorsPage() {
                       : STATES
                   ).map((s) => ({ label: s, value: s })),
                 ]}
-                className="w-48"
+                className="w-full sm:w-48"
               />
               <Button variant="outline" size="sm" onClick={() => {
                 const data = mentors.map(m => ({
@@ -490,8 +490,8 @@ export default function MentorsPage() {
                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
                 <th className="px-4 py-3 font-medium text-gray-600">States</th>
-                <th className="px-4 py-3 font-medium text-gray-600">LGAs</th>
-                <th className="px-4 py-3 font-medium text-gray-600">Role</th>
+                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">LGAs</th>
+                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Role</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                 <th className="px-4 py-3 font-medium text-gray-600 text-right">
                   Actions
@@ -527,8 +527,8 @@ export default function MentorsPage() {
                     <td className="px-4 py-3 font-medium">{m.name}</td>
                     <td className="px-4 py-3 text-gray-600">{m.email}</td>
                     <td className="px-4 py-3">{m.states?.join(", ") || "—"}</td>
-                    <td className="px-4 py-3 text-gray-600">{m.lgas?.join(", ") || "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{m.lgas?.join(", ") || "—"}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
                       <Badge variant={m.role === UserRole.ADMIN ? "destructive" : "secondary"}>
                         {m.role}
                       </Badge>

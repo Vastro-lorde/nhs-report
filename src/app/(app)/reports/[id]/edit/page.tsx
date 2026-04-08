@@ -339,7 +339,7 @@ export default function EditReportPage() {
           <CardContent>
             <div className="space-y-3">
               {fellows.map((f, i) => (
-                <div key={i} className="flex items-end gap-3">
+                <div key={i} className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
                   <div className="flex-1">
                     {loadingFellows ? (
                       <div className="flex items-center text-sm text-gray-500 h-10">
@@ -442,7 +442,7 @@ export default function EditReportPage() {
                 </div>
 
                 {/* Date & Time */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <Input
                     label="Session Date *"
                     type="date"
@@ -585,7 +585,7 @@ export default function EditReportPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">Outreach Activities Done</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {OUTREACH_TYPES.map((type) => (
                     <label key={type} className="flex items-center gap-2 text-sm">
                       <input
@@ -612,7 +612,7 @@ export default function EditReportPage() {
 
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">Top Challenges This Week</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {CHALLENGE_TYPES.map((type) => (
                     <label key={type} className="flex items-center gap-2 text-sm">
                       <input

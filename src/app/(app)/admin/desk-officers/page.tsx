@@ -90,7 +90,7 @@ function DeskOfficerModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
                         <h2 className="text-lg font-semibold">{deskOfficer ? "Edit Desk Officer" : "Add New Desk Officer"}</h2>
@@ -186,7 +186,7 @@ function ResetPasswordModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                 {success ? (
                     <div className="p-6 text-center space-y-4">
                         <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
@@ -340,7 +340,7 @@ export default function DeskOfficersPage() {
                                     setSearch(e.target.value);
                                     setPage(1);
                                 }}
-                                className="w-60"
+                                className="w-full sm:w-60"
                             />
                             <div className="flex-1"></div>
                             {selectedIds.length > 0 && (
@@ -371,8 +371,8 @@ export default function DeskOfficersPage() {
                                 </th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Zones Supervised</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Phone</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Zones Supervised</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">
                                     Actions
@@ -405,8 +405,8 @@ export default function DeskOfficersPage() {
                                         </td>
                                         <td className="px-4 py-3 font-medium">{c.name}</td>
                                         <td className="px-4 py-3 text-gray-600">{c.email}</td>
-                                        <td className="px-4 py-3">{c.phone || "—"}</td>
-                                        <td className="px-4 py-3 text-gray-600 break-words max-w-xs">{c.states?.join(", ") || "—"}</td>
+                                        <td className="px-4 py-3 hidden sm:table-cell">{c.phone || "—"}</td>
+                                        <td className="px-4 py-3 text-gray-600 break-words max-w-xs hidden sm:table-cell">{c.states?.join(", ") || "—"}</td>
                                         <td className="px-4 py-3">
                                             <Badge variant={c.active ? "default" : "warning"}>
                                                 {c.active ? "Active" : "Suspended"}

@@ -94,7 +94,7 @@ export default function AlertsPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               options={STATUS_OPTIONS}
-              className="w-48"
+              className="w-full sm:w-48"
             />
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export default function AlertsPage() {
                           { label: "In Review", value: AlertStatus.IN_REVIEW },
                           { label: "Resolved", value: AlertStatus.RESOLVED },
                         ]}
-                        className="w-48"
+                        className="w-full sm:w-48"
                       />
                       <Textarea
                         label="Notes"

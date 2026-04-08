@@ -213,7 +213,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
                 <BarChart data={challengeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={200} fontSize={12} />
+                  <YAxis dataKey="name" type="category" width={120} fontSize={12} tickFormatter={(v: string) => v.length > 15 ? v.slice(0, 15) + '…' : v} />
                   <Tooltip />
                   <Bar dataKey="count" fill="#dc2626" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -320,7 +320,7 @@ function MentorDashboard() {
                 <div className="text-6xl font-bold text-gray-800">{fellows.length}</div>
                 <p className="text-gray-500 text-sm uppercase tracking-wider font-medium">Total Fellows Assigned</p>
 
-                <div className="w-full mt-6 bg-gray-50 rounded-lg p-4 border grid grid-cols-2 gap-4 text-center">
+                <div className="w-full mt-6 bg-gray-50 rounded-lg p-4 border grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold text-orange-700">
                       {fellows.filter(f => f.gender.toLowerCase() === 'male' || f.gender.toLowerCase() === 'm').length}

@@ -160,13 +160,13 @@ export default function FellowDocumentUploadPage({
                                 <div className="space-y-4 mt-6">
                                     <h3 className="font-medium text-sm text-gray-700">Files Ready for Upload</h3>
                                     {filesToUpload.map((item, index) => (
-                                        <div key={index} className="flex items-center justify-between gap-4 p-3 bg-white border rounded-lg shadow-sm">
+                                        <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 bg-white border rounded-lg shadow-sm">
                                             <div className="truncate flex-1">
                                                 <p className="text-sm font-medium truncate" title={item.file.name}>{item.file.name}</p>
                                                 <p className="text-xs text-gray-500">{(item.file.size / 1024 / 1024).toFixed(2)} MB</p>
                                             </div>
 
-                                            <div className="w-1/3">
+                                            <div className="w-full sm:w-1/3">
                                                 <Select
                                                     options={[
                                                         { label: "Select Document Type", value: "" },

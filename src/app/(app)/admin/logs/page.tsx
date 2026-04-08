@@ -151,7 +151,7 @@ function ActivityLogsTab() {
         <CardContent className="pt-4">
           <div className="flex flex-wrap items-end gap-4">
             <Input label="Actor name" placeholder="Search…" value={actorName}
-              onChange={(e) => { setActorName(e.target.value); setPage(1); }} className="w-44" />
+              onChange={(e) => { setActorName(e.target.value); setPage(1); }} className="w-full sm:w-44" />
             <Select label="Actor role" value={actorRole}
               onChange={(e) => { setActorRole(e.target.value); setPage(1); }}
               options={[
@@ -160,11 +160,11 @@ function ActivityLogsTab() {
                 { label: "Coordinator", value: UserRole.COORDINATOR },
                 { label: "Mentor", value: UserRole.MENTOR },
                 { label: "Desk Officer", value: UserRole.ZONAL_DESK_OFFICER },
-              ]} className="w-44" />
+              ]} className="w-full sm:w-44" />
             <Select label="Target type" value={targetType}
               onChange={(e) => { setTargetType(e.target.value); setPage(1); }}
               options={[{ label: "All Types", value: "" }, ...TARGET_TYPES.map((t) => ({ label: t, value: t }))]}
-              className="w-44" />
+              className="w-full sm:w-44" />
             <DateRange from={from} to={to} onChange={handleDateChange} />
             <Button variant="outline" size="sm" onClick={reset}><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
             <div className="flex-1" />
@@ -268,9 +268,9 @@ function ExceptionLogsTab() {
         <CardContent className="pt-4">
           <div className="flex flex-wrap items-end gap-4">
             <Input label="Context" placeholder="e.g. POST /api/reports" value={context}
-              onChange={(e) => { setContext(e.target.value); setPage(1); }} className="w-56" />
+              onChange={(e) => { setContext(e.target.value); setPage(1); }} className="w-full sm:w-56" />
             <Input label="Message" placeholder="Search error message…" value={message}
-              onChange={(e) => { setMessage(e.target.value); setPage(1); }} className="w-56" />
+              onChange={(e) => { setMessage(e.target.value); setPage(1); }} className="w-full sm:w-56" />
             <DateRange from={from} to={to} onChange={handleDateChange} />
             <Button variant="outline" size="sm" onClick={reset}><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
             <div className="flex-1" />
@@ -386,14 +386,14 @@ function IntegrationLogsTab() {
                 { label: "Email", value: "email" },
                 { label: "Cloudinary", value: "cloudinary" },
                 { label: "Cron", value: "cron" },
-              ]} className="w-44" />
+              ]} className="w-full sm:w-44" />
             <Select label="Status" value={status}
               onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               options={[
                 { label: "All", value: "" },
                 { label: "Success", value: "success" },
                 { label: "Failure", value: "failure" },
-              ]} className="w-36" />
+              ]} className="w-full sm:w-36" />
             <DateRange from={from} to={to} onChange={handleDateChange} />
             <Button variant="outline" size="sm" onClick={reset}><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
             <div className="flex-1" />

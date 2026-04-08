@@ -144,7 +144,7 @@ export default function ReportDetailPage() {
             <CardTitle>Report Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <dt className="text-gray-500">Week</dt>
                 <dd className="font-medium">{weekRangeLabelFromDate(report.weekEnding)}</dd>
@@ -228,7 +228,7 @@ export default function ReportDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <dl className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
                     {s.menteeLGA && (
                       <div>
                         <dt className="text-gray-500">LGA</dt>

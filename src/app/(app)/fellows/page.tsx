@@ -52,7 +52,7 @@ function AddFellowModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
                         <h2 className="text-lg font-semibold">Add New Fellow</h2>
@@ -152,7 +152,7 @@ function EditFellowModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
                         <h2 className="text-lg font-semibold">Edit Fellow</h2>
@@ -417,9 +417,9 @@ export default function FellowsPage() {
                                 </th>
                                 )}
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Gender</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Gender</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Qualification</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Qualification</th>
 
                                 {canWrite && (
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
@@ -451,9 +451,9 @@ export default function FellowsPage() {
                                         </td>
                                         )}
                                         <td className="px-4 py-3 font-medium">{f.name}</td>
-                                        <td className="px-4 py-3 text-gray-600">{f.gender}</td>
+                                        <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
-                                        <td className="px-4 py-3 text-gray-600">{f.qualification || "—"}</td>
+                                        <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{f.qualification || "—"}</td>
 
                                         {canWrite && (
                                         <td className="px-4 py-3 text-right space-x-2">

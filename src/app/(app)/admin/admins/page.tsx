@@ -94,7 +94,7 @@ function AdminModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
                         <h2 className="text-lg font-semibold">{admin ? "Edit Administrator" : "Add New Administrator"}</h2>
@@ -193,7 +193,7 @@ function ResetPasswordModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                 {success ? (
                     <div className="p-6 text-center space-y-4">
                         <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto">
@@ -364,7 +364,7 @@ export default function AdminsPage() {
                                     setSearch(e.target.value);
                                     setPage(1);
                                 }}
-                                className="w-60"
+                                className="w-full sm:w-60"
                             />
                             <div className="flex-1"></div>
                             {selectedIds.length > 0 && (
@@ -395,7 +395,7 @@ export default function AdminsPage() {
                                 </th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Name</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Email</th>
-                                <th className="px-4 py-3 font-medium text-gray-600">Phone</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Phone</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Role</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">
@@ -437,7 +437,7 @@ export default function AdminsPage() {
                                                 {isSelf && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">You</span>}
                                             </td>
                                             <td className="px-4 py-3 text-gray-600">{a.email}</td>
-                                            <td className="px-4 py-3">{a.phone || "—"}</td>
+                                            <td className="px-4 py-3 hidden sm:table-cell">{a.phone || "—"}</td>
                                             <td className="px-4 py-3">
                                                 {a.rootAdmin ? (
                                                     <Badge variant="default" className="bg-purple-600 gap-1 hover:bg-purple-700">

@@ -283,7 +283,7 @@ export default function MentorDetailsPage({
 
             {resetModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                         <form onSubmit={handleResetPassword}>
                             <div className="p-6 space-y-4">
                                 <h2 className="text-lg font-semibold">Reset Password</h2>
@@ -321,7 +321,7 @@ export default function MentorDetailsPage({
 
             {changeEmailOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                         <form onSubmit={handleChangeEmail}>
                             <div className="p-6 space-y-4">
                                 <h2 className="text-lg font-semibold">Change Email</h2>

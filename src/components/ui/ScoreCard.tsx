@@ -18,10 +18,10 @@ export function ScoreCard({ title, value, subtitle, icon: Icon, trend, className
   return (
     <Card className={cn("", className)}>
       <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-sm font-medium text-gray-500">{title}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{value}</p>
             {subtitle && (
               <p
                 className={cn(

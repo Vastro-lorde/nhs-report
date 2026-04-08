@@ -196,7 +196,7 @@ export default function MonthlyReportDetailPage() {
                                         </Link>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-4">
                                         {wr.keyWins && (
                                             <div className="bg-orange-50 p-3 rounded-md">
                                                 <p className="font-semibold text-orange-800 mb-1">Key Wins</p>

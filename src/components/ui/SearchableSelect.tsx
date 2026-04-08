@@ -90,7 +90,7 @@ export function SearchableSelect({
             </div>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-1 max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-md">
+                <div className="absolute z-50 w-full mt-1 max-h-48 sm:max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-md">
                     {filteredOptions.length === 0 ? (
                         <p className="px-3 py-2 text-gray-500 text-center">No options found</p>
                     ) : (

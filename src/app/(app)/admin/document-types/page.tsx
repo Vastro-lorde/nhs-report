@@ -58,7 +58,7 @@ function DocumentTypeModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4">
                         <h2 className="text-lg font-semibold">

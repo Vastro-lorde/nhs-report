@@ -115,7 +115,7 @@ export default function ReportsListPage() {
                   setWeekKey(e.target.value);
                   setPage(1);
                 }}
-                className="w-40"
+                className="w-full sm:w-40"
               />
               <Select
                   label="State"
@@ -128,7 +128,7 @@ export default function ReportsListPage() {
                     { label: "All States", value: "" },
                     ...stateOptions,
                   ]}
-                  className="w-48"
+                  className="w-full sm:w-48"
                 />
               {isMentor && (
                 <Link href="/reports/new">
@@ -163,8 +163,8 @@ export default function ReportsListPage() {
                 <th className="px-4 py-3 font-medium text-gray-600">Week</th>
                 {!isMentor && <th className="px-4 py-3 font-medium text-gray-600">Mentor</th>}
                 <th className="px-4 py-3 font-medium text-gray-600">State</th>
-                <th className="px-4 py-3 font-medium text-gray-600">Sessions</th>
-                <th className="px-4 py-3 font-medium text-gray-600">Mentees</th>
+                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Sessions</th>
+                <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Mentees</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Status</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Submitted</th>
                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
@@ -191,8 +191,8 @@ export default function ReportsListPage() {
                       <td className="px-4 py-3">{report.mentor?.name ?? report.mentorName ?? "—"}</td>
                     )}
                     <td className="px-4 py-3">{report.mentor?.state ?? report.state}</td>
-                    <td className="px-4 py-3">{report.sessionsCount}</td>
-                    <td className="px-4 py-3">{report.menteesCheckedIn}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{report.sessionsCount}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">{report.menteesCheckedIn}</td>
                     <td className="px-4 py-3">{statusBadge(report.status)}</td>
                     <td className="px-4 py-3">
                       {format(new Date(report.createdAt), "MMM d, yyyy")}

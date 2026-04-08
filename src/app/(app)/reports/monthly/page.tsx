@@ -80,7 +80,7 @@ export default function MonthlyReportsPage() {
                                 <th className="px-4 py-3 font-medium text-gray-600">Type</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">Author</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">State</th>
-                                <th className="px-4 py-3 font-medium text-gray-600 w-1/3">Summary Preview</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 w-1/3 hidden sm:table-cell">Summary Preview</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -117,7 +117,7 @@ export default function MonthlyReportsPage() {
                                             </td>
                                             <td className="px-4 py-3 text-gray-600">{authorName}</td>
                                             <td className="px-4 py-3 text-gray-600">{r.state}</td>
-                                            <td className="px-4 py-3 text-gray-600 truncate max-w-[200px]">
+                                            <td className="px-4 py-3 text-gray-600 truncate max-w-[200px] hidden sm:table-cell">
                                                 {r.summaryText}
                                             </td>
                                             <td className="px-4 py-3 text-right">
