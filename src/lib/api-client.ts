@@ -257,6 +257,16 @@ export const api = {
       prefill: (fellowId: string, month: string) =>
         request<MentorMonthlyReportPrefill>(`/api/reports/fellow-monthly/prefill?fellowId=${fellowId}&month=${encodeURIComponent(month)}`),
     },
+
+    zonalAudits: {
+      list: (params?: URLSearchParams | Record<string, string>) =>
+        request<PaginatedResponse<SavedZonalAudit>>(`/api/reports/zonal-audits?${new URLSearchParams(params).toString()}`),
+      get: (id: string) => request<SavedZonalAudit>(`/api/reports/zonal-audits/${id}`),
+      save: (data: CreateSavedZonalAuditInput) =>
+        request<SavedZonalAudit>("/api/reports/zonal-audits", { method: "POST", body: JSON.stringify(data) }),
+      delete: (id: string) =>
+        request<{ message: string }>(`/api/reports/zonal-audits/${id}`, { method: "DELETE" }),
+    },
   },
 
   alerts: {
@@ -677,6 +687,20 @@ export interface CreateMonthlyReportInput {
   month: string;
   summaryText: string;
   zonalAuditData?: IZonalAuditReport;
+}
+
+export interface SavedZonalAudit {
+  _id: string;
+  coordinator: { _id: string; name: string; email: string; state: string };
+  zoneName: string;
+  month: string;
+  auditData: IZonalAuditReport;
+  createdAt: string;
+}
+
+export interface CreateSavedZonalAuditInput {
+  month: string;
+  auditData: IZonalAuditReport;
 }
 
 export interface MentorMonthlyReport {

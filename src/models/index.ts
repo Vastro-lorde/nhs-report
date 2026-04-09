@@ -17,3 +17,4 @@ export { ReportHistory, type IReportHistory } from "./ReportHistory";
 export { ActivityLog, type IActivityLog } from "./ActivityLog";
 export { ExceptionLog, type IExceptionLog } from "./ExceptionLog";
 export { IntegrationLog, type IIntegrationLog } from "./IntegrationLog";
+export { SavedZonalAudit, type ISavedZonalAudit } from "./SavedZonalAudit";

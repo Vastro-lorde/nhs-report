@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { api } from "@/lib/api-client";
-import { ChevronLeft, Sparkles, Loader2, Download } from "lucide-react";
+import { ChevronLeft, Sparkles, Loader2, Download, Save } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
 import { MonthlyReportPDF } from "@/components/pdf/MonthlyReportPDF";
 import Link from "next/link";
@@ -39,6 +39,8 @@ export default function NewMonthlyReportPage() {
     const [aiLoading, setAiLoading] = useState(false);
     const [zonalAuditData, setZonalAuditData] = useState<IZonalAuditReport | null>(null);
     const [pdfGenerating, setPdfGenerating] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     const handleGenerateAI = async () => {
         if (!month) return;
@@ -74,6 +76,21 @@ export default function NewMonthlyReportPage() {
             console.error("PDF generation failed:", err);
         } finally {
             setPdfGenerating(false);
+        }
+    };
+
+    const handleSaveZonalAudit = async () => {
+        if (!zonalAuditData || !month) return;
+        setSaving(true);
+        setSaveSuccess(false);
+        setError("");
+        try {
+            await api.reports.zonalAudits.save({ month, auditData: zonalAuditData });
+            setSaveSuccess(true);
+        } catch (err: any) {
+            setError(err.message || "Failed to save zonal audit.");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -190,6 +207,17 @@ export default function NewMonthlyReportPage() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
+                                                    className="text-xs text-green-700"
+                                                    disabled={saving}
+                                                    onClick={handleSaveZonalAudit}
+                                                >
+                                                    <Save className="h-3.5 w-3.5 mr-1" />
+                                                    {saving ? "Saving…" : "Save"}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
                                                     className="text-red-500 text-xs"
                                                     onClick={() => setZonalAuditData(null)}
                                                 >
@@ -198,6 +226,13 @@ export default function NewMonthlyReportPage() {
                                             </div>
                                         </div>
                                         <ZonalAuditPreview data={zonalAuditData} readOnly />
+                                    </div>
+                                )}
+
+                                {saveSuccess && (
+                                    <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm font-medium">
+                                        Zonal audit saved successfully. You can view it on the{" "}
+                                        <Link href="/reports/zonal-audits" className="underline font-semibold">Zonal Audits</Link> page.
                                     </div>
                                 )}
                             </div>

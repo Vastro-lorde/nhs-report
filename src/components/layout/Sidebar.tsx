@@ -54,6 +54,12 @@ const NAV_ITEMS = [
     roles: [UserRole.ADMIN, UserRole.MENTOR, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
+    label: "Zonal Audits",
+    href: "/reports/zonal-audits",
+    icon: ClipboardList,
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
+  },
+  {
     label: "Fellows",
     href: "/fellows",
     icon: Users,
@@ -160,6 +166,8 @@ export function Sidebar() {
     (item) => {
       if (role && !item.roles.includes(role)) return false;
       if (item.label === "Submit Report" && hasCurrentWeekReport) return false;
+      // Coordinators need AI access to see Zonal Audits
+      if (item.label === "Zonal Audits" && role === UserRole.COORDINATOR && !session?.user?.aiAccessEnabled) return false;
       return true;
     }
   );
