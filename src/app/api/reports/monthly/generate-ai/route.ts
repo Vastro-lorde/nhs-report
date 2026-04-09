@@ -217,6 +217,12 @@ export const POST = withExceptionLog(
           503,
         );
       }
+      if (msg.includes("503") || msg.includes("Service Unavailable") || msg.includes("high demand")) {
+        return jsonError(
+          "The AI model is currently experiencing high demand. Please try again in a few minutes.",
+          503,
+        );
+      }
       if (msg.includes("403") || msg.includes("API_KEY")) {
         return jsonError("AI service authentication failed. Please contact an administrator.", 503);
       }
