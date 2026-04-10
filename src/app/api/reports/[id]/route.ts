@@ -68,8 +68,16 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const mentorEmail = mentorUser?.email;
   const mentorState = mentorDoc?.states?.[0] ?? (report as any).state ?? "";
 
+  const reportObj = (report as any);
+  const evidence = (reportObj.evidenceUrls ?? []).map((url: string, i: number) => ({
+    url,
+    comment: reportObj.evidenceComments?.[i] ?? "",
+  }));
+  const { evidenceUrls: _eu, evidenceComments: _ec, ...rest } = reportObj;
+
   return jsonOk({
-    ...(report as any),
+    ...rest,
+    evidence,
     state: mentorState,
     mentorName,
     mentor: mentorDoc
@@ -79,7 +87,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
           email: mentorEmail,
           state: mentorState,
         }
-      : (report as any).mentor,
+      : reportObj.mentor,
   });
 }
 
@@ -116,6 +124,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
   }
   // Admins can edit any report (no extra check needed)
+
+  // Convert evidence objects to parallel arrays for DB
+  if (Array.isArray(body.evidence)) {
+    (body as any).evidenceUrls = body.evidence.map((e: any) => e.url);
+    (body as any).evidenceComments = body.evidence.map((e: any) => e.comment);
+    delete body.evidence;
+  }
 
   // Apply updates
   const snapshot = JSON.stringify(report.toObject());

@@ -109,8 +109,16 @@ export async function GET(request: NextRequest) {
     const mentorEmail = mentorUser?.email;
     const mentorState = mentorDoc?.states?.[0] ?? report.state ?? "";
 
+    const evidence = (report.evidenceUrls ?? []).map((url: string, i: number) => ({
+      url,
+      comment: report.evidenceComments?.[i] ?? "",
+    }));
+
+    const { evidenceUrls: _eu, evidenceComments: _ec, ...rest } = report;
+
     return {
-      ...report,
+      ...rest,
+      evidence,
       state: mentorState,
       mentorName,
       mentor: mentorDoc
@@ -160,7 +168,7 @@ interface CreateReportBody {
   urgentAlert: boolean;
   urgentDetails?: string;
   supportNeeded?: string;
-  evidenceUrls?: string[];
+  evidence?: { url: string; comment: string }[];
 }
 
 export async function POST(request: NextRequest) {
@@ -222,7 +230,8 @@ export async function POST(request: NextRequest) {
     urgentAlert: body.urgentAlert ?? false,
     urgentDetails: body.urgentDetails,
     supportNeeded: body.supportNeeded,
-    evidenceUrls: body.evidenceUrls ?? [],
+    evidenceUrls: (body.evidence ?? []).map(e => e.url),
+    evidenceComments: (body.evidence ?? []).map(e => e.comment),
     dataQualityFlags: flags,
   });
 

@@ -368,23 +368,28 @@ export default function ReportDetailPage() {
         </Card>
 
         {/* Evidence */}
-        {report.evidenceUrls?.length > 0 && (
+        {report.evidence?.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Evidence / Attachments</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
-                {report.evidenceUrls.map((url, i) => (
+              <ul className="space-y-3 text-sm">
+                {report.evidence.map((ev: { url: string; comment: string }, i: number) => (
                   <li key={i}>
                     <a
-                      href={url}
+                      href={ev.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline"
                     >
-                      Attachment {i + 1} — {url.split("/").pop()}
+                      Attachment {i + 1} — {ev.url.split("/").pop()}
                     </a>
+                    {ev.comment && (
+                      <p className="text-gray-600 text-xs mt-0.5 ml-4 italic">
+                        {ev.comment}
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

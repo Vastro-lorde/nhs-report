@@ -53,6 +53,7 @@ export interface IWeeklyReport extends Document {
   urgentDetails?: string;
   supportNeeded?: string;
   evidenceUrls: string[]; // Cloudinary URLs
+  evidenceComments?: string[]; // per-file comments, index-matched to evidenceUrls
 
   status: ReportStatus;
   dataQualityFlags: string[];
@@ -130,6 +131,7 @@ const WeeklyReportSchema = new Schema<IWeeklyReport>(
     urgentDetails: { type: String, trim: true },
     supportNeeded: { type: String, trim: true },
     evidenceUrls: { type: [String], default: [] },
+    evidenceComments: { type: [String], default: [] },
     status: {
       type: String,
       enum: Object.values(ReportStatus),

@@ -565,7 +565,7 @@ export interface Report {
   urgentAlert: boolean;
   urgentDetails?: string;
   supportNeeded?: string;
-  evidenceUrls: string[];
+  evidence: { url: string; comment: string }[];
   status: string;
   dataQualityFlags: string[];
   state: string;
@@ -614,7 +614,7 @@ export interface CreateReportInput {
   urgentAlert: boolean;
   urgentDetails?: string;
   supportNeeded?: string;
-  evidenceUrls?: string[];
+  evidence?: { url: string; comment: string }[];
 }
 
 export interface AlertItem {

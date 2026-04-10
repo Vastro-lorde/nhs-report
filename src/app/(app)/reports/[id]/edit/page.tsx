@@ -61,7 +61,7 @@ export default function EditReportPage() {
   const [urgentAlert, setUrgentAlert] = useState(false);
   const [urgentDetails, setUrgentDetails] = useState("");
   const [supportNeeded, setSupportNeeded] = useState("");
-  const [evidenceUrls, setEvidenceUrls] = useState<string[]>([]);
+  const [evidence, setEvidence] = useState<{ url: string; comment: string }[]>([]);
 
   // ─── Load existing report + fellows ──
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function EditReportPage() {
         setUrgentAlert(report.urgentAlert ?? false);
         setUrgentDetails(report.urgentDetails ?? "");
         setSupportNeeded(report.supportNeeded ?? "");
-        setEvidenceUrls(report.evidenceUrls ?? []);
+        setEvidence(report.evidence ?? []);
       } catch {
         router.push("/reports");
       } finally {
@@ -229,10 +229,10 @@ export default function EditReportPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingIdx(evidenceUrls.length);
+    setUploadingIdx(evidence.length);
     try {
       const result = await api.upload.file(file);
-      setEvidenceUrls((prev) => [...prev, result.url]);
+      setEvidence((prev) => [...prev, { url: result.url, comment: "" }]);
     } catch (err) {
       setError(`Upload failed: ${(err as Error).message}`);
     } finally {
@@ -272,7 +272,7 @@ export default function EditReportPage() {
       urgentAlert,
       urgentDetails: urgentDetails || undefined,
       supportNeeded: supportNeeded || undefined,
-      evidenceUrls,
+      evidence,
     };
 
     try {
@@ -688,24 +688,39 @@ export default function EditReportPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {evidenceUrls.map((url, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className="text-orange-600">✓</span>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline truncate max-w-md"
-                  >
-                    {url.split("/").pop()}
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setEvidenceUrls((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="text-red-400 hover:text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+              {evidence.map((ev, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-orange-600">✓</span>
+                    <a
+                      href={ev.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline truncate max-w-md"
+                    >
+                      {ev.url.split("/").pop()}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEvidence((prev) => prev.filter((_, idx) => idx !== i));
+                      }}
+                      className="text-red-400 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Add a comment for this file…"
+                    value={ev.comment}
+                    onChange={(e) =>
+                      setEvidence((prev) =>
+                        prev.map((item, idx) => (idx === i ? { ...item, comment: e.target.value } : item))
+                      )
+                    }
+                    className="ml-6 text-sm border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  />
                 </div>
               ))}
 
@@ -732,6 +747,8 @@ export default function EditReportPage() {
                 </Button>
                 <span className="text-xs text-gray-400">JPEG, PNG, WebP, PDF — max 10MB</span>
               </label>
+
+
             </div>
           </CardContent>
         </Card>
