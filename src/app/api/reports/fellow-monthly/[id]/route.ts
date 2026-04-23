@@ -58,7 +58,16 @@ export async function GET(
             }
         }
 
-        return NextResponse.json(report);
+        const settings =
+            role === UserRole.MENTOR || role === UserRole.COORDINATOR
+                ? await AppSettings.findOne({}).lean()
+                : null;
+        const canEdit =
+            role === UserRole.ADMIN ||
+            (role === UserRole.MENTOR && !settings?.blockMonthlyReportEdits?.mentor) ||
+            (role === UserRole.COORDINATOR && !settings?.blockMonthlyReportEdits?.coordinator);
+
+        return NextResponse.json({ ...(report as any), canEdit });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

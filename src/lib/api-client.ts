@@ -592,6 +592,7 @@ export interface Report {
   dataQualityFlags: string[];
   state: string;
   createdAt: string;
+  canEdit?: boolean;
   /** Convenience — populated from mentor.name or virtual */
   mentorName?: string;
   comments?: ReportComment[];
@@ -761,6 +762,7 @@ export interface MentorMonthlyReport {
   weeklyReportIds: string[];
   status: string;
   createdAt: string;
+  canEdit?: boolean;
 }
 
 export interface CreateMentorMonthlyReportInput {

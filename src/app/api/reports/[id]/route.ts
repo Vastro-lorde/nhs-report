@@ -63,6 +63,16 @@ export async function GET(_request: NextRequest, { params }: Params) {
     }
   }
 
+  const userRole = session!.user.role as UserRole;
+  const settings =
+    userRole === UserRole.MENTOR || userRole === UserRole.COORDINATOR
+      ? await AppSettings.findOne({}).lean()
+      : null;
+  const canEdit =
+    userRole === UserRole.ADMIN ||
+    (userRole === UserRole.MENTOR && !settings?.blockWeeklyReportEdits?.mentor) ||
+    (userRole === UserRole.COORDINATOR && !settings?.blockWeeklyReportEdits?.coordinator);
+
   const mentorUser = mentorDoc?.authId;
   const mentorName = mentorUser?.name;
   const mentorEmail = mentorUser?.email;
@@ -77,6 +87,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   return jsonOk({
     ...rest,
+    canEdit,
     evidence,
     state: mentorState,
     mentorName,

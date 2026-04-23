@@ -114,11 +114,8 @@ export default function ReportDetailPage() {
           <PDFDownloadButton report={report} size="sm">
             <FileDown className="h-4 w-4 mr-1" /> Download PDF
           </PDFDownloadButton>
-          {/* Edit — for the owning mentor, their coordinator, or admin */}
-          {session?.user &&
-            (session.user.role === UserRole.MENTOR ||
-              session.user.role === UserRole.COORDINATOR ||
-              session.user.role === UserRole.ADMIN) && (
+          {/* Edit — only when the server says this viewer can edit */}
+          {report.canEdit && (
               <Link href={`/reports/${report._id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="h-4 w-4 mr-1" /> Edit

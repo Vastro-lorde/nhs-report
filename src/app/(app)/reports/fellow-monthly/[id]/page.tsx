@@ -151,6 +151,7 @@ export default function MentorMonthlyReportDetailPage() {
     report.sessionsHeld > 0
       ? Math.round((report.sessionsAttended / report.sessionsHeld) * 100)
       : 0;
+  const canEdit = !!report.canEdit;
 
   return (
     <>
@@ -174,7 +175,7 @@ export default function MentorMonthlyReportDetailPage() {
               )}
               {downloading ? "Generating…" : "Download PDF"}
             </Button>
-          {canDelete && (
+          {canEdit && (
             <Link href={`/reports/fellow-monthly/${report._id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="h-4 w-4 mr-1" /> Edit
