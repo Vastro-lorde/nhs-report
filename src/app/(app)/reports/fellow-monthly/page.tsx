@@ -10,6 +10,7 @@ import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
+import { Input } from "@/components/ui/Input";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole, STATES } from "@/lib/constants";
 import { safeFormatISO } from "@/lib/date-helpers";
@@ -34,13 +35,25 @@ export default function MentorMonthlyReportsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [stateFilter, setStateFilter] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
+  const [debouncedName, setDebouncedName] = useState("");
   const [scopedStates, setScopedStates] = useState<string[]>([]);
+
+  // Debounce name input so we don't refetch on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedName(nameFilter.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [nameFilter]);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = { page: String(page), limit: String(pageSize) };
       if (stateFilter) params.state = stateFilter;
+      if (debouncedName) params.q = debouncedName;
       const result = await api.reports.fellowMonthly.list(params);
       setReports(result.data);
       setPagination(result.pagination);
@@ -49,7 +62,7 @@ export default function MentorMonthlyReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, stateFilter]);
+  }, [page, pageSize, stateFilter, debouncedName]);
 
   // Fetch the states the current user is allowed to see
   useEffect(() => {
@@ -103,6 +116,13 @@ export default function MentorMonthlyReportsPage() {
               <div className="text-sm text-gray-600">
                 {pagination.total} report{pagination.total === 1 ? "" : "s"}
               </div>
+              <Input
+                type="search"
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+                placeholder="Search fellow name…"
+                className="w-full sm:w-56"
+              />
               {userRole !== UserRole.MENTOR && (
                 <Select
                   value={stateFilter}

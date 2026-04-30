@@ -21,8 +21,16 @@ export async function GET(request: Request) {
         const limit = parseInt(searchParams.get("limit") || "20", 10);
         const skip = (page - 1) * limit;
 
-        const stateParam = searchParams.get("state");
+        const rawStateParam = searchParams.get("state");
+        const stateParam = rawStateParam ? rawStateParam.toUpperCase().trim() : "";
+        const qParam = (searchParams.get("q") || "").trim();
         const filter: Record<string, any> = {};
+
+        if (qParam) {
+            // Case-insensitive search against denormalised fellow name
+            const escaped = qParam.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            filter.fellowName = { $regex: escaped, $options: "i" };
+        }
 
         if (session.user.role === UserRole.MENTOR) {
             const mentorDoc = await Mentor.findOne({ authId: session.user.id }).lean();
@@ -40,9 +48,10 @@ export async function GET(request: Request) {
             if (!deskOfficerDoc || !deskOfficerDoc.states?.length) {
                 return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
             }
+            const officerStates = deskOfficerDoc.states.map((s: string) => String(s).toUpperCase());
             const allowedStates = stateParam
-                ? deskOfficerDoc.states.filter((s: string) => s === stateParam)
-                : deskOfficerDoc.states;
+                ? officerStates.filter((s: string) => s === stateParam)
+                : officerStates;
             const mentorIds = await Mentor.find({ states: { $in: allowedStates } }).distinct("_id");
             filter.mentor = { $in: mentorIds };
         } else if (stateParam) {

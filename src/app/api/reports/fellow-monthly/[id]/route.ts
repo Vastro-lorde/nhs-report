@@ -145,6 +145,12 @@ export async function PATCH(
 
         return NextResponse.json(report);
     } catch (error: any) {
+        if (error?.code === 11000) {
+            return NextResponse.json(
+                { error: "A report already exists for this fellow and month." },
+                { status: 409 }
+            );
+        }
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

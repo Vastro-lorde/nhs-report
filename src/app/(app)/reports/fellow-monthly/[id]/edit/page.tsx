@@ -117,9 +117,15 @@ export default function EditMentorMonthlyReportPage() {
     const filteredChallenges = challenges.filter(c => c.trim());
     const filteredRecommendations = recommendations.filter(r => r.trim());
 
+    if (!month) {
+      setError("Reporting month is required.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await api.reports.fellowMonthly.update(id, {
+        month,
         sessionsHeld,
         sessionsAttended,
         sessionsAbsent,
@@ -185,7 +191,12 @@ export default function EditMentorMonthlyReportPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Reporting Month
               </label>
-              <Input type="month" value={month} readOnly className="bg-gray-50" />
+              <Input
+                type="month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                required
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fellow</label>
