@@ -396,3 +396,38 @@ ${APP_NAME}`;
 
   return { subject, text, html };
 }
+
+export function passwordResetOtpTemplate(name: string, otp: string, expiryMinutes: number) {
+  const subject = `Password reset code for ${APP_NAME}`;
+
+  const text = `Hello ${name},
+
+We received a request to reset the password for your ${APP_NAME} account.
+
+Your one-time password (OTP) is: ${otp}
+
+This code expires in ${expiryMinutes} minutes.
+
+If you did not request this, you can safely ignore this email.
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">Password reset code</h2>
+      <p>Hello <strong>${name}</strong>,</p>
+      <p>We received a request to reset the password for your ${APP_NAME} account.</p>
+      <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0; text-align: center;">
+        <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px;">Your one-time password (OTP)</p>
+        <p style="margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #1a7f37;">${otp}</p>
+      </div>
+      <p>This code expires in <strong>${expiryMinutes} minutes</strong>.</p>
+      <p>If you did not request this, you can safely ignore this email.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}

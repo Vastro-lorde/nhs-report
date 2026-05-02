@@ -344,22 +344,23 @@ function MentorDashboard() {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const user = session?.user;
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [fetched, setFetched] = useState(false);
+  const isMentor = user?.role === "mentor";
 
   useEffect(() => {
-    if (user?.role !== "mentor") {
-      api.dashboard
-        .get()
-        .then(setData)
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    if (status === "loading") return;
+    if (isMentor) return;
+    api.dashboard
+      .get()
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setFetched(true));
+  }, [status, isMentor]);
+
+  const loading = status === "loading" || (!isMentor && !fetched);
 
   if (loading) {
     return (

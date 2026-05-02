@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Bug } from "lucide-react";
 
 interface DebugSeederProps {
@@ -9,13 +8,7 @@ interface DebugSeederProps {
 }
 
 export function DebugSeeder({ onFill, label = "Fill Fake Data" }: DebugSeederProps) {
-    const [isDev, setIsDev] = useState(false);
-
-    useEffect(() => {
-        if (process.env.NODE_ENV === "development") {
-            setIsDev(true);
-        }
-    }, []);
+    const isDev = process.env.NODE_ENV === "development";
 
     if (!isDev) return null;
 

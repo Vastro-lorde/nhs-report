@@ -31,14 +31,6 @@ export default function FellowDocumentUploadPage({
 
     const [filesToUpload, setFilesToUpload] = useState<{ file: File; typeId: string; }[]>([]);
 
-    if (session?.user && session.user.role !== UserRole.MENTOR) {
-        return (
-            <div className="p-6">
-                <p className="text-red-600">You are not authorized to view this page.</p>
-            </div>
-        );
-    }
-
     useEffect(() => {
         Promise.all([
             // Fetch the fellow doesn't have a single GET endpoint, so we can list and filter, or just use the existing documents list which validates access
@@ -50,6 +42,14 @@ export default function FellowDocumentUploadPage({
         }).catch(err => setError(err.message))
             .finally(() => setLoading(false));
     }, [id]);
+
+    if (session?.user && session.user.role !== UserRole.MENTOR) {
+        return (
+            <div className="p-6">
+                <p className="text-red-600">You are not authorized to view this page.</p>
+            </div>
+        );
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files || []);

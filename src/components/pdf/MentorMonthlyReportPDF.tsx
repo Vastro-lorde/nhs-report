@@ -203,7 +203,7 @@ export function MentorMonthlyReportPDF({ report, mentorName, monthLabel }: Mento
         <BulletList items={report.challenges} />
 
         {/* Section 5 – Recommendations */}
-        <Text style={s.sectionHeader}>Section 5 – Mentor's Recommendations</Text>
+        <Text style={s.sectionHeader}>{"Section 5 – Mentor's Recommendations"}</Text>
         <BulletList items={report.recommendations} />
 
         {/* Section 6 – Progress Rating */}

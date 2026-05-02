@@ -113,7 +113,7 @@ function CoordinatorModal({
                         />
                         {coordinator && (
                             <p className="text-xs text-gray-500">
-                                To change a coordinator's login email, use the “Change Email” action. This will reset their password and email a temporary password to the new address.
+                                To change a coordinator&apos;s login email, use the “Change Email” action. This will reset their password and email a temporary password to the new address.
                             </p>
                         )}
                         {!coordinator && (
@@ -219,7 +219,7 @@ function ChangeEmailModal({
                         <div className="p-6 space-y-4">
                             <h2 className="text-lg font-semibold">Change Login Email</h2>
                             <p className="text-sm text-gray-600">
-                                This will reset the coordinator's password and send a temporary password to the new email.
+                                This will reset the coordinator&apos;s password and send a temporary password to the new email.
                             </p>
                             {error && (
                                 <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>

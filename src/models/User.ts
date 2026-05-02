@@ -14,6 +14,9 @@ export interface IUser extends Document {
   profileImage?: string;
   active: boolean;
   aiAccessEnabled: boolean;
+  resetOtpHash?: string;
+  resetOtpExpires?: Date;
+  resetOtpAttempts?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +42,9 @@ const UserSchema = new Schema<IUser>(
     profileImage: { type: String },
     active: { type: Boolean, default: true },
     aiAccessEnabled: { type: Boolean, default: false },
+    resetOtpHash: { type: String, select: false },
+    resetOtpExpires: { type: Date, select: false },
+    resetOtpAttempts: { type: Number, default: 0, select: false },
   },
   { timestamps: true }
 );

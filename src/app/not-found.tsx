@@ -17,7 +17,7 @@ export default function NotFound() {
             404 - Page Not Found
           </h1>
           <p className="text-gray-500 text-sm">
-            We couldn't find the page you were looking for. It might have been moved or removed.
+            We couldn&apos;t find the page you were looking for. It might have been moved or removed.
           </p>
         </div>
 

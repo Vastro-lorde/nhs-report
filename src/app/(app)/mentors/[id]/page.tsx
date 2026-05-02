@@ -249,7 +249,7 @@ export default function MentorDetailsPage({
                                             <AtSign className="h-4 w-4 mr-2" /> Change Email
                                         </Button>
                                         <p className="text-xs text-gray-500 mt-2">
-                                            Updates the mentor's login email, resets their password to a temporary one, and sends it to the new email.
+                                            Updates the mentor&apos;s login email, resets their password to a temporary one, and sends it to the new email.
                                         </p>
                                     </div>
                                 )}
@@ -326,7 +326,7 @@ export default function MentorDetailsPage({
                             <div className="p-6 space-y-4">
                                 <h2 className="text-lg font-semibold">Change Email</h2>
                                 <p className="text-sm text-gray-600">
-                                    This will reset the mentor's password and send a temporary password to the new email.
+                                    This will reset the mentor&apos;s password and send a temporary password to the new email.
                                 </p>
 
                                 {changeEmailError && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{changeEmailError}</p>}

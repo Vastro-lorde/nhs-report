@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     // 1. Find matching users first
     const users = await User.find(filter).select("-password").sort({ name: 1 }).lean();
-    let userIds = users.map(u => u._id);
+    const userIds = users.map(u => u._id);
 
     // 2. Find matching coordinator details linked to these users
     coordinatorFilter.authId = { $in: userIds };
