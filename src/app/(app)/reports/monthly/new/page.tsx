@@ -221,36 +221,42 @@ export default function NewMonthlyReportPage() {
                             </div>
                         )}
 
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-gray-700">Monthly Summary</label>
-                            <p className="text-xs text-gray-500 mb-2">
-                                {isMentor
-                                    ? "Write a high-level overview of your mentoring activities, successes, and challenges for the month."
-                                    : "Write a high-level overview of the mentoring activities, successes, and challenges observed across your zone for the month."}
-                            </p>
-                            <textarea
-                                className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                                placeholder={isMentor
-                                    ? "This month I focused on building rapport with my mentees..."
-                                    : "Our state saw tremendous growth in mentee check-ins this month..."}
-                                value={summaryText}
-                                onChange={(e) => setSummaryText(e.target.value)}
-                                required
-                            />
-                        </div>
+                        {!isCoordinator && (
+                            <>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-gray-700">Monthly Summary</label>
+                                    <p className="text-xs text-gray-500 mb-2">
+                                        {isMentor
+                                            ? "Write a high-level overview of your mentoring activities, successes, and challenges for the month."
+                                            : "Write a high-level overview of the mentoring activities, successes, and challenges observed across your zone for the month."}
+                                    </p>
+                                    <textarea
+                                        className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                                        placeholder={isMentor
+                                            ? "This month I focused on building rapport with my mentees..."
+                                            : "Our state saw tremendous growth in mentee check-ins this month..."}
+                                        value={summaryText}
+                                        onChange={(e) => setSummaryText(e.target.value)}
+                                        required
+                                    />
+                                </div>
 
-                        <div className="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg">
-                            <strong>Note:</strong> Generating this report will snapshot the current weekly reports.
-                            Any weekly reports submitted or edited after this point will not be retroactively included.
-                        </div>
+                                <div className="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg">
+                                    <strong>Note:</strong> Generating this report will snapshot the current weekly reports.
+                                    Any weekly reports submitted or edited after this point will not be retroactively included.
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
 
-                <div className="flex justify-end pt-4">
-                    <Button type="submit" size="lg" disabled={loading}>
-                        {loading ? "Aggregating Data..." : `Generate ${reportTypeLabel}`}
-                    </Button>
-                </div>
+                {!isCoordinator && (
+                    <div className="flex justify-end pt-4">
+                        <Button type="submit" size="lg" disabled={loading}>
+                            {loading ? "Aggregating Data..." : `Generate ${reportTypeLabel}`}
+                        </Button>
+                    </div>
+                )}
             </form>
         </>
     );
