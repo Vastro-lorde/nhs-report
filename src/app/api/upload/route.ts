@@ -33,6 +33,10 @@ export async function POST(request: NextRequest) {
 
   const result = await uploadToCloudinary(base64, {
     folder: "evidence",
+    // PDFs (and other non-images) must be uploaded as "raw" — Cloudinary blocks
+    // delivery of PDF/ZIP files uploaded under the "image" resource type by
+    // default (returns HTTP 401), so we route them through "raw" instead.
+    resourceType: file.type.startsWith("image/") ? "image" : "raw",
   });
 
   return jsonOk({ url: result.url, publicId: result.publicId });

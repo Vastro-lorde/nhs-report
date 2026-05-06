@@ -8,6 +8,9 @@ import { connectDB } from "@/lib/db";
 import { Fellow } from "@/models/Fellow";
 import { FellowDocument } from "@/models/FellowDocument";
 import { Mentor } from "@/models/Mentor";
+// Imported so the DocumentType model is registered before populate() runs
+// on cold serverless starts (otherwise: MissingSchemaError -> 500).
+import "@/models/DocumentType";
 import { requireAuth } from "@/lib/auth-guard";
 import { UserRole } from "@/lib/constants";
 import { jsonOk, jsonCreated, parseBody } from "@/lib/api-helpers";

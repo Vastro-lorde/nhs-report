@@ -26,23 +26,28 @@ export function getCloudinary() {
  */
 export async function uploadToCloudinary(
   file: string, // base64 data URI or file path
-  options?: { folder?: string; publicId?: string }
+  options?: {
+    folder?: string;
+    publicId?: string;
+    resourceType?: "image" | "raw" | "video" | "auto";
+  }
 ): Promise<{ url: string; publicId: string }> {
   const cld = getCloudinary();
   const baseFolder = env.CLOUDINARY_UPLOAD_FOLDER();
   const subFolder = options?.folder ? `${baseFolder}/${options.folder}` : baseFolder;
+  const resourceType = options?.resourceType ?? "auto";
 
   return trackIntegration(
     {
       service: "cloudinary",
       action: "UPLOAD_IMAGE",
-      payload: { folder: subFolder, publicId: options?.publicId },
+      payload: { folder: subFolder, publicId: options?.publicId, resourceType },
     },
     async () => {
       const result = await cld.uploader.upload(file, {
         folder: subFolder,
         public_id: options?.publicId,
-        resource_type: "auto",
+        resource_type: resourceType,
         overwrite: false,
       });
       return {
