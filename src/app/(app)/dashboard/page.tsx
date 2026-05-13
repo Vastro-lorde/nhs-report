@@ -3,11 +3,11 @@
    ────────────────────────────────────────── */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout";
 import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button } from "@/components/ui";
-import { api, type DashboardData, type Mentor, type Fellow } from "@/lib/api-client";
-import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download } from "lucide-react";
+import { api, type DashboardData, type Mentor, type Fellow, type Report } from "@/lib/api-client";
+import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download, Trophy } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
 import {
@@ -233,20 +233,64 @@ function MentorDashboard() {
   const user = session?.user;
   const [profile, setProfile] = useState<Mentor | null>(null);
   const [fellows, setFellows] = useState<Fellow[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rankingView, setRankingView] = useState<"month" | "overall">("overall");
 
   useEffect(() => {
     Promise.all([
       api.mentors.get("me"),
-      api.fellows.list()
+      api.fellows.list(),
+      api.reports.list({ limit: "100" }),
     ])
-      .then(([profileData, fellowsData]) => {
+      .then(([profileData, fellowsData, reportsData]) => {
         setProfile(profileData);
         setFellows(fellowsData.data);
+        setReports(reportsData.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const rankingData = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const counts = new Map<string, { name: string; sessions: number }>();
+
+    // Seed with assigned fellows so they appear even with 0 sessions
+    for (const f of fellows) {
+      const key = f.name?.trim().toLowerCase();
+      if (!key) continue;
+      counts.set(key, { name: f.name.trim(), sessions: 0 });
+    }
+
+    for (const r of reports) {
+      for (const s of r.sessions ?? []) {
+        if (!s.menteeName) continue;
+        if (rankingView === "month") {
+          const d = s.sessionDate ? new Date(s.sessionDate) : null;
+          if (!d || isNaN(d.getTime())) continue;
+          if (d < startOfMonth || d >= startOfNextMonth) continue;
+        }
+        const key = s.menteeName.trim().toLowerCase();
+        if (!key) continue;
+        const existing = counts.get(key);
+        if (existing) {
+          existing.sessions += 1;
+        } else {
+          counts.set(key, { name: s.menteeName.trim(), sessions: 1 });
+        }
+      }
+    }
+
+    return Array.from(counts.values())
+      .sort((a, b) => b.sessions - a.sessions)
+      .slice(0, 10);
+  }, [reports, fellows, rankingView]);
+
+  const hasAnySessions = rankingData.some((d) => d.sessions > 0);
 
   if (loading) {
     return (
@@ -338,6 +382,79 @@ function MentorDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Fellow Session Ranking */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-orange-700" />
+                Fellow Session Ranking
+              </CardTitle>
+              <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setRankingView("month")}
+                  className={`px-3 py-1.5 text-xs font-medium transition ${
+                    rankingView === "month"
+                      ? "bg-orange-700 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  This Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRankingView("overall")}
+                  className={`px-3 py-1.5 text-xs font-medium transition border-l border-gray-200 ${
+                    rankingView === "overall"
+                      ? "bg-orange-700 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Overall
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {rankingData.length === 0 ? (
+              <p className="text-sm text-gray-500 py-8 text-center">
+                No fellows to rank yet.
+              </p>
+            ) : !hasAnySessions ? (
+              <p className="text-sm text-gray-500 py-8 text-center">
+                {rankingView === "month"
+                  ? "No sessions recorded this month."
+                  : "No sessions recorded yet."}
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(220, rankingData.length * 38)}>
+                  <BarChart
+                    data={rankingData}
+                    layout="vertical"
+                    margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" allowDecimals={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={140}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip
+                      formatter={(value) => {
+                        const n = Number(value) || 0;
+                        return [`${n} session${n === 1 ? "" : "s"}`, "Sessions"];
+                      }}
+                    />
+                    <Bar dataKey="sessions" fill="#c2410c" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </>
   );
