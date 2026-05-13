@@ -522,6 +522,7 @@ export interface Fellow {
   gender: string;
   lga: string;
   qualification?: string;
+  documentCount?: number;
   createdAt: string;
 }
 

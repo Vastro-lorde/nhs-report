@@ -420,6 +420,7 @@ export default function FellowsPage() {
                                 <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Gender</th>
                                 <th className="px-4 py-3 font-medium text-gray-600">LGA</th>
                                 <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Qualification</th>
+                                <th className="px-4 py-3 font-medium text-gray-600 text-center">Documents</th>
 
                                 {canWrite && (
                                 <th className="px-4 py-3 font-medium text-gray-600 text-right">Actions</th>
@@ -429,11 +430,11 @@ export default function FellowsPage() {
                         <tbody className="divide-y">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={isReadOnly ? 4 : 6} className="px-4 py-8 text-center text-gray-400">Loading…</td>
+                                    <td colSpan={isReadOnly ? 5 : 7} className="px-4 py-8 text-center text-gray-400">Loading…</td>
                                 </tr>
                             ) : !fellows.length ? (
                                 <tr>
-                                    <td colSpan={isReadOnly ? 4 : 6} className="px-4 py-8 text-center text-gray-400">No fellows added yet.</td>
+                                    <td colSpan={isReadOnly ? 5 : 7} className="px-4 py-8 text-center text-gray-400">No fellows added yet.</td>
                                 </tr>
                             ) : (
                                 fellows.map((f) => (
@@ -454,6 +455,18 @@ export default function FellowsPage() {
                                         <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
                                         <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{f.qualification || "—"}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span
+                                                className={`inline-flex items-center justify-center min-w-7 h-6 px-2 rounded-full text-xs font-medium ${
+                                                    (f.documentCount ?? 0) > 0
+                                                        ? "bg-orange-100 text-orange-700"
+                                                        : "bg-gray-100 text-gray-500"
+                                                }`}
+                                                title={`${f.documentCount ?? 0} document${(f.documentCount ?? 0) === 1 ? "" : "s"}`}
+                                            >
+                                                {f.documentCount ?? 0}
+                                            </span>
+                                        </td>
 
                                         {canWrite && (
                                         <td className="px-4 py-3 text-right space-x-2">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Fellow } from "@/models/Fellow";
+import { FellowDocument } from "@/models/FellowDocument";
 import { Mentor } from "@/models/Mentor";
 import { DeskOfficer } from "@/models/DeskOfficer";
 import { Coordinator } from "@/models/Coordinator";
@@ -67,8 +68,22 @@ export async function GET(request: Request) {
             Fellow.countDocuments(filter),
         ]);
 
+        // Attach documentCount for each fellow on this page
+        const fellowIds = data.map((f) => f._id);
+        const counts = fellowIds.length
+            ? await FellowDocument.aggregate<{ _id: unknown; count: number }>([
+                  { $match: { fellow: { $in: fellowIds } } },
+                  { $group: { _id: "$fellow", count: { $sum: 1 } } },
+              ])
+            : [];
+        const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
+        const dataWithCounts = data.map((f) => ({
+            ...f,
+            documentCount: countMap.get(String(f._id)) ?? 0,
+        }));
+
         return NextResponse.json({
-            data,
+            data: dataWithCounts,
             pagination: {
                 page,
                 limit,
