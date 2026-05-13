@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Report, type ReportComment } from "@/lib/api-client";
 import { format } from "date-fns";
-import { ArrowLeft, FileDown, Pencil, Send, MessageSquare, Trash2, History } from "lucide-react";
+import { ArrowLeft, FileDown, Pencil, Send, MessageSquare, Trash2, History, CheckCircle2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 import { weekRangeLabelFromDate } from "@/lib/date-helpers";
@@ -200,12 +200,27 @@ export default function ReportDetailPage() {
             </CardHeader>
             <CardContent>
               <ul className="text-sm space-y-1 list-disc list-inside">
-                {report.fellows.map((f, i) => (
-                  <li key={i}>
-                    {f.name}
-                    {f.lga ? ` — ${f.lga}` : ""}
-                  </li>
-                ))}
+                {report.fellows.map((f, i) => {
+                  const hasSession = (report.sessions ?? []).some(
+                    (s) =>
+                      s.menteeName &&
+                      f.name &&
+                      s.menteeName.trim().toLowerCase() ===
+                        f.name.trim().toLowerCase()
+                  );
+                  return (
+                    <li key={i}>
+                      {f.name}
+                      {f.lga ? ` — ${f.lga}` : ""}
+                      {hasSession && (
+                        <CheckCircle2
+                          className="inline-block h-4 w-4 text-green-600 ml-1.5 -mt-0.5 align-middle"
+                          aria-label="Has session this report"
+                        />
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </CardContent>
           </Card>
