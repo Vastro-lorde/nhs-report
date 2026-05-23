@@ -5,7 +5,7 @@ import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-
 import { env } from "@/lib/env";
 import { TEAM_LEAD_NAME } from "@/lib/constants";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
-import type { INationalAuditReport } from "@/types/national-audit";
+import type { INationalAuditPeriodReport, INationalAuditReport } from "@/types/national-audit";
 
 let _client: GoogleGenerativeAI | null = null;
 
@@ -288,6 +288,115 @@ const nationalAuditResponseSchema: Schema = {
   ],
 };
 
+const periodicNationalAuditResponseSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    title: { type: SchemaType.STRING, description: "Official report title" },
+    reportingPeriod: { type: SchemaType.STRING, description: "Period label, e.g. Q1 2026 - January to March" },
+    totalLGAsMonitored: { type: SchemaType.INTEGER, description: "National LGA catalogue count, normally 774" },
+    totalStatesAndFct: { type: SchemaType.INTEGER, description: "State entity count including FCT, normally 37" },
+    nationalFellowAttendance: { type: SchemaType.STRING, description: "National fellow attendance percentage or N/A when source data is unavailable" },
+    nationalMentorEngagement: { type: SchemaType.STRING, description: "National mentor engagement percentage or N/A when source data is unavailable" },
+
+    geopoliticalZoneExecutiveBriefs: {
+      type: SchemaType.ARRAY,
+      description: "One entry per geopolitical zone, with every state entity including FCT under North-Central",
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          zoneName: { type: SchemaType.STRING, description: "Full geopolitical zone name" },
+          zoneCode: { type: SchemaType.STRING, description: "Short zone code such as NC, NE, NW, SE, SS, or SW" },
+          stateCount: { type: SchemaType.INTEGER, description: "Number of state entities in the zone" },
+          stateExecutiveBriefs: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                stateName: { type: SchemaType.STRING },
+                brief: { type: SchemaType.STRING, description: "Strategic state-level summary based only on supplied source data" },
+              },
+              required: ["stateName", "brief"],
+            },
+          },
+        },
+        required: ["zoneName", "zoneCode", "stateCount", "stateExecutiveBriefs"],
+      },
+    },
+
+    nationalLeadershipBoard: {
+      type: SchemaType.OBJECT,
+      properties: {
+        topLGAs: {
+          type: SchemaType.ARRAY,
+          description: "Absolute Top 5 LGAs nationally",
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              nationalRank: { type: SchemaType.INTEGER },
+              lgaName: { type: SchemaType.STRING },
+              state: { type: SchemaType.STRING },
+              zone: { type: SchemaType.STRING },
+              performance: { type: SchemaType.STRING },
+            },
+            required: ["nationalRank", "lgaName", "state", "zone", "performance"],
+          },
+        },
+        bottomLGAs: {
+          type: SchemaType.ARRAY,
+          description: "Absolute Bottom 5 LGAs nationally",
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              nationalRank: { type: SchemaType.INTEGER },
+              lgaName: { type: SchemaType.STRING },
+              state: { type: SchemaType.STRING },
+              zone: { type: SchemaType.STRING },
+              primaryRisk: { type: SchemaType.STRING },
+            },
+            required: ["nationalRank", "lgaName", "state", "zone", "primaryRisk"],
+          },
+        },
+      },
+      required: ["topLGAs", "bottomLGAs"],
+    },
+
+    nationalOperationalInsights: {
+      type: SchemaType.OBJECT,
+      properties: {
+        progressOfTheNation: { type: SchemaType.STRING, description: "Strategic summary of national progress" },
+        nationalChallenges: {
+          type: SchemaType.ARRAY,
+          items: { type: SchemaType.STRING },
+          description: "Macro-level operational hurdles",
+        },
+        nationalSolutionsProffered: { type: SchemaType.STRING, description: "System-wide interventions" },
+      },
+      required: ["progressOfTheNation", "nationalChallenges", "nationalSolutionsProffered"],
+    },
+
+    teamLeadStrategicRecommendation: {
+      type: SchemaType.OBJECT,
+      properties: {
+        nationalDirective: { type: SchemaType.STRING, description: "National directive for programme leadership" },
+        teamLeadFinalWord: { type: SchemaType.STRING, description: "Final word from the Team Lead" },
+      },
+      required: ["nationalDirective", "teamLeadFinalWord"],
+    },
+  },
+  required: [
+    "title",
+    "reportingPeriod",
+    "totalLGAsMonitored",
+    "totalStatesAndFct",
+    "nationalFellowAttendance",
+    "nationalMentorEngagement",
+    "geopoliticalZoneExecutiveBriefs",
+    "nationalLeadershipBoard",
+    "nationalOperationalInsights",
+    "teamLeadStrategicRecommendation",
+  ],
+};
+
 /**
  * Build the system prompt for the national federal oversight audit.
  */
@@ -350,6 +459,74 @@ Generate the complete National Federal Oversight Report based on this data.`;
   const result = await model.generateContent(userPrompt);
   const text = result.response.text();
   const parsed: INationalAuditReport = JSON.parse(text);
+
+  return parsed;
+}
+
+function buildPeriodicNationalSystemPrompt(reportingPeriod: string): string {
+  return `You are an expert NHS (National Health Service) National Performance Auditor for Nigeria's Federal Oversight Programme.
+
+Your task is to generate the official "National Health Fellows Mentorship Program: Federal Oversight Report" for ${reportingPeriod} using ONLY the source data provided. Do NOT fabricate or infer source data that is not present.
+
+This periodic report may include saved Zonal Audit summaries and submitted Mentor Monthly Report aggregates. Synthesize across the selected months by identifying repeated strengths, recurring challenges, improving or declining LGAs, and zone-level themes. When the source contains missing zone-month coverage, keep the language appropriately cautious and do not imply full source coverage for missing periods.
+
+The output MUST follow this official national-audit-period template structure:
+
+Header:
+- title
+- reportingPeriod
+- totalLGAsMonitored
+- totalStatesAndFct
+- nationalFellowAttendance
+- nationalMentorEngagement
+
+**Section 1 - Geopolitical Zone Executive Brief (State-by-State Grouping)**
+- Return exactly six zone groups: North-Central, North-East, North-West, South-East, South-South, South-West.
+- Iterate through all 36 States plus the FCT.
+- Treat FCT as the 37th State entity within the North-Central block.
+- Each state entity must have one concise executive brief. If no submitted source data exists for a state, state that plainly instead of inventing performance.
+
+**Section 2 - The National Leadership Board (Top & Bottom 5)**
+- Return exactly 5 top LGAs and exactly 5 bottom LGAs.
+- Use the supplied computed nationalLeadershipBoard as the ranking source because it compares all 774 LGAs nationally.
+- Preserve the supplied LGA names, states, zones, rank numbers, performance labels, and primary risk labels.
+
+**Section 3 - National Operational Insights**
+- Progress of the Nation: strategic summary of how all LGAs with source data are contributing to healthcare delivery, reporting reliability, and national health data systems.
+- National Challenges: macro-level operational hurdles evidenced by the source data.
+- National Solutions Proffered: system-wide interventions aligned with the challenges.
+
+**Section 4 - Team Lead's Strategic Recommendation**
+- National Directive: clear national directive for the next reporting cycle.
+- Team Lead's Final Word: professional closing quotation or paragraph from ${TEAM_LEAD_NAME}, Team Lead.
+
+Use professional, formal language appropriate for an official NHS national report. Be data-driven where the source data provides numbers. Do not include markdown fences or commentary outside the JSON object.`;
+}
+
+export async function generatePeriodicNationalAudit(
+  reportData: object,
+  period: string,
+): Promise<INationalAuditPeriodReport> {
+  const client = getClient();
+
+  const model = client.getGenerativeModel({
+    model: "gemini-3-flash-preview",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: periodicNationalAuditResponseSchema,
+    },
+    systemInstruction: buildPeriodicNationalSystemPrompt(period),
+  });
+
+  const userPrompt = `Here is the aggregated source data and computed national board for the periodic Federal Oversight Report, ${period}:
+
+${JSON.stringify(reportData, null, 2)}
+
+Generate the complete national-audit-period report JSON using the official template.`;
+
+  const result = await model.generateContent(userPrompt);
+  const text = result.response.text();
+  const parsed: INationalAuditPeriodReport = JSON.parse(text);
 
   return parsed;
 }

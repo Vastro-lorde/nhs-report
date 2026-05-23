@@ -5,7 +5,12 @@
 
 import type { ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
-import type { INationalAuditReport } from "@/types/national-audit";
+import type {
+  INationalAuditReport,
+  INationalAuditPeriodReport,
+  IPeriodicCoverage,
+  NationalAuditPeriodType,
+} from "@/types/national-audit";
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -281,6 +286,18 @@ export const api = {
         request<{ message: string }>(`/api/reports/national-audit/${id}`, { method: "DELETE" }),
       generate: (data: { month: string }) =>
         request<INationalAuditReport>("/api/reports/national-audit/generate", { method: "POST", body: JSON.stringify(data) }),
+    },
+
+    nationalAuditPeriod: {
+      list: (params?: URLSearchParams | Record<string, string>) =>
+        request<PaginatedResponse<SavedNationalAuditPeriod>>(`/api/reports/national-audit-period?${new URLSearchParams(params).toString()}`),
+      get: (id: string) => request<SavedNationalAuditPeriod>(`/api/reports/national-audit-period/${id}`),
+      save: (data: CreateSavedNationalAuditPeriodInput) =>
+        request<SavedNationalAuditPeriod>("/api/reports/national-audit-period", { method: "POST", body: JSON.stringify(data) }),
+      delete: (id: string) =>
+        request<{ message: string }>(`/api/reports/national-audit-period/${id}`, { method: "DELETE" }),
+      generate: (data: GenerateNationalAuditPeriodInput) =>
+        request<GeneratedNationalAuditPeriod>("/api/reports/national-audit-period/generate", { method: "POST", body: JSON.stringify(data) }),
     },
   },
 
@@ -739,6 +756,42 @@ export interface SavedNationalAudit {
 export interface CreateSavedNationalAuditInput {
   month: string;
   auditData: INationalAuditReport;
+}
+
+export interface SavedNationalAuditPeriod {
+  _id: string;
+  generatedBy: { _id: string; name: string; email: string };
+  startMonth: string;
+  endMonth: string;
+  periodType: NationalAuditPeriodType;
+  periodLabel: string;
+  auditData: INationalAuditPeriodReport;
+  coverage: IPeriodicCoverage;
+  createdAt: string;
+}
+
+export interface GenerateNationalAuditPeriodInput {
+  startMonth: string;
+  endMonth: string;
+  periodType?: NationalAuditPeriodType;
+}
+
+export interface GeneratedNationalAuditPeriod {
+  startMonth: string;
+  endMonth: string;
+  periodType: NationalAuditPeriodType;
+  periodLabel: string;
+  coverage: IPeriodicCoverage;
+  auditData: INationalAuditPeriodReport;
+}
+
+export interface CreateSavedNationalAuditPeriodInput {
+  startMonth: string;
+  endMonth: string;
+  periodType: NationalAuditPeriodType;
+  periodLabel: string;
+  auditData: INationalAuditPeriodReport;
+  coverage: IPeriodicCoverage;
 }
 
 export interface MentorMonthlyReport {

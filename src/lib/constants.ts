@@ -18,8 +18,11 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 // ─── Nigerian States covered by the programme ─
 import statesLgaData from "../../nigerian-states-lga.json";
+export const STATE_LGA_DATA = statesLgaData as Array<{ state: string; lgas: Array<{ name: string }> }>;
 export const STATES = statesLgaData.map((d) => d.state) as unknown as readonly string[];
 export type State = string;
+export const TOTAL_STATE_ENTITIES = STATE_LGA_DATA.length;
+export const TOTAL_NIGERIAN_LGAS = STATE_LGA_DATA.reduce((count, entry) => count + entry.lgas.length, 0);
 
 // ─── Outreach Activity Types ────────────────
 export const OUTREACH_TYPES = [

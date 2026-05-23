@@ -66,6 +66,12 @@ const NAV_ITEMS = [
     roles: [UserRole.ADMIN, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
+    label: "Periodic National Audit",
+    href: "/admin/national-audit-period",
+    icon: ClipboardList,
+    roles: [UserRole.ADMIN, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
+  },
+  {
     label: "Fellows",
     href: "/fellows",
     icon: Users,
