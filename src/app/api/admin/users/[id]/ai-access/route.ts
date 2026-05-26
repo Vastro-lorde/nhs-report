@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody, withExceptionLog } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
 import { User } from "@/models/User";
+import { UserRole } from "@/lib/constants";
 
 interface ToggleBody {
   aiAccessEnabled: boolean;
@@ -28,13 +29,23 @@ export const PATCH = withExceptionLog(
 
     await connectDB();
 
-    const user = await User.findByIdAndUpdate(
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return jsonError("User not found.", 404);
+    }
+
+    // Only root admins can toggle AI access for other admins or themselves
+    if (targetUser.role === UserRole.ADMIN && !session!.user.rootAdmin) {
+      return jsonError("Forbidden: Only root administrators can toggle AI access for administrators.", 403);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
       id,
       { aiAccessEnabled: body.aiAccessEnabled },
       { new: true, select: "name email role aiAccessEnabled" },
     );
 
-    if (!user) {
+    if (!updatedUser) {
       return jsonError("User not found.", 404);
     }
 
@@ -43,9 +54,9 @@ export const PATCH = withExceptionLog(
       action: body.aiAccessEnabled ? "enable_ai_access" : "disable_ai_access",
       targetType: "User",
       targetId: id,
-      targetName: user.name,
+      targetName: updatedUser.name,
     });
 
-    return jsonOk(user);
+    return jsonOk(updatedUser);
   },
 );

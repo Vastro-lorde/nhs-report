@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Admin } from "@/lib/api-client";
-import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, KeyRound, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { Plus, UserCheck, UserX, ChevronLeft, ChevronRight, KeyRound, Pencil, Trash2, ShieldAlert, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 /* ─── Create/Update Admin Modal ──── */
@@ -292,6 +292,20 @@ export default function AdminsPage() {
         }
     };
 
+    const toggleAiAccess = async (admin: Admin) => {
+        if (!isRootAdmin) {
+            alert("Forbidden: Only root administrators can toggle AI access for administrators.");
+            return;
+        }
+
+        try {
+            await api.admin.toggleAiAccess(admin._id, !admin.aiAccessEnabled);
+            fetchAdmins();
+        } catch (err: any) {
+            alert(`Failed to update AI access: ${err.message || "Unknown error"}`);
+        }
+    };
+
     const openEdit = (admin: Admin) => {
         setSelectedAdmin(admin);
         setShowModal(true);
@@ -469,6 +483,15 @@ export default function AdminsPage() {
                                                     disabled={cannotModify}
                                                 >
                                                     <KeyRound className="h-4 w-4 text-gray-600 hover:text-gray-900" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => toggleAiAccess(a)}
+                                                    title={a.aiAccessEnabled ? "Disable AI Access" : "Enable AI Access"}
+                                                    disabled={!isRootAdmin}
+                                                >
+                                                    <Sparkles className={`h-4 w-4 ${a.aiAccessEnabled ? "text-yellow-500" : "text-gray-400"}`} />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"

@@ -418,6 +418,7 @@ export interface Admin {
   role: string;
   rootAdmin?: boolean;
   active: boolean;
+  aiAccessEnabled?: boolean;
   createdAt: string;
 }
 
