@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer } from "@/models";
+import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer, Fellow } from "@/models";
 import mongoose from "mongoose";
 import { UserRole, AlertStatus } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
@@ -81,6 +81,11 @@ export async function GET(request: NextRequest) {
 
     const isZoneScoped = user.role === UserRole.COORDINATOR || user.role === UserRole.ZONAL_DESK_OFFICER;
 
+    const fellowFilter: any = {};
+    if (mentorDocIds) {
+      fellowFilter.mentor = { $in: mentorDocIds };
+    }
+
     // Build weekKey filter for rollups
     const rollupWeekFilter: any = {};
     if (fromWeekKey) rollupWeekFilter.weekKey = { ...rollupWeekFilter.weekKey, $gte: fromWeekKey };
@@ -92,6 +97,7 @@ export async function GET(request: NextRequest) {
       reportsThisWeek,
       openAlerts,
       latestRollups,
+      totalFellows,
     ] = await Promise.all([
       User.countDocuments(baseMentorFilter),
       User.countDocuments(activeMentorFilter),
@@ -103,6 +109,7 @@ export async function GET(request: NextRequest) {
         : isZoneScoped
           ? buildZoneScopedRollups(mentorDocIds ?? [], mentorDocIds?.length ?? 0, fromWeekKey, toWeekKey)
           : Promise.resolve([]),
+      Fellow.countDocuments(fellowFilter),
     ]);
 
     // Aggregate submissions by state
@@ -156,6 +163,7 @@ export async function GET(request: NextRequest) {
       submissionRate: activeMentors > 0 ? reportsThisWeek / activeMentors : 0,
       rollups: latestRollups,
       submissionsByState,
+      totalFellows,
     });
   } catch (err: any) {
     console.error("Dashboard API Error:", err);

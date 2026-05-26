@@ -439,6 +439,7 @@ export interface Mentor {
   lgas: string[];
   active: boolean;
   createdAt: string;
+  mentorId?: string;
 }
 
 export interface CreateMentorInput {
@@ -701,6 +702,7 @@ export interface DashboardData {
     sessions?: number;
     checkins?: number;
   }[];
+  totalFellows: number;
 }
 
 export interface MonthlyReport {

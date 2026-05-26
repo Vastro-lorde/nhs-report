@@ -5,9 +5,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout";
-import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button } from "@/components/ui";
-import { api, type DashboardData, type Mentor, type Fellow, type Report } from "@/lib/api-client";
-import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download, Trophy } from "lucide-react";
+import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button, SearchableSelect, Select, Badge } from "@/components/ui";
+import { api, type DashboardData, type Mentor, type Fellow, type Report, type RollupItem } from "@/lib/api-client";
+import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download, Trophy, GraduationCap, Clock, Calendar, BookOpen, AlertCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
 import {
@@ -23,7 +23,7 @@ import {
   Legend,
 } from "recharts";
 import { useSession } from "next-auth/react";
-import { weekRangeFilenameCodeFromWeekKey, weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
+import { weekRangeFilenameCodeFromWeekKey, weekRangeLabelFromWeekKey, formatDate } from "@/lib/date-helpers";
 
 function AdminDashboard({ data }: { data: DashboardData }) {
   const { data: session } = useSession();
@@ -111,12 +111,17 @@ function AdminDashboard({ data }: { data: DashboardData }) {
 
       <div id="dashboard-export-area" className="p-6 space-y-6 bg-gray-50">
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <ScoreCard
             title="Active Mentors"
             value={data.activeMentors}
             subtitle={`${data.totalMentors} total`}
             icon={Users}
+          />
+          <ScoreCard
+            title="Total Fellows"
+            value={data.totalFellows}
+            icon={GraduationCap}
           />
           <ScoreCard
             title="Reports This Week"
@@ -223,8 +228,338 @@ function AdminDashboard({ data }: { data: DashboardData }) {
             )}
           </CardContent>
         </Card>
+
+        {/* Mentor Sessions Tool */}
+        <MentorSessionsTool currentWeekKey={data.currentWeekKey} rollups={data.rollups} />
       </div>
     </>
+  );
+}
+
+function MentorSessionsTool({ currentWeekKey, rollups }: { currentWeekKey: string; rollups: RollupItem[] }) {
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [selectedMentorId, setSelectedMentorId] = useState<string>("");
+  const [selectedWeekKey, setSelectedWeekKey] = useState<string>(currentWeekKey);
+  const [report, setReport] = useState<Report | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [hasFetched, setHasFetched] = useState<boolean>(false);
+
+  useEffect(() => {
+    api.mentors
+      .list({ limit: "1000" })
+      .then((res) => {
+        setMentors(res.data || []);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedMentorId || !selectedWeekKey) {
+      setReport(null);
+      setHasFetched(false);
+      return;
+    }
+    setLoading(true);
+    api.reports
+      .list({ mentorId: selectedMentorId, weekKey: selectedWeekKey })
+      .then((res) => {
+        setReport(res.data[0] || null);
+        setHasFetched(true);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch report:", err);
+        setReport(null);
+        setHasFetched(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [selectedMentorId, selectedWeekKey]);
+
+  const mentorOptions = useMemo(() => {
+    return mentors
+      .filter((m) => m.mentorId)
+      .map((m) => ({
+        value: m.mentorId!,
+        label: `${m.name} (${m.states?.join(", ") || "No State"})`,
+      }));
+  }, [mentors]);
+
+  const weekOptions = useMemo(() => {
+    return rollups.map((r) => ({
+      value: r.weekKey,
+      label: `Week ending ${weekRangeLabelFromWeekKey(r.weekKey)}`,
+    }));
+  }, [rollups]);
+
+  const currentMentor = mentors.find((m) => m.mentorId === selectedMentorId);
+
+  return (
+    <Card className="border border-gray-200 shadow-sm bg-white">
+      <CardHeader className="pb-3 border-b border-gray-100">
+        <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-orange-700" />
+          Mentorship Sessions & Mentor Statistics
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <SearchableSelect
+            label="Select Mentor"
+            placeholder="Search by mentor name..."
+            options={mentorOptions}
+            value={selectedMentorId}
+            onChange={setSelectedMentorId}
+          />
+          <Select
+            label="Select Week"
+            options={weekOptions}
+            value={selectedWeekKey}
+            onChange={(e) => setSelectedWeekKey(e.target.value)}
+          />
+        </div>
+
+        {!selectedMentorId ? (
+          <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+            <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">
+              Please select a mentor to view their mentorship sessions and statistics for the selected week.
+            </p>
+          </div>
+        ) : loading ? (
+          <div className="flex flex-col items-center justify-center py-12 space-y-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-700" />
+            <p className="text-sm text-gray-500">Fetching session data...</p>
+          </div>
+        ) : hasFetched && !report ? (
+          <div className="space-y-6">
+            <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-700 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-yellow-800">No report submitted</h4>
+                <p className="text-sm text-yellow-700 mt-0.5">
+                  This mentor has not submitted a weekly report for the week ending{" "}
+                  {weekRangeLabelFromWeekKey(selectedWeekKey)}.
+                </p>
+              </div>
+            </div>
+
+            {currentMentor && (
+              <div className="bg-gray-50 border border-gray-100 rounded-lg p-5">
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  Mentor Information
+                </h4>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <dt className="text-gray-400">Email Address</dt>
+                    <dd className="font-medium text-gray-800 mt-1">{currentMentor.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-400">Phone Number</dt>
+                    <dd className="font-medium text-gray-800 mt-1">{currentMentor.phone || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-400">States Assigned</dt>
+                    <dd className="font-medium text-gray-800 mt-1">
+                      {currentMentor.states?.join(", ") || "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-400">LGAs Assigned</dt>
+                    <dd className="font-medium text-gray-800 mt-1">
+                      {currentMentor.lgas?.join(", ") || "—"}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+          </div>
+        ) : report ? (
+          <div className="space-y-6">
+            {/* Stats Summary Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div className="bg-white p-3 rounded-lg border border-gray-200/50 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Report Status
+                </span>
+                <div className="mt-2">
+                  <Badge
+                    variant={
+                      report.status.toLowerCase() === "approved"
+                        ? "default"
+                        : report.status.toLowerCase() === "draft"
+                        ? "secondary"
+                        : "info"
+                    }
+                  >
+                    {report.status}
+                  </Badge>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-gray-200/50 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Total Sessions Held
+                </span>
+                <span className="text-2xl font-bold text-gray-800 mt-1">{report.sessionsCount}</span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-gray-200/50 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Mentees Checked In
+                </span>
+                <span className="text-2xl font-bold text-gray-800 mt-1">{report.menteesCheckedIn}</span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-gray-200/50 shadow-sm flex flex-col justify-between">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Urgent Alerts
+                </span>
+                <div className="mt-2">
+                  {report.urgentAlert ? (
+                    <Badge variant="destructive">Urgent Alert Raised</Badge>
+                  ) : (
+                    <Badge variant="secondary">No Alerts</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Overview Text */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white">
+              {report.keyWins && (
+                <div className="border border-gray-100 rounded-lg p-4 bg-orange-50/20">
+                  <h4 className="font-semibold text-orange-900 text-sm mb-1">Key Wins</h4>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{report.keyWins}</p>
+                </div>
+              )}
+              {report.supportNeeded && (
+                <div className="border border-gray-100 rounded-lg p-4 bg-blue-50/20">
+                  <h4 className="font-semibold text-blue-900 text-sm mb-1">Support Needed</h4>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{report.supportNeeded}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Challenges Section */}
+            {report.challenges && report.challenges.length > 0 && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-red-50/10">
+                <h4 className="font-semibold text-red-900 text-sm mb-2">Challenges Encountered</h4>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {report.challenges.map((c, idx) => (
+                    <Badge key={idx} variant="warning">
+                      {c}
+                    </Badge>
+                  ))}
+                </div>
+                {report.challengeDescription && (
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{report.challengeDescription}</p>
+                )}
+              </div>
+            )}
+
+            {/* Urgent Alert Details */}
+            {report.urgentAlert && report.urgentDetails && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+                <AlertCircle className="h-5 w-5 text-red-750 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-red-900">Urgent Alert Details</h4>
+                  <p className="text-sm text-red-700 mt-1 whitespace-pre-wrap">{report.urgentDetails}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Mentorship Sessions List */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-orange-700" />
+                Mentorship Sessions ({report.sessions?.length || 0})
+              </h3>
+              {!report.sessions || report.sessions.length === 0 ? (
+                <p className="text-sm text-gray-400 italic py-4">
+                  No detailed session records provided in the report.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {report.sessions.map((s, idx) => (
+                    <div
+                      key={s._id || idx}
+                      className="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition duration-150"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3 mb-4">
+                        <div>
+                          <h4 className="font-bold text-gray-800 text-base">{s.menteeName}</h4>
+                          {s.menteeLGA && (
+                            <p className="text-xs text-gray-500 font-medium uppercase mt-0.5">
+                              LGA: {s.menteeLGA}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                            {s.sessionDate ? formatDate(s.sessionDate) : "—"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-gray-400" />
+                            {s.startTime} - {s.endTime} ({s.duration})
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                            Topic Discussed
+                          </h5>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{s.topicDiscussed}</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {s.challenges && s.challenges.length > 0 && (
+                            <div>
+                              <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                                Challenges
+                              </h5>
+                              <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                {s.challenges.map((ch, cidx) => (
+                                  <li key={cidx}>{ch}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {s.solutions && s.solutions.length > 0 && (
+                            <div>
+                              <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                                Solutions
+                              </h5>
+                              <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                {s.solutions.map((sol, sidx) => (
+                                  <li key={sidx}>{sol}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {s.actionPlan && s.actionPlan.length > 0 && (
+                            <div>
+                              <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                                Action Plan
+                              </h5>
+                              <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                {s.actionPlan.map((act, aidx) => (
+                                  <li key={aidx}>{act}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
