@@ -186,7 +186,7 @@ export function MentorMonthlyReportPDF({ report, mentorName, monthLabel }: Mento
 
         {/* Section 2 – Attendance */}
         <Text style={s.sectionHeader}>Section 2 – Attendance</Text>
-        <Field label="Sessions Booked" value={report.sessionsHeld} />
+        <Field label="Scheduled Sessions" value={report.sessionsHeld} />
         <Field label="Sessions Attended" value={`${report.sessionsAttended} (${attendancePct}%)`} />
         <Field label="Sessions Absent" value={report.sessionsAbsent} />
 

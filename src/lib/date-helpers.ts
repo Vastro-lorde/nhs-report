@@ -119,4 +119,18 @@ export function weekRangeFilenameCodeFromWeekKey(weekKey: string): string {
     .replace(/[^A-Za-z0-9_-]/g, "-");
 }
 
+export function getSundaysInMonth(monthString: string): number {
+  if (!monthString || !/^\d{4}-\d{2}$/.test(monthString)) return 4;
+  const [year, month] = monthString.split("-").map(Number);
+  const date = new Date(year, month - 1, 1);
+  let count = 0;
+  while (date.getMonth() === month - 1) {
+    if (date.getDay() === 0) {
+      count++;
+    }
+    date.setDate(date.getDate() + 1);
+  }
+  return count;
+}
+
 export { startOfISOWeek, endOfISOWeek, subWeeks, addDays };

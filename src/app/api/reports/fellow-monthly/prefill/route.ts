@@ -6,6 +6,7 @@ import { Fellow } from "@/models/Fellow";
 import { Mentor } from "@/models/Mentor";
 import { UserRole } from "@/lib/constants";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { getSundaysInMonth } from "@/lib/date-helpers";
 
 /**
  * GET /api/reports/fellow-monthly/prefill?fellowId=X&month=2026-03
@@ -56,7 +57,9 @@ export async function GET(request: Request) {
             )
         );
 
-        const sessionsHeld = matchingSessions.length;
+        const sundaysCount = getSundaysInMonth(month);
+        const sessionsAttended = Math.min(sundaysCount, matchingSessions.length);
+        const sessionsAbsent = Math.max(0, sundaysCount - sessionsAttended);
 
         // Deduplicated challenges from all matching sessions
         const challengeSet = new Set<string>();
@@ -90,9 +93,9 @@ export async function GET(request: Request) {
                 lga: fellowDoc.lga,
                 qualification: (fellowDoc as any).qualification || "",
             },
-            sessionsHeld,
-            sessionsAttended: sessionsHeld,
-            sessionsAbsent: 0,
+            sessionsHeld: sundaysCount,
+            sessionsAttended,
+            sessionsAbsent,
             challenges: Array.from(challengeSet),
             recommendations: Array.from(solutionSet),
             weeklyReportIds,

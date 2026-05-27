@@ -219,7 +219,7 @@ export default function MentorMonthlyReportDetailPage() {
         {/* Section 2 – Attendance */}
         <Section title="Section 2 – Attendance">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Field label="Sessions Booked" value={report.sessionsHeld} />
+            <Field label="Scheduled Sessions" value={report.sessionsHeld} />
             <Field
               label="Sessions Attended"
               value={`${report.sessionsAttended} (${attendancePct}%)`}
