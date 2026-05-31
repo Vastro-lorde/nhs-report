@@ -24,6 +24,7 @@ export async function GET(request: Request) {
         const rawStateParam = searchParams.get("state");
         const stateParam = rawStateParam ? rawStateParam.toUpperCase().trim() : "";
         const qParam = (searchParams.get("q") || "").trim();
+        const mentorIdParam = searchParams.get("mentorId");
         const filter: Record<string, any> = {};
 
         if (qParam) {
@@ -32,7 +33,23 @@ export async function GET(request: Request) {
             filter.fellowName = { $regex: escaped, $options: "i" };
         }
 
-        if (session.user.role === UserRole.MENTOR) {
+        if (mentorIdParam) {
+            // Restrict to a specific mentor. Admin: any. Coordinator: only their own mentors.
+            if (session.user.role === UserRole.ADMIN) {
+                filter.mentor = mentorIdParam;
+            } else if (session.user.role === UserRole.COORDINATOR) {
+                const coordDoc = await Coordinator.findOne({ authId: session.user.id }).lean();
+                const mentorDoc = coordDoc
+                    ? await Mentor.findOne({ _id: mentorIdParam, coordinator: coordDoc._id }).lean()
+                    : null;
+                if (!mentorDoc) {
+                    return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+                }
+                filter.mentor = mentorIdParam;
+            } else {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            }
+        } else if (session.user.role === UserRole.MENTOR) {
             const mentorDoc = await Mentor.findOne({ authId: session.user.id }).lean();
             if (!mentorDoc) return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
             filter.mentor = mentorDoc._id;

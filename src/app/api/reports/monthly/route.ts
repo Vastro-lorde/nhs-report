@@ -21,10 +21,30 @@ export async function GET(request: Request) {
         const page = parseInt(searchParams.get("page") || "1", 10);
         const limit = parseInt(searchParams.get("limit") || "20", 10);
         const skip = (page - 1) * limit;
+        const mentorIdParam = searchParams.get("mentorId");
 
         const filter: Record<string, any> = {};
 
-        if (session.user.role === UserRole.COORDINATOR) {
+        // When filtering by a specific mentor, restrict to that mentor's reports.
+        // Admin: any mentor. Coordinator: only their own mentors. Others: forbidden.
+        if (mentorIdParam) {
+            if (session.user.role === UserRole.ADMIN) {
+                filter.type = "mentor";
+                filter.mentor = mentorIdParam;
+            } else if (session.user.role === UserRole.COORDINATOR) {
+                const coordinatorDoc = await Coordinator.findOne({ authId: session.user.id });
+                const mentorDoc = coordinatorDoc
+                    ? await Mentor.findOne({ _id: mentorIdParam, coordinator: coordinatorDoc._id }).lean()
+                    : null;
+                if (!mentorDoc) {
+                    return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+                }
+                filter.type = "mentor";
+                filter.mentor = mentorIdParam;
+            } else {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            }
+        } else if (session.user.role === UserRole.COORDINATOR) {
             const coordinatorDoc = await Coordinator.findOne({ authId: session.user.id });
             if (coordinatorDoc) {
                 // Coordinators see their own zonal reports + mentor reports from their mentors

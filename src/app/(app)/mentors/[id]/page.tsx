@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { api, type Mentor } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 import { LocationSelector } from "@/components/ui/LocationSelector";
-import { ArrowLeft, Key, AtSign, Pencil } from "lucide-react";
+import { ArrowLeft, Key, AtSign, Pencil, FileText } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/Badge";
 
@@ -216,6 +216,20 @@ export default function MentorDetailsPage({
                                 <CardTitle>Actions</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                {(user?.role === "admin" || user?.role === "coordinator") && (
+                                    <div>
+                                        <Button
+                                            onClick={() => router.push(`/mentors/${id}/reports`)}
+                                            variant="secondary"
+                                            className="w-full justify-start"
+                                        >
+                                            <FileText className="h-4 w-4 mr-2" /> View Reports
+                                        </Button>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            See all weekly, monthly, and fellow monthly reports submitted by this mentor.
+                                        </p>
+                                    </div>
+                                )}
                                 {(user?.role === "admin" || user?.role === "coordinator" || user?.role === "zonal_desk_officer") && (
                                     <div>
                                         <Button onClick={openEditModal} variant="secondary" className="w-full justify-start">
