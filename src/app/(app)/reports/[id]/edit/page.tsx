@@ -15,6 +15,7 @@ import { Select } from "@/components/ui/Select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Report, type MentorshipSessionInput } from "@/lib/api-client";
 import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
+import { weekRangeLabelFromDate } from "@/lib/date-helpers";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
 
 const EMPTY_SESSION: MentorshipSessionInput = {
@@ -340,14 +341,25 @@ export default function EditReportPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                id="weekEnding"
-                label="Week Ending Date *"
-                type="date"
-                value={weekEnding}
-                onChange={(e) => setWeekEnding(e.target.value)}
-                required
-              />
+              <div>
+                <Input
+                  id="weekEnding"
+                  label="Week Ending Date *"
+                  type="date"
+                  value={weekEnding}
+                  onChange={(e) => setWeekEnding(e.target.value)}
+                  required
+                />
+                {weekEnding && (
+                  <p className="mt-1 text-xs text-gray-600">
+                    This will be saved as week{" "}
+                    <span className="font-medium">
+                      {weekRangeLabelFromDate(weekEnding)}
+                    </span>
+                    .
+                  </p>
+                )}
+              </div>
               <Input
                 id="weekNumber"
                 label="Week Number"

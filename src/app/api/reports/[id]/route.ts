@@ -9,7 +9,7 @@ import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { rebuildRollupForWeek } from "@/services/rollup.service";
 import { logActivity } from "@/lib/activity-logger";
-import { currentWeekKey } from "@/lib/date-helpers";
+import { currentWeekKey, isoWeekKey, endOfISOWeek } from "@/lib/date-helpers";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -161,13 +161,43 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     delete body.evidence;
   }
 
+  const previousWeekKey = report.weekKey;
+
+  // If weekEnding is being updated, normalize it to the Sunday of its ISO
+  // week and recompute weekKey. Reject if the new slot is already taken by
+  // another report from the same mentor.
+  if (typeof body.weekEnding === "string" || body.weekEnding instanceof Date) {
+    const parsed = new Date(body.weekEnding as string | Date);
+    if (isNaN(parsed.getTime())) return jsonError("Invalid weekEnding date");
+    const normalizedEnding = endOfISOWeek(parsed);
+    const newWeekKey = isoWeekKey(normalizedEnding);
+    if (newWeekKey !== report.weekKey) {
+      const conflict = await WeeklyReport.findOne({
+        _id: { $ne: report._id },
+        mentor: report.mentor,
+        weekKey: newWeekKey,
+      });
+      if (conflict) {
+        return jsonError(
+          `A report already exists for ${newWeekKey}. Edit that report instead.`,
+          409,
+        );
+      }
+    }
+    (body as any).weekEnding = normalizedEnding;
+    (body as any).weekKey = newWeekKey;
+  }
+
   // Apply updates
   const snapshot = JSON.stringify(report.toObject());
   Object.assign(report, body);
   await report.save();
 
-  // Rebuild rollup
+  // Rebuild rollup for both old and new week if the key changed
   await rebuildRollupForWeek(report.weekKey);
+  if (previousWeekKey && previousWeekKey !== report.weekKey) {
+    await rebuildRollupForWeek(previousWeekKey);
+  }
 
   void ReportHistory.create({
     reportId: report._id,

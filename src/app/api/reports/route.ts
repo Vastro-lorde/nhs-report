@@ -7,7 +7,7 @@ import { WeeklyReport, Alert, User, Mentor, Coordinator, DeskOfficer, ReportHist
 import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
-import { isoWeekKey } from "@/lib/date-helpers";
+import { isoWeekKey, endOfISOWeek } from "@/lib/date-helpers";
 import { rebuildRollupForWeek } from "@/services/rollup.service";
 import { logActivity } from "@/lib/activity-logger";
 
@@ -182,9 +182,12 @@ export async function POST(request: NextRequest) {
 
   await connectDB();
 
-  const weekEnding = new Date(body.weekEnding);
-  if (isNaN(weekEnding.getTime())) return jsonError("Invalid weekEnding date");
+  const parsedWeekEnding = new Date(body.weekEnding);
+  if (isNaN(parsedWeekEnding.getTime())) return jsonError("Invalid weekEnding date");
 
+  // Normalize to the Sunday of the ISO week so weekEnding and weekKey can
+  // never disagree.
+  const weekEnding = endOfISOWeek(parsedWeekEnding);
   const weekKey = isoWeekKey(weekEnding);
 
   const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
