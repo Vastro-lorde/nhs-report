@@ -15,7 +15,7 @@ import { Select } from "@/components/ui/Select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type CreateReportInput, type MentorshipSessionInput } from "@/lib/api-client";
 import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
-import { weekRangeLabelFromDate } from "@/lib/date-helpers";
+import { parseInputDate, weekRangeLabelFromDate } from "@/lib/date-helpers";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
 import { faker } from "@faker-js/faker";
@@ -330,7 +330,7 @@ export default function NewReportPage() {
                   <p className="mt-1 text-xs text-gray-600">
                     This will be saved as week{" "}
                     <span className="font-medium">
-                      {weekRangeLabelFromDate(weekEnding)}
+                      {weekRangeLabelFromDate(parseInputDate(weekEnding))}
                     </span>
                     .
                   </p>

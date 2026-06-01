@@ -15,7 +15,7 @@ import { safeFormatISO } from "@/lib/date-helpers";
 import Link from "next/link";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
-import { weekRangeLabelFromDate } from "@/lib/date-helpers";
+import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 import ZonalAuditPreview from "@/components/reports/ZonalAuditPreview";
@@ -191,7 +191,7 @@ export default function MonthlyReportDetailPage() {
                                             <div>
                                                 <p className="font-semibold text-gray-900">{wr.mentorName || (wr.mentor as any)?.authId?.name || (wr.mentor as any)?.name || "Unknown Mentor"}</p>
                                                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                                                    <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {weekRangeLabelFromDate(wr.weekEnding)}</span>
+                                                    <span className="flex items-center"><Calendar className="h-3 w-3 mr-1" /> {weekRangeLabelFromWeekKey(wr.weekKey)}</span>
                                                     <span>•</span>
                                                     <span className="flex items-center"><User className="h-3 w-3 mr-1" /> {wr.sessionsCount} Sessions</span>
                                                 </div>

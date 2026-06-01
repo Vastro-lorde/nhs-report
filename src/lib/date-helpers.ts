@@ -38,6 +38,40 @@ export function isoWeekKey(date: Date): string {
   return `${year}-W${String(week).padStart(2, "0")}`;
 }
 
+/**
+ * Parse a date-input value as a local calendar date. A bare "YYYY-MM-DD"
+ * passed to `new Date()` is interpreted as UTC midnight which, in any tz
+ * east of UTC, shifts the day forward. This helper anchors the date to the
+ * local day the user actually picked.
+ */
+export function parseInputDate(input: string | Date): Date {
+  if (input instanceof Date) return input;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+  if (match) {
+    const [, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d), 12, 0, 0, 0);
+  }
+  return new Date(input);
+}
+
+/**
+ * Canonical storage value for `weekEnding`: noon UTC of the Sunday that
+ * ends the ISO week containing `date`. Using noon UTC keeps the calendar
+ * day stable across every timezone we care about, so display code never
+ * flips into the following week.
+ */
+export function canonicalWeekEnding(date: Date): Date {
+  const week = isoWeekKey(date);
+  const m = /^(\d{4})-W(\d{2})$/.exec(week);
+  if (!m) return endOfISOWeek(date);
+  const monday = parseWeekKey(week);
+  if (!monday) return endOfISOWeek(date);
+  const sunday = addDays(monday, 6);
+  return new Date(
+    Date.UTC(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 12, 0, 0, 0),
+  );
+}
+
 /** Parse "2026-W08" back to the Monday of that ISO week */
 export function parseWeekKey(weekKey: string): Date | null {
   const match = weekKey.match(/^(\d{4})-W(\d{2})$/);

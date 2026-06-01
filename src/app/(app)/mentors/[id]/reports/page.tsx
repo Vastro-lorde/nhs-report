@@ -23,7 +23,7 @@ import {
     type MonthlyReport,
     type MentorMonthlyReport,
 } from "@/lib/api-client";
-import { safeFormatISO, weekRangeLabelFromDate } from "@/lib/date-helpers";
+import { safeFormatISO, weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 
 type TabKey = "weekly" | "monthly" | "fellowMonthly";
 
@@ -220,7 +220,7 @@ export default function MentorReportsPage({
                                         ) : (
                                             weekly.map((r) => (
                                                 <tr key={r._id} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3">{weekRangeLabelFromDate(r.weekEnding)}</td>
+                                                    <td className="px-4 py-3">{weekRangeLabelFromWeekKey(r.weekKey)}</td>
                                                     <td className="px-4 py-3">{r.mentor?.state ?? r.state}</td>
                                                     <td className="px-4 py-3 hidden sm:table-cell">{r.sessionsCount}</td>
                                                     <td className="px-4 py-3 hidden sm:table-cell">{r.menteesCheckedIn}</td>

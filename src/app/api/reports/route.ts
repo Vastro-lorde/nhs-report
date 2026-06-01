@@ -7,7 +7,7 @@ import { WeeklyReport, Alert, User, Mentor, Coordinator, DeskOfficer, ReportHist
 import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
-import { isoWeekKey, endOfISOWeek } from "@/lib/date-helpers";
+import { isoWeekKey, parseInputDate, canonicalWeekEnding } from "@/lib/date-helpers";
 import { rebuildRollupForWeek } from "@/services/rollup.service";
 import { logActivity } from "@/lib/activity-logger";
 
@@ -183,13 +183,14 @@ export async function POST(request: NextRequest) {
 
   await connectDB();
 
-  const parsedWeekEnding = new Date(body.weekEnding);
+  const parsedWeekEnding = parseInputDate(body.weekEnding);
   if (isNaN(parsedWeekEnding.getTime())) return jsonError("Invalid weekEnding date");
 
-  // Normalize to the Sunday of the ISO week so weekEnding and weekKey can
-  // never disagree.
-  const weekEnding = endOfISOWeek(parsedWeekEnding);
-  const weekKey = isoWeekKey(weekEnding);
+  // Normalize to the canonical Sunday of the ISO week (noon UTC) so
+  // weekEnding and weekKey can never disagree, and so display in any tz
+  // never flips to the following week.
+  const weekEnding = canonicalWeekEnding(parsedWeekEnding);
+  const weekKey = isoWeekKey(parsedWeekEnding);
 
   const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
   if (!mentorDoc) return jsonError("Mentor profile not found", 403);

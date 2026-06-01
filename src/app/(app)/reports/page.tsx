@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { Plus, Eye, ChevronLeft, ChevronRight, FileDown, Download, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { exportToCSV } from "@/lib/export";
-import { weekRangeLabelFromDate } from "@/lib/date-helpers";
+import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 
 const PDFDownloadButton = dynamic(
   () => import("@/components/pdf/PDFDownloadButton").then((m) => m.PDFDownloadButton),
@@ -139,7 +139,7 @@ export default function ReportsListPage() {
               )}
               <Button variant="outline" size="sm" onClick={() => {
                 const data = reports.map(r => ({
-                  Week: weekRangeLabelFromDate(r.weekEnding),
+                  Week: weekRangeLabelFromWeekKey(r.weekKey),
                   Mentor: r.mentor?.name ?? r.mentorName ?? "",
                   State: r.mentor?.state ?? r.state,
                   Sessions: r.sessionsCount,
@@ -186,7 +186,7 @@ export default function ReportsListPage() {
               ) : (
                 reports.map((report) => (
                   <tr key={report._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">{weekRangeLabelFromDate(report.weekEnding)}</td>
+                    <td className="px-4 py-3">{weekRangeLabelFromWeekKey(report.weekKey)}</td>
                     {!isMentor && (
                       <td className="px-4 py-3">{report.mentor?.name ?? report.mentorName ?? "—"}</td>
                     )}

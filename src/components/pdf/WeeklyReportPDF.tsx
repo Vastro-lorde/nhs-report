@@ -7,7 +7,7 @@
 import React from "react";
 import { format, parseISO } from "date-fns";
 import { APP_NAME } from "@/lib/constants";
-import { weekRangeLabelFromDate } from "@/lib/date-helpers";
+import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 
 import {
   Document,
@@ -187,7 +187,7 @@ export function WeeklyReportPDF({ report }: ReportPDFProps) {
     report.mentor?.name ??
     ((report.mentor as any)?.authId?.name as string | undefined) ??
     "Mentor";
-  const weekLabel = weekRangeLabelFromDate(report.weekEnding);
+  const weekLabel = weekRangeLabelFromWeekKey(report.weekKey);
 
   return (
     <Document

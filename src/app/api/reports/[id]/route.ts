@@ -9,7 +9,7 @@ import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { rebuildRollupForWeek } from "@/services/rollup.service";
 import { logActivity } from "@/lib/activity-logger";
-import { currentWeekKey, isoWeekKey, endOfISOWeek } from "@/lib/date-helpers";
+import { currentWeekKey, isoWeekKey, parseInputDate, canonicalWeekEnding } from "@/lib/date-helpers";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -167,10 +167,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   // week and recompute weekKey. Reject if the new slot is already taken by
   // another report from the same mentor.
   if (typeof body.weekEnding === "string" || body.weekEnding instanceof Date) {
-    const parsed = new Date(body.weekEnding as string | Date);
+    const parsed = parseInputDate(body.weekEnding as string | Date);
     if (isNaN(parsed.getTime())) return jsonError("Invalid weekEnding date");
-    const normalizedEnding = endOfISOWeek(parsed);
-    const newWeekKey = isoWeekKey(normalizedEnding);
+    const normalizedEnding = canonicalWeekEnding(parsed);
+    const newWeekKey = isoWeekKey(parsed);
     if (newWeekKey !== report.weekKey) {
       const conflict = await WeeklyReport.findOne({
         _id: { $ne: report._id },
