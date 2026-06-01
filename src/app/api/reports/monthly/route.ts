@@ -28,19 +28,21 @@ export async function GET(request: Request) {
         // When filtering by a specific mentor, restrict to that mentor's reports.
         // Admin: any mentor. Coordinator: only their own mentors. Others: forbidden.
         if (mentorIdParam) {
+            // mentorIdParam may be Mentor._id or the user's authId
+            const targetMentor = await Mentor.findOne({ $or: [{ _id: mentorIdParam }, { authId: mentorIdParam }] }).lean();
+            if (!targetMentor) {
+                return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+            }
             if (session.user.role === UserRole.ADMIN) {
                 filter.type = "mentor";
-                filter.mentor = mentorIdParam;
+                filter.mentor = targetMentor._id;
             } else if (session.user.role === UserRole.COORDINATOR) {
                 const coordinatorDoc = await Coordinator.findOne({ authId: session.user.id });
-                const mentorDoc = coordinatorDoc
-                    ? await Mentor.findOne({ _id: mentorIdParam, coordinator: coordinatorDoc._id }).lean()
-                    : null;
-                if (!mentorDoc) {
+                if (!coordinatorDoc || String(targetMentor.coordinator) !== String(coordinatorDoc._id)) {
                     return NextResponse.json({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
                 }
                 filter.type = "mentor";
-                filter.mentor = mentorIdParam;
+                filter.mentor = targetMentor._id;
             } else {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }

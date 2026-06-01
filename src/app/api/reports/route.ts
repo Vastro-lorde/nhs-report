@@ -78,7 +78,8 @@ export async function GET(request: NextRequest) {
       mustFilterByMentorIds = true;
     }
     if (mentorId) {
-      mentorFilter._id = mentorId;
+      // mentorId from the UI may be either Mentor._id or the user's authId
+      mentorFilter.$or = [{ _id: mentorId }, { authId: mentorId }];
       mustFilterByMentorIds = true;
     }
 
