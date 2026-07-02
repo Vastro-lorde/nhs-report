@@ -6,6 +6,7 @@
 import { useSession } from "next-auth/react";
 import { Menu } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
+import { NotificationBell } from "./NotificationBell";
 
 interface HeaderProps {
   title: string;
@@ -35,6 +36,7 @@ export function Header({ title, subtitle, children }: HeaderProps) {
       </div>
       <div className="flex items-center gap-4">
         {children}
+        {session?.user && <NotificationBell />}
         {session?.user && (
           <div className="hidden sm:flex items-center gap-3">
             <div className="text-right">

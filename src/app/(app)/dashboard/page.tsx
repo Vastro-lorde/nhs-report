@@ -4,9 +4,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Header } from "@/components/layout";
 import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button, SearchableSelect, Select, Badge } from "@/components/ui";
-import { api, type DashboardData, type Mentor, type Fellow, type Report, type RollupItem } from "@/lib/api-client";
+import { api, type DashboardData, type Mentor, type Fellow, type Report, type RollupItem, type BookingItem } from "@/lib/api-client";
 import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download, Trophy, GraduationCap, Clock, Calendar, BookOpen, AlertCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
@@ -795,24 +796,106 @@ function MentorDashboard() {
   );
 }
 
+function FellowDashboard() {
+  const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.bookings
+      .list({ upcoming: "true", status: "confirmed" })
+      .then((res) => setBookings(res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString("en-GB", {
+      timeZone: "Africa/Lagos",
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+  return (
+    <>
+      <Header title="Dashboard" subtitle="Your mentorship sessions at a glance" />
+      <div className="p-4 md:p-6 space-y-6">
+        <Card>
+          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Book a mentorship session</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Choose from your mentor&apos;s available time slots.
+              </p>
+            </div>
+            <Link href="/book">
+              <Button>Book a Session</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Sessions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p className="text-sm text-gray-500 py-6 text-center">Loading…</p>
+            ) : bookings.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6 text-center">
+                No upcoming sessions. Book one to get started.
+              </p>
+            ) : (
+              <ul className="divide-y divide-gray-100">
+                {bookings.map((b) => (
+                  <li key={b._id} className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{fmt(b.startAt)}</p>
+                      {b.note && <p className="text-xs text-gray-500 mt-0.5">Note: {b.note}</p>}
+                    </div>
+                    {b.meetingLink && (
+                      <a
+                        href={b.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-orange-700 hover:underline"
+                      >
+                        Join
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const user = session?.user;
   const [data, setData] = useState<DashboardData | null>(null);
   const [fetched, setFetched] = useState(false);
   const isMentor = user?.role === "mentor";
+  const isFellow = user?.role === "fellow";
 
   useEffect(() => {
     if (status === "loading") return;
-    if (isMentor) return;
+    if (isMentor || isFellow) return;
     api.dashboard
       .get()
       .then(setData)
       .catch(console.error)
       .finally(() => setFetched(true));
-  }, [status, isMentor]);
+  }, [status, isMentor, isFellow]);
 
-  const loading = status === "loading" || (!isMentor && !fetched);
+  const loading = status === "loading" || (!isMentor && !isFellow && !fetched);
 
   if (loading) {
     return (
@@ -824,6 +907,10 @@ export default function DashboardPage() {
 
   if (user?.role === "mentor") {
     return <MentorDashboard />;
+  }
+
+  if (user?.role === "fellow") {
+    return <FellowDashboard />;
   }
 
   if (!data) {

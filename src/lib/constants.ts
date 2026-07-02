@@ -13,8 +13,52 @@ export const UserRole = {
   ZONAL_DESK_OFFICER: "zonal_desk_officer",
   ME_OFFICER: "me_officer",
   TEAM_RESEARCH_LEAD: "team_research_lead",
+  FELLOW: "fellow",
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+// ─── Scheduling / Booking ───────────────────
+/** Duration of a single mentorship session slot, in minutes. */
+export const SESSION_DURATION_MINUTES = 40;
+/** Number of weeks ahead that recurring availability is materialized into concrete slots. */
+export const SLOT_MATERIALIZATION_WEEKS = 4;
+
+export const FellowInviteStatus = {
+  NONE: "none",
+  INVITED: "invited",
+  ACTIVE: "active",
+} as const;
+export type FellowInviteStatus = (typeof FellowInviteStatus)[keyof typeof FellowInviteStatus];
+
+export const TimeSlotStatus = {
+  OPEN: "open",
+  BOOKED: "booked",
+  CANCELLED: "cancelled",
+} as const;
+export type TimeSlotStatus = (typeof TimeSlotStatus)[keyof typeof TimeSlotStatus];
+
+export const TimeSlotSource = {
+  TEMPLATE: "template",
+  MANUAL: "manual",
+} as const;
+export type TimeSlotSource = (typeof TimeSlotSource)[keyof typeof TimeSlotSource];
+
+export const BookingStatus = {
+  CONFIRMED: "confirmed",
+  CANCELLED: "cancelled",
+  COMPLETED: "completed",
+  NO_SHOW: "no_show",
+} as const;
+export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
+
+export const NotificationType = {
+  SLOTS_PUBLISHED: "slots_published",
+  BOOKING_CONFIRMED: "booking_confirmed",
+  BOOKING_CANCELLED: "booking_cancelled",
+  SESSION_REMINDER: "session_reminder",
+  FELLOW_INVITED: "fellow_invited",
+} as const;
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
 
 // ─── Nigerian States covered by the programme ─
 import statesLgaData from "../../nigerian-states-lga.json";

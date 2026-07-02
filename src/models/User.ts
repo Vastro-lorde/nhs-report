@@ -17,6 +17,8 @@ export interface IUser extends Document {
   resetOtpHash?: string;
   resetOtpExpires?: Date;
   resetOtpAttempts?: number;
+  inviteTokenHash?: string;
+  inviteTokenExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +47,8 @@ const UserSchema = new Schema<IUser>(
     resetOtpHash: { type: String, select: false },
     resetOtpExpires: { type: Date, select: false },
     resetOtpAttempts: { type: Number, default: 0, select: false },
+    inviteTokenHash: { type: String, select: false },
+    inviteTokenExpires: { type: Date, select: false },
   },
   { timestamps: true }
 );

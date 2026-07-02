@@ -2,6 +2,8 @@
   "crons": [
     { "path": "/api/cron/rollups", "schedule": "30 1 * * *" },
     { "path": "/api/cron/reminders", "schedule": "0 8 * * 5" },
-    { "path": "/api/cron/digest", "schedule": "15 8 * * 1" }
+    { "path": "/api/cron/digest", "schedule": "15 8 * * 1" },
+    { "path": "/api/cron/materialize-slots", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/session-reminders", "schedule": "0 * * * *" }
   ]
 }

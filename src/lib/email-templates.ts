@@ -431,3 +431,237 @@ ${APP_NAME}`;
 
   return { subject, text, html };
 }
+
+/* ──────────────────────────────────────────
+   Scheduling / Booking email templates
+   ────────────────────────────────────────── */
+
+/** Fellow invitation with a secure set-password link. */
+export function fellowInviteTemplate(name: string, mentorName: string, token: string, appUrl: string) {
+  const link = `${appUrl}/set-password?token=${encodeURIComponent(token)}`;
+  const subject = `You've been invited to ${APP_NAME}`;
+
+  const text = `Hello ${name},
+
+Your mentor ${mentorName} has invited you to join ${APP_NAME} as a Fellow.
+
+Set your password and activate your account here:
+${link}
+
+Once activated, you can log in to book mentorship sessions with your mentor.
+
+This link will expire in 48 hours.
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">Welcome to ${APP_NAME}</h2>
+      <p>Hello <strong>${name}</strong>,</p>
+      <p>Your mentor <strong>${mentorName}</strong> has invited you to join ${APP_NAME} as a Fellow.</p>
+      <p>Set your password to activate your account and start booking mentorship sessions.</p>
+      <p>
+        <a href="${link}"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          Set Your Password
+        </a>
+      </p>
+      <p style="color: #6b7280; font-size: 13px;">This link will expire in 48 hours.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
+/** Notify a fellow that their mentor published new availability. */
+export function slotsPublishedTemplate(fellowName: string, mentorName: string, appUrl: string) {
+  const subject = `${mentorName} has new available session times`;
+
+  const text = `Hello ${fellowName},
+
+Your mentor ${mentorName} has opened new session time slots.
+
+Book a session here: ${appUrl}/book
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">New Session Times Available</h2>
+      <p>Hello <strong>${fellowName}</strong>,</p>
+      <p>Your mentor <strong>${mentorName}</strong> has opened new session time slots. Book before they fill up.</p>
+      <p>
+        <a href="${appUrl}/book"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          Book a Session
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
+/** Booking confirmation sent to the fellow. */
+export function bookingConfirmedFellowTemplate(
+  fellowName: string,
+  mentorName: string,
+  whenLabel: string,
+  meetingLink: string | undefined,
+  appUrl: string,
+) {
+  const subject = `Session confirmed with ${mentorName} — ${whenLabel}`;
+  const linkLine = meetingLink ? `\nMeeting link: ${meetingLink}` : "";
+
+  const text = `Hello ${fellowName},
+
+Your session with ${mentorName} is confirmed for ${whenLabel}.${linkLine}
+
+View your sessions: ${appUrl}/sessions
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">Session Confirmed</h2>
+      <p>Hello <strong>${fellowName}</strong>,</p>
+      <p>Your session with <strong>${mentorName}</strong> is confirmed for <strong>${whenLabel}</strong>.</p>
+      ${meetingLink ? `<p><strong>Meeting link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>` : ""}
+      <p>
+        <a href="${appUrl}/sessions"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          View My Sessions
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
+/** New-booking notification sent to the mentor. */
+export function bookingConfirmedMentorTemplate(
+  mentorName: string,
+  fellowName: string,
+  whenLabel: string,
+  note: string | undefined,
+  appUrl: string,
+) {
+  const subject = `New session booked by ${fellowName} — ${whenLabel}`;
+  const noteLine = note ? `\nNote from fellow: ${note}` : "";
+
+  const text = `Hello ${mentorName},
+
+${fellowName} has booked a session with you for ${whenLabel}.${noteLine}
+
+View your sessions: ${appUrl}/sessions
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">New Session Booked</h2>
+      <p>Hello <strong>${mentorName}</strong>,</p>
+      <p><strong>${fellowName}</strong> has booked a session with you for <strong>${whenLabel}</strong>.</p>
+      ${note ? `<div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;"><p style="margin: 0;"><strong>Note:</strong> ${note}</p></div>` : ""}
+      <p>
+        <a href="${appUrl}/sessions"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          View My Sessions
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
+/** Cancellation notice sent to the other party. */
+export function bookingCancelledTemplate(
+  recipientName: string,
+  otherName: string,
+  whenLabel: string,
+  cancelledByLabel: string,
+  appUrl: string,
+) {
+  const subject = `Session cancelled — ${whenLabel}`;
+
+  const text = `Hello ${recipientName},
+
+Your session with ${otherName} scheduled for ${whenLabel} has been cancelled by ${cancelledByLabel}.
+
+View your sessions: ${appUrl}/sessions
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #b91c1c;">Session Cancelled</h2>
+      <p>Hello <strong>${recipientName}</strong>,</p>
+      <p>Your session with <strong>${otherName}</strong> scheduled for <strong>${whenLabel}</strong> has been cancelled by ${cancelledByLabel}.</p>
+      <p>
+        <a href="${appUrl}/sessions"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          View My Sessions
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}
+
+/** Upcoming session reminder sent to either party. */
+export function sessionReminderTemplate(
+  recipientName: string,
+  otherName: string,
+  whenLabel: string,
+  meetingLink: string | undefined,
+  appUrl: string,
+) {
+  const subject = `Reminder: session with ${otherName} — ${whenLabel}`;
+  const linkLine = meetingLink ? `\nMeeting link: ${meetingLink}` : "";
+
+  const text = `Hello ${recipientName},
+
+This is a reminder of your upcoming session with ${otherName} on ${whenLabel}.${linkLine}
+
+View your sessions: ${appUrl}/sessions
+
+Thank you,
+${APP_NAME}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #1a7f37;">Upcoming Session Reminder</h2>
+      <p>Hello <strong>${recipientName}</strong>,</p>
+      <p>This is a reminder of your upcoming session with <strong>${otherName}</strong> on <strong>${whenLabel}</strong>.</p>
+      ${meetingLink ? `<p><strong>Meeting link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>` : ""}
+      <p>
+        <a href="${appUrl}/sessions"
+           style="display: inline-block; padding: 12px 24px; background: #1a7f37;
+                  color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          View My Sessions
+        </a>
+      </p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">${APP_NAME}</p>
+    </div>`;
+
+  return { subject, text, html };
+}

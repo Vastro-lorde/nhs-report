@@ -15,6 +15,9 @@ import {
   Settings,
   LogOut,
   ClipboardList,
+  CalendarClock,
+  CalendarPlus,
+  CalendarCheck,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { APP_NAME, APP_LOGO_URL, UserRole } from "@/lib/constants";
@@ -27,7 +30,25 @@ const NAV_ITEMS = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD, UserRole.FELLOW],
+  },
+  {
+    label: "Book a Session",
+    href: "/book",
+    icon: CalendarPlus,
+    roles: [UserRole.FELLOW],
+  },
+  {
+    label: "My Schedule",
+    href: "/schedule",
+    icon: CalendarClock,
+    roles: [UserRole.MENTOR],
+  },
+  {
+    label: "My Sessions",
+    href: "/sessions",
+    icon: CalendarCheck,
+    roles: [UserRole.MENTOR, UserRole.FELLOW],
   },
   {
     label: "Submit Report",
@@ -153,7 +174,7 @@ const NAV_ITEMS = [
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD, UserRole.FELLOW],
   },
 ] satisfies { label: string; href: string; icon: typeof LayoutDashboard; roles: string[] }[];
 

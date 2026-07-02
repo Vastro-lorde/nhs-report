@@ -8,6 +8,7 @@ export interface IMentor extends Document {
     coordinator: Types.ObjectId;
     states: string[];
     lgas: string[];
+    meetingLink?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -27,6 +28,7 @@ const MentorSchema = new Schema<IMentor>(
             uppercase: true,
             default: []
         },
+        meetingLink: { type: String, trim: true },
     },
     { timestamps: true }
 );

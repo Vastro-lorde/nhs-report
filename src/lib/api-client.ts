@@ -322,6 +322,13 @@ export const api = {
       request<Fellow>(`/api/fellows/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     delete: (id: string) =>
       request(`/api/fellows/${id}`, { method: "DELETE" }),
+    invite: (id: string, email: string) =>
+      request<{ success: boolean; message: string; fellowId: string }>(`/api/fellows/${id}/invite`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }),
+    mySlots: () =>
+      request<{ mentorName: string; slots: TimeSlotItem[] }>("/api/fellows/me/slots"),
     documents: {
       list: (fellowId: string) =>
         request<FellowDocument[]>(`/api/fellows/${fellowId}/documents`),
@@ -396,6 +403,67 @@ export const api = {
       request<ReportSettings>("/api/admin/report-settings", {
         method: "PATCH",
         body: JSON.stringify(data),
+      }),
+  },
+
+  scheduling: {
+    getMe: () => request<MentorScheduleProfile>("/api/mentors/me"),
+    updateMeetingLink: (meetingLink: string) =>
+      request<MentorScheduleProfile>("/api/mentors/me", {
+        method: "PATCH",
+        body: JSON.stringify({ meetingLink }),
+      }),
+    getAvailability: () =>
+      request<{ templates: AvailabilityTemplate[]; slots: TimeSlotItem[] }>(
+        "/api/mentors/me/availability",
+      ),
+    saveTemplates: (templates: AvailabilityTemplateInput[]) =>
+      request<{ success: boolean; templates: number; slotsCreated: number }>(
+        "/api/mentors/me/availability",
+        { method: "PUT", body: JSON.stringify({ templates }) },
+      ),
+    addSlot: (data: { startAt: string; meetingLinkOverride?: string }) =>
+      request<TimeSlotItem>("/api/mentors/me/availability", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    deleteSlot: (slotId: string) =>
+      request<{ success: boolean }>(`/api/mentors/me/availability/${slotId}`, { method: "DELETE" }),
+    publish: () =>
+      request<{ success: boolean; notified: number; openSlots: number }>(
+        "/api/mentors/me/publish",
+        { method: "POST" },
+      ),
+  },
+
+  notifications: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
+      return request<{
+        data: NotificationItem[];
+        unreadCount: number;
+        pagination: PaginatedResponse<NotificationItem>["pagination"];
+      }>(`/api/notifications${qs}`);
+    },
+    markRead: (id: string) =>
+      request<NotificationItem>(`/api/notifications/${id}`, { method: "PATCH" }),
+    markAllRead: () =>
+      request<{ success: boolean; updated: number }>("/api/notifications/read-all", {
+        method: "POST",
+      }),
+  },
+
+  bookings: {
+    list: (params?: Record<string, string>) => {
+      const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
+      return request<PaginatedResponse<BookingItem>>(`/api/bookings${qs}`);
+    },
+    create: (data: { slotId: string; note?: string }) =>
+      request<BookingItem>("/api/bookings", { method: "POST", body: JSON.stringify(data) }),
+    cancel: (id: string) =>
+      request<{ success: boolean; status: string }>(`/api/bookings/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ action: "cancel" }),
       }),
   },};
 
@@ -542,6 +610,67 @@ export interface Fellow {
   lga: string;
   qualification?: string;
   documentCount?: number;
+  email?: string;
+  inviteStatus?: "none" | "invited" | "active";
+  invitedAt?: string;
+  createdAt: string;
+}
+
+// ─── Scheduling / Booking types ─────────────
+export interface MentorScheduleProfile {
+  _id: string;
+  meetingLink?: string;
+  states: string[];
+  lgas: string[];
+}
+
+export interface AvailabilityTemplate {
+  _id: string;
+  mentor: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  active: boolean;
+}
+
+export interface AvailabilityTemplateInput {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  active?: boolean;
+}
+
+export interface TimeSlotItem {
+  _id: string;
+  mentor: string;
+  startAt: string;
+  endAt: string;
+  status: "open" | "booked" | "cancelled";
+  source: "template" | "manual";
+  meetingLinkOverride?: string;
+  meetingLink?: string | null;
+}
+
+export interface BookingItem {
+  _id: string;
+  timeSlot: string;
+  fellow: { _id: string; name: string; email?: string } | string;
+  mentor: string;
+  note?: string;
+  status: "confirmed" | "cancelled" | "completed" | "no_show";
+  meetingLink?: string;
+  startAt: string;
+  endAt: string;
+  createdAt: string;
+}
+
+export interface NotificationItem {
+  _id: string;
+  type: string;
+  title: string;
+  body: string;
+  link?: string;
+  read: boolean;
   createdAt: string;
 }
 

@@ -5,7 +5,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User, Coordinator, Mentor, DeskOfficer } from "@/models";
+import { User, Coordinator, Mentor, DeskOfficer, Fellow } from "@/models";
 import { UserRole } from "@/lib/constants";
 
 declare module "next-auth" {
@@ -20,6 +20,8 @@ declare module "next-auth" {
       states?: string[];
       profileImage?: string;
       aiAccessEnabled?: boolean;
+      fellowId?: string;
+      mentorId?: string;
     };
   }
 
@@ -30,6 +32,8 @@ declare module "next-auth" {
     states?: string[];
     profileImage?: string;
     aiAccessEnabled?: boolean;
+    fellowId?: string;
+    mentorId?: string;
   }
 }
 
@@ -42,6 +46,8 @@ declare module "next-auth" {
     states?: string[];
     profileImage?: string;
     aiAccessEnabled?: boolean;
+    fellowId?: string;
+    mentorId?: string;
   }
 }
 
@@ -73,15 +79,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!isValid) return null;
 
         let userStates: string[] | undefined = undefined;
+        let fellowId: string | undefined = undefined;
+        let mentorId: string | undefined = undefined;
         if (user.role === UserRole.COORDINATOR) {
           const coord = await Coordinator.findOne({ authId: user._id }).lean();
           userStates = coord?.states;
         } else if (user.role === UserRole.MENTOR) {
           const mentor = await Mentor.findOne({ authId: user._id }).lean();
           userStates = mentor?.states;
+          mentorId = mentor?._id.toString();
         } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
           const deskOfficer = await DeskOfficer.findOne({ authId: user._id }).lean();
           userStates = deskOfficer?.states;
+        } else if (user.role === UserRole.FELLOW) {
+          const fellow = await Fellow.findOne({ authId: user._id }).lean();
+          fellowId = fellow?._id.toString();
+          mentorId = fellow?.mentor?.toString();
         }
 
         return {
@@ -94,6 +107,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           states: userStates,
           profileImage: user.profileImage,
           aiAccessEnabled: user.aiAccessEnabled ?? false,
+          fellowId,
+          mentorId,
         };
       },
     }),
@@ -108,6 +123,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.states = user.states;
         token.profileImage = user.profileImage;
         token.aiAccessEnabled = user.aiAccessEnabled;
+        token.fellowId = user.fellowId;
+        token.mentorId = user.mentorId;
       }
 
       // When session.update() is called, refresh mutable fields from DB
@@ -134,6 +151,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.states = token.states as string[] | undefined;
       session.user.profileImage = token.profileImage as string | undefined;
       session.user.aiAccessEnabled = token.aiAccessEnabled as boolean | undefined;
+      session.user.fellowId = token.fellowId as string | undefined;
+      session.user.mentorId = token.mentorId as string | undefined;
       return session;
     },
   },

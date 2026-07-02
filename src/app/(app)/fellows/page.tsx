@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
 import { UserRole } from "@/lib/constants";
 import { api, type Fellow } from "@/lib/api-client";
-import { Plus, UserMinus, FileDown, Trash2, FileUp, ChevronLeft, ChevronRight, Search, Pencil } from "lucide-react";
+import { Plus, UserMinus, FileDown, Trash2, FileUp, ChevronLeft, ChevronRight, Search, Pencil, Mail } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
 import Link from "next/link";
 
@@ -295,6 +295,26 @@ export default function FellowsPage() {
         }
     };
 
+    const handleInvite = async (fellow: Fellow) => {
+        const email = window.prompt(
+            "Enter the fellow's email to send a portal invitation:",
+            fellow.email ?? "",
+        );
+        if (email === null) return;
+        const trimmed = email.trim();
+        if (!trimmed) {
+            alert("An email is required to invite a fellow.");
+            return;
+        }
+        try {
+            await api.fellows.invite(fellow._id, trimmed);
+            alert(`Invitation sent to ${trimmed}.`);
+            fetchFellows();
+        } catch (error) {
+            alert(`Could not send invitation: ${(error as Error).message}`);
+        }
+    };
+
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
             const allIds = fellows.map((f) => f._id);
@@ -451,7 +471,17 @@ export default function FellowsPage() {
                                             )}
                                         </td>
                                         )}
-                                        <td className="px-4 py-3 font-medium">{f.name}</td>
+                                        <td className="px-4 py-3 font-medium">
+                                            <div className="flex items-center gap-2">
+                                                <span>{f.name}</span>
+                                                {f.inviteStatus === "active" && (
+                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">Active</span>
+                                                )}
+                                                {f.inviteStatus === "invited" && (
+                                                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-medium text-yellow-700">Invited</span>
+                                                )}
+                                            </div>
+                                        </td>
                                         <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{f.gender}</td>
                                         <td className="px-4 py-3 text-gray-600">{f.lga}</td>
                                         <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{f.qualification || "—"}</td>
@@ -482,6 +512,15 @@ export default function FellowsPage() {
                                                         title="Edit Fellow"
                                                     >
                                                         <Pencil className="h-4 w-4 text-blue-600" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleInvite(f)}
+                                                        title={f.inviteStatus === "active" ? "Fellow account active" : "Invite Fellow"}
+                                                        disabled={f.inviteStatus === "active"}
+                                                    >
+                                                        <Mail className="h-4 w-4 text-orange-600" />
                                                     </Button>
                                                     <Link href={`/fellows/${f._id}/documents/upload`}>
                                                         <Button variant="secondary" size="sm">
