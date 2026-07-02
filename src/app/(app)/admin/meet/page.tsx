@@ -5,13 +5,12 @@
    ────────────────────────────────────────── */
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
-import { ScoreCard, Card, CardHeader, CardTitle, CardContent } from "@/components/ui";
-import { api, type Mentor, type MeetStatsResponse } from "@/lib/api-client";
+import { ScoreCard, Card, CardHeader, CardTitle, CardContent, SearchableSelect } from "@/components/ui";
+import { api, type MeetStatsResponse } from "@/lib/api-client";
 
 const TZ = "Africa/Lagos";
 
@@ -29,20 +28,39 @@ function fmt(iso?: string) {
 }
 
 export default function AdminMeetPage() {
-  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [mentorOptions, setMentorOptions] = useState<{ value: string; label: string }[]>([]);
+  const [mentorLoading, setMentorLoading] = useState(false);
   const [mentorId, setMentorId] = useState("");
+  const [selectedMentorLabel, setSelectedMentorLabel] = useState("");
   const [stats, setStats] = useState<MeetStatsResponse | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadMentors = useCallback(async (query?: string) => {
+    setMentorLoading(true);
+    try {
+      const params: Record<string, string> = { limit: "50" };
+      if (query) params.search = query;
+      const res = await api.mentors.list(params);
+      setMentorOptions(res.data.map((m) => ({ value: m._id, label: `${m.name} (${m.email})` })));
+    } catch {
+      setError("Failed to load mentors.");
+    } finally {
+      setMentorLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    api.mentors
-      .list({ limit: "200" })
-      .then((res) => setMentors(res.data))
-      .catch(() => setError("Failed to load mentors."));
-  }, []);
+    loadMentors();
+  }, [loadMentors]);
+
+  const onMentorSearch = (query: string) => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => loadMentors(query), 300);
+  };
 
   const loadStats = useCallback(async (id: string) => {
     if (!id) {
@@ -82,11 +100,6 @@ export default function AdminMeetPage() {
     }
   }
 
-  const mentorOptions = [
-    { value: "", label: "Select a mentor…" },
-    ...mentors.map((m) => ({ value: m._id, label: `${m.name} (${m.email})` })),
-  ];
-
   const summary = stats?.summary;
 
   return (
@@ -110,10 +123,19 @@ export default function AdminMeetPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="max-w-md">
-              <Select
+              <SearchableSelect
+                label="Mentor"
+                placeholder="Search mentors by name or email…"
                 options={mentorOptions}
                 value={mentorId}
-                onChange={(e) => setMentorId(e.target.value)}
+                selectedLabel={selectedMentorLabel}
+                loading={mentorLoading}
+                onSearch={onMentorSearch}
+                onChange={(v) => {
+                  setMentorId(v);
+                  const opt = mentorOptions.find((o) => o.value === v);
+                  setSelectedMentorLabel(opt?.label ?? "");
+                }}
               />
             </div>
 

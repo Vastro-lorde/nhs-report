@@ -274,8 +274,8 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* Google Meet connection — hidden once a meeting link is set */}
-        {!meetingLink && (
+        {/* Google Meet connection — shown until the mentor connects Google */}
+        {!googleEmail ? (
         <Card>
           <CardHeader>
             <CardTitle>Google Meet</CardTitle>
@@ -285,20 +285,25 @@ export default function SchedulePage() {
               Connect your Google account so an admin can generate a persistent Meet link for you.
               You start recording and transcription manually inside each meeting.
             </p>
-            {googleEmail ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p className="text-sm text-gray-800">
-                  Connected as <span className="font-medium">{googleEmail}</span>
-                </p>
-                <Button variant="secondary" onClick={connectGoogle} disabled={connectingGoogle}>
-                  {connectingGoogle ? "Redirecting…" : "Reconnect"}
-                </Button>
-              </div>
-            ) : (
-              <Button onClick={connectGoogle} disabled={connectingGoogle}>
-                {connectingGoogle ? "Redirecting…" : "Connect Google Meet"}
+            <Button onClick={connectGoogle} disabled={connectingGoogle}>
+              {connectingGoogle ? "Redirecting…" : "Connect Google Meet"}
+            </Button>
+          </CardContent>
+        </Card>
+        ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Google Meet</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-sm text-gray-800">
+                Connected as <span className="font-medium">{googleEmail}</span>
+              </p>
+              <Button variant="secondary" onClick={connectGoogle} disabled={connectingGoogle}>
+                {connectingGoogle ? "Redirecting…" : "Reconnect"}
               </Button>
-            )}
+            </div>
           </CardContent>
         </Card>
         )}

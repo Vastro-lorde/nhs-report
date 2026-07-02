@@ -13,6 +13,12 @@ export interface SearchableSelectProps {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
+    /** When provided, filtering is delegated to the parent (server-side search). */
+    onSearch?: (query: string) => void;
+    /** Shows a loading state in the dropdown (useful with onSearch). */
+    loading?: boolean;
+    /** Fallback label for the selected value when it isn't in the current options. */
+    selectedLabel?: string;
 }
 
 export function SearchableSelect({
@@ -23,10 +29,14 @@ export function SearchableSelect({
     onChange,
     placeholder = "Search...",
     className,
+    onSearch,
+    loading = false,
+    selectedLabel,
 }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
+    const isAsync = typeof onSearch === "function";
 
     // Close when clicking outside
     useEffect(() => {
@@ -39,11 +49,14 @@ export function SearchableSelect({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const selectedOption = options.find((opt) => opt.value === value);
+    const selectedOption =
+        options.find((opt) => opt.value === value) ??
+        (value && selectedLabel ? { value, label: selectedLabel } : undefined);
 
-    const filteredOptions = options.filter((opt) =>
-        opt.label.toLowerCase().includes(search.toLowerCase())
-    );
+    // In async mode the parent already returns filtered results.
+    const filteredOptions = isAsync
+        ? options
+        : options.filter((opt) => opt.label.toLowerCase().includes(search.toLowerCase()));
 
     return (
         <div className="space-y-1 relative" ref={containerRef}>
@@ -69,7 +82,10 @@ export function SearchableSelect({
                             className="w-full h-full bg-transparent outline-none placeholder-gray-400"
                             placeholder={placeholder}
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                onSearch?.(e.target.value);
+                            }}
                             onClick={(e) => e.stopPropagation()}
                         />
                     )}
@@ -91,7 +107,9 @@ export function SearchableSelect({
 
             {isOpen && (
                 <div className="absolute z-50 w-full mt-1 max-h-48 sm:max-h-60 overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-md">
-                    {filteredOptions.length === 0 ? (
+                    {loading ? (
+                        <p className="px-3 py-2 text-gray-500 text-center">Searching…</p>
+                    ) : filteredOptions.length === 0 ? (
                         <p className="px-3 py-2 text-gray-500 text-center">No options found</p>
                     ) : (
                         filteredOptions.map((opt) => (

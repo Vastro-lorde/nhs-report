@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout";
 import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button, SearchableSelect, Select, Badge } from "@/components/ui";
@@ -239,20 +239,37 @@ function AdminDashboard({ data }: { data: DashboardData }) {
 
 function MentorSessionsTool({ currentWeekKey, rollups }: { currentWeekKey: string; rollups: RollupItem[] }) {
   const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [mentorLoading, setMentorLoading] = useState(false);
+  const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [selectedMentorId, setSelectedMentorId] = useState<string>("");
   const [selectedWeekKey, setSelectedWeekKey] = useState<string>(currentWeekKey);
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [hasFetched, setHasFetched] = useState<boolean>(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadMentors = useCallback(async (query?: string) => {
+    setMentorLoading(true);
+    try {
+      const params: Record<string, string> = { limit: "50" };
+      if (query) params.search = query;
+      const res = await api.mentors.list(params);
+      setMentors(res.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMentorLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    api.mentors
-      .list({ limit: "1000" })
-      .then((res) => {
-        setMentors(res.data || []);
-      })
-      .catch(console.error);
-  }, []);
+    loadMentors();
+  }, [loadMentors]);
+
+  const onMentorSearch = (query: string) => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => loadMentors(query), 300);
+  };
 
   useEffect(() => {
     if (!selectedMentorId || !selectedWeekKey) {
@@ -293,7 +310,7 @@ function MentorSessionsTool({ currentWeekKey, rollups }: { currentWeekKey: strin
     }));
   }, [rollups]);
 
-  const currentMentor = mentors.find((m) => m.mentorId === selectedMentorId);
+  const currentMentor = selectedMentor;
 
   return (
     <Card className="border border-gray-200 shadow-sm bg-white">
@@ -310,7 +327,17 @@ function MentorSessionsTool({ currentWeekKey, rollups }: { currentWeekKey: strin
             placeholder="Search by mentor name..."
             options={mentorOptions}
             value={selectedMentorId}
-            onChange={setSelectedMentorId}
+            selectedLabel={
+              selectedMentor
+                ? `${selectedMentor.name} (${selectedMentor.states?.join(", ") || "No State"})`
+                : undefined
+            }
+            loading={mentorLoading}
+            onSearch={onMentorSearch}
+            onChange={(v) => {
+              setSelectedMentorId(v);
+              setSelectedMentor(mentors.find((m) => m.mentorId === v) ?? null);
+            }}
           />
           <Select
             label="Select Week"
