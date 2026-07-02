@@ -3,6 +3,11 @@
    ────────────────────────────────────────── */
 // ─── App Constants ──────────────────────────
 export const APP_NAME = "CWCR-NHF Mentor Reporting Platform";
+/**
+ * Public-facing product name. Must match the application name configured on the
+ * Google OAuth consent screen so verification passes.
+ */
+export const APP_PUBLIC_NAME = "CWC Research Mentorship Portal";
 export const APP_LOGO_URL = "/logo.png";
 
 // ─── User Roles ─────────────────────────────

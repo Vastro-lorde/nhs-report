@@ -10,7 +10,9 @@ export function middleware(req: NextRequest) {
 
   // Public routes — skip auth check
   const publicPaths = ["/login", "/forgot-password", "/set-password", "/terms", "/privacy-policy", "/api/auth", "/api/seed"];
-  if (publicPaths.some((p) => pathname.startsWith(p))) {
+  // The landing page ("/") must stay publicly viewable (exact match only, so
+  // it doesn't accidentally allow every route).
+  if (pathname === "/" || publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
