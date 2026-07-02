@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type AvailabilityTemplate, type TimeSlotItem } from "@/lib/api-client";
+import { SESSION_DURATION_MINUTES } from "@/lib/constants";
 import { Trash2, Plus } from "lucide-react";
 
 const DAYS = [
@@ -40,6 +41,41 @@ function fmtTime(iso: string) {
     minute: "2-digit",
     hour12: true,
   });
+}
+
+/** Minutes since midnight for an "HH:MM" value, or null if invalid. */
+function toMinutes(value: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+}
+
+/** Format minutes-since-midnight as a 12-hour label, e.g. "10:40 AM". */
+function labelFromMinutes(total: number): string {
+  const h24 = Math.floor(total / 60) % 24;
+  const min = total % 60;
+  const period = h24 >= 12 ? "PM" : "AM";
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${String(min).padStart(2, "0")} ${period}`;
+}
+
+/**
+ * Split an availability window into consecutive session-length slots.
+ * Returns each slot's "start – end" label. Empty if the window is invalid
+ * or too short for a single session.
+ */
+function splitWindow(startTime: string, endTime: string): string[] {
+  const start = toMinutes(startTime);
+  const end = toMinutes(endTime);
+  if (start === null || end === null || end <= start) return [];
+  const out: string[] = [];
+  for (let m = start; m + SESSION_DURATION_MINUTES <= end; m += SESSION_DURATION_MINUTES) {
+    out.push(`${labelFromMinutes(m)} – ${labelFromMinutes(m + SESSION_DURATION_MINUTES)}`);
+  }
+  return out;
 }
 
 export default function SchedulePage() {
@@ -297,46 +333,77 @@ export default function SchedulePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-gray-500">
-              Each window is split into 40-minute bookable slots for the next few weeks.
+              Each window is automatically split into {SESSION_DURATION_MINUTES}-minute bookable
+              sessions for the next few weeks.
             </p>
             {rows.length === 0 && (
               <p className="text-sm text-gray-400">No recurring availability yet.</p>
             )}
-            <div className="space-y-3">
-              {rows.map((row, i) => (
-                <div key={i} className="flex flex-wrap items-end gap-3">
-                  <div className="w-40">
-                    <Select
-                      label="Day"
-                      options={DAYS}
-                      value={row.dayOfWeek}
-                      onChange={(e) => updateRow(i, "dayOfWeek", e.target.value)}
-                    />
+            <div className="space-y-4">
+              {rows.map((row, i) => {
+                const sessions = splitWindow(row.startTime, row.endTime);
+                const hasWindow = Boolean(row.startTime && row.endTime);
+                return (
+                  <div key={i} className="rounded-lg border border-gray-200 p-3 space-y-3">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <div className="w-40">
+                        <Select
+                          label="Day"
+                          options={DAYS}
+                          value={row.dayOfWeek}
+                          onChange={(e) => updateRow(i, "dayOfWeek", e.target.value)}
+                        />
+                      </div>
+                      <Input
+                        id={`start-${i}`}
+                        label="Start"
+                        type="time"
+                        value={row.startTime}
+                        onChange={(e) => updateRow(i, "startTime", e.target.value)}
+                      />
+                      <Input
+                        id={`end-${i}`}
+                        label="End"
+                        type="time"
+                        value={row.endTime}
+                        onChange={(e) => updateRow(i, "endTime", e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeRow(i)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-md"
+                        aria-label="Remove"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Live split preview */}
+                    {hasWindow && sessions.length === 0 ? (
+                      <p className="text-xs text-amber-600">
+                        This window is shorter than one {SESSION_DURATION_MINUTES}-minute session.
+                      </p>
+                    ) : sessions.length > 0 ? (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1.5">
+                          {sessions.length} session{sessions.length === 1 ? "" : "s"} of{" "}
+                          {SESSION_DURATION_MINUTES} min:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {sessions.map((label, si) => (
+                            <span
+                              key={si}
+                              className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                  <Input
-                    id={`start-${i}`}
-                    label="Start"
-                    type="time"
-                    value={row.startTime}
-                    onChange={(e) => updateRow(i, "startTime", e.target.value)}
-                  />
-                  <Input
-                    id={`end-${i}`}
-                    label="End"
-                    type="time"
-                    value={row.endTime}
-                    onChange={(e) => updateRow(i, "endTime", e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeRow(i)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-md"
-                    aria-label="Remove"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="flex flex-wrap gap-3">
               <Button variant="secondary" onClick={addRow}>

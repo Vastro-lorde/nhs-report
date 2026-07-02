@@ -66,8 +66,9 @@ export const POST = withExceptionLog(
         if (error) return error;
 
         const { id } = await params;
-        const body = await parseBody<{ email?: string }>(request);
+        const body = await parseBody<{ email?: string; phone?: string }>(request);
         const email = body?.email?.toLowerCase().trim();
+        const phone = body?.phone?.trim();
         if (!email || !EMAIL_RE.test(email)) {
             return jsonError("A valid email is required", 400);
         }
@@ -109,6 +110,7 @@ export const POST = withExceptionLog(
             userDoc.name = userDoc.name || fellow.name;
             userDoc.role = UserRole.FELLOW;
             userDoc.active = false;
+            if (phone) userDoc.phone = phone;
             userDoc.inviteTokenHash = tokenHash;
             userDoc.inviteTokenExpires = expires;
             await userDoc.save();
@@ -121,6 +123,7 @@ export const POST = withExceptionLog(
                 password: placeholder,
                 role: UserRole.FELLOW,
                 active: false,
+                ...(phone ? { phone } : {}),
                 inviteTokenHash: tokenHash,
                 inviteTokenExpires: expires,
             });

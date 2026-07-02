@@ -322,10 +322,10 @@ export const api = {
       request<Fellow>(`/api/fellows/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     delete: (id: string) =>
       request(`/api/fellows/${id}`, { method: "DELETE" }),
-    invite: (id: string, email: string) =>
+    invite: (id: string, data: { email: string; phone?: string }) =>
       request<{ success: boolean; message: string; fellowId: string }>(`/api/fellows/${id}/invite`, {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(data),
       }),
     mySlots: () =>
       request<{ mentorName: string; slots: TimeSlotItem[] }>("/api/fellows/me/slots"),

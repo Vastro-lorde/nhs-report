@@ -205,6 +205,101 @@ function EditFellowModal({
 }
 
 /* ─── Main Page ─────────────────────────── */
+function InviteFellowModal({
+    open,
+    onClose,
+    onInvited,
+    fellow,
+}: {
+    open: boolean;
+    onClose: () => void;
+    onInvited: () => void;
+    fellow: Fellow | null;
+}) {
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (fellow) {
+            setEmail(fellow.email || "");
+            setPhone("");
+            setError("");
+        }
+    }, [fellow, open]);
+
+    if (!open || !fellow) return null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        if (!email.trim()) {
+            setError("An email is required to invite this fellow.");
+            return;
+        }
+        setLoading(true);
+        try {
+            await api.fellows.invite(fellow._id, {
+                email: email.trim(),
+                phone: phone.trim() || undefined,
+            });
+            onInvited();
+            onClose();
+        } catch (err) {
+            setError((err as Error).message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
+                <form onSubmit={handleSubmit}>
+                    <div className="p-6 space-y-4">
+                        <div>
+                            <h2 className="text-lg font-semibold">Invite {fellow.name}</h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                We&apos;ll email a link for the fellow to set their password and activate
+                                their account.
+                            </p>
+                        </div>
+                        {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>}
+                        <Input
+                            label="Email *"
+                            type="email"
+                            placeholder="fellow@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            autoFocus
+                        />
+                        <Input
+                            label="Phone number (optional)"
+                            type="tel"
+                            placeholder="e.g. 08012345678"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-400">
+                            The fellow can update their phone number later.
+                        </p>
+                    </div>
+                    <div className="flex justify-end gap-3 px-6 pb-6">
+                        <Button type="button" variant="outline" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? "Sending…" : "Send Invitation"}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 export default function FellowsPage() {
     const { data: session } = useSession();
     const role = session?.user?.role;
@@ -218,6 +313,8 @@ export default function FellowsPage() {
     const [showAdd, setShowAdd] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [editingFellow, setEditingFellow] = useState<Fellow | null>(null);
+    const [showInvite, setShowInvite] = useState(false);
+    const [invitingFellow, setInvitingFellow] = useState<Fellow | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isDeletingBulk, setIsDeletingBulk] = useState(false);
     const [mentorLGAs, setMentorLGAs] = useState<string[]>([]);
@@ -295,24 +392,9 @@ export default function FellowsPage() {
         }
     };
 
-    const handleInvite = async (fellow: Fellow) => {
-        const email = window.prompt(
-            "Enter the fellow's email to send a portal invitation:",
-            fellow.email ?? "",
-        );
-        if (email === null) return;
-        const trimmed = email.trim();
-        if (!trimmed) {
-            alert("An email is required to invite a fellow.");
-            return;
-        }
-        try {
-            await api.fellows.invite(fellow._id, trimmed);
-            alert(`Invitation sent to ${trimmed}.`);
-            fetchFellows();
-        } catch (error) {
-            alert(`Could not send invitation: ${(error as Error).message}`);
-        }
+    const handleInvite = (fellow: Fellow) => {
+        setInvitingFellow(fellow);
+        setShowInvite(true);
     };
 
     const handleSelectAll = (checked: boolean) => {
@@ -587,6 +669,12 @@ export default function FellowsPage() {
                 onUpdated={fetchFellows}
                 fellow={editingFellow}
                 mentorLGAs={mentorLGAs}
+            />
+            <InviteFellowModal
+                open={showInvite}
+                onClose={() => { setShowInvite(false); setInvitingFellow(null); }}
+                onInvited={fetchFellows}
+                fellow={invitingFellow}
             />
         </>
     );
