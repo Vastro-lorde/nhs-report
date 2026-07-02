@@ -50,4 +50,33 @@ export const env = {
 
   // AI (Gemini)
   GEMINI_API_KEY: () => getEnvVar("GEMINI_API_KEY", ""),
+
+  // Google (Meet integration) — parsed from the GOOGLESECRETS JSON string
+  GOOGLE_CREDENTIALS: () => {
+    const raw = process.env.GOOGLESECRETS;
+    if (!raw) {
+      throw new Error("Missing environment variable: GOOGLESECRETS");
+    }
+    let parsed: { web?: { client_id?: string; client_secret?: string; token_uri?: string; auth_uri?: string } };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("GOOGLESECRETS is not valid JSON");
+    }
+    const web = parsed.web ?? {};
+    if (!web.client_id || !web.client_secret) {
+      throw new Error("GOOGLESECRETS is missing web.client_id or web.client_secret");
+    }
+    return {
+      clientId: web.client_id,
+      clientSecret: web.client_secret,
+      tokenUri: web.token_uri ?? "https://oauth2.googleapis.com/token",
+      authUri: web.auth_uri ?? "https://accounts.google.com/o/oauth2/auth",
+    };
+  },
+  /** OAuth redirect URI for the Google Meet integration (derived from the app URL). */
+  GOOGLE_REDIRECT_URI: () =>
+    `${getEnvVar("NEXTAUTH_URL", "http://localhost:3000").replace(/\/$/, "")}/api/integrations/google/callback`,
+  /** Whether the Google Meet integration is configured. */
+  GOOGLE_ENABLED: () => Boolean(process.env.GOOGLESECRETS),
 } as const;

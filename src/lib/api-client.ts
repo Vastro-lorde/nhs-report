@@ -434,6 +434,15 @@ export const api = {
         "/api/mentors/me/publish",
         { method: "POST" },
       ),
+    connectGoogle: () =>
+      request<{ url: string }>("/api/integrations/google/connect"),
+    generateMeetLink: (mentorUserId: string) =>
+      request<{ meetingLink: string; spaceName: string; meetingCode: string }>(
+        `/api/mentors/${mentorUserId}/meet-link`,
+        { method: "POST" },
+      ),
+    meetStats: (mentorUserId: string) =>
+      request<MeetStatsResponse>(`/api/mentors/${mentorUserId}/meet-stats`),
   },
 
   notifications: {
@@ -622,6 +631,35 @@ export interface MentorScheduleProfile {
   meetingLink?: string;
   states: string[];
   lgas: string[];
+  google?: {
+    email?: string;
+    connectedAt?: string;
+    meetingUri?: string;
+    spaceName?: string;
+  };
+}
+
+export interface MeetMeetingStat {
+  conferenceRecord: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes: number | null;
+  participantCount: number;
+  recordingUri?: string;
+  transcriptUri?: string;
+}
+
+export interface MeetStatsResponse {
+  connected: boolean;
+  email: string | null;
+  meetingLink?: string | null;
+  summary: {
+    totalMeetings: number;
+    totalMinutes: number;
+    totalRecordings: number;
+    totalTranscripts: number;
+    meetings: MeetMeetingStat[];
+  } | null;
 }
 
 export interface AvailabilityTemplate {

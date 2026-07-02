@@ -45,6 +45,8 @@ function fmtTime(iso: string) {
 export default function SchedulePage() {
   const [meetingLink, setMeetingLink] = useState("");
   const [savingLink, setSavingLink] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [connectingGoogle, setConnectingGoogle] = useState(false);
   const [rows, setRows] = useState<TemplateRow[]>([]);
   const [slots, setSlots] = useState<TimeSlotItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,7 @@ export default function SchedulePage() {
         api.scheduling.getAvailability(),
       ]);
       setMeetingLink(me.meetingLink ?? "");
+      setGoogleEmail(me.google?.email ?? null);
       setRows(
         availability.templates.map((t: AvailabilityTemplate) => ({
           dayOfWeek: String(t.dayOfWeek),
@@ -85,10 +88,36 @@ export default function SchedulePage() {
     load();
   }, [load]);
 
+  // Surface the result of the Google OAuth redirect (?google=connected|denied|...).
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get("google");
+    if (!status) return;
+    if (status === "connected") setMessage("Google account connected.");
+    else if (status === "denied") setError("Google connection was cancelled.");
+    else if (status === "no_refresh")
+      setError("Google did not return a refresh token. Please remove app access in your Google account and reconnect.");
+    else if (status === "mismatch" || status === "error")
+      setError("Google connection failed. Please try again.");
+    // Clean the query string.
+    window.history.replaceState({}, "", "/schedule");
+  }, []);
+
   function flash(msg: string) {
     setMessage(msg);
     setError("");
     setTimeout(() => setMessage(""), 4000);
+  }
+
+  async function connectGoogle() {
+    setConnectingGoogle(true);
+    setError("");
+    try {
+      const { url } = await api.scheduling.connectGoogle();
+      window.location.href = url;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start Google connection.");
+      setConnectingGoogle(false);
+    }
   }
 
   async function saveMeetingLink() {
@@ -208,6 +237,33 @@ export default function SchedulePage() {
             {error}
           </div>
         )}
+
+        {/* Google Meet connection */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Google Meet</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Connect your Google account so an admin can generate a persistent Meet link for you.
+              You start recording and transcription manually inside each meeting.
+            </p>
+            {googleEmail ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-sm text-gray-800">
+                  Connected as <span className="font-medium">{googleEmail}</span>
+                </p>
+                <Button variant="secondary" onClick={connectGoogle} disabled={connectingGoogle}>
+                  {connectingGoogle ? "Redirecting…" : "Reconnect"}
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={connectGoogle} disabled={connectingGoogle}>
+                {connectingGoogle ? "Redirecting…" : "Connect Google Meet"}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Meeting link */}
         <Card>

@@ -105,6 +105,12 @@ const NAV_ITEMS = [
     roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
+    label: "Meet Monitoring",
+    href: "/admin/meet",
+    icon: CalendarCheck,
+    roles: [UserRole.ADMIN],
+  },
+  {
     label: "Admins Management",
     href: "/admin/admins",
     icon: Users,
