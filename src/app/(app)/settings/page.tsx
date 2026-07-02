@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
+import { api } from "@/lib/api-client";
 import { faker } from "@faker-js/faker";
 import { useEffect } from "react";
 import Image from "next/image";
@@ -21,6 +22,7 @@ interface RoleDetails {
   lgas?: string[];
   coordinatorName?: string;
   coordinatorEmail?: string;
+  meetingLink?: string;
   createdAt?: string;
 }
 
@@ -43,6 +45,8 @@ export default function SettingsPage() {
 
   const [name, setName] = useState(session?.user?.name ?? "");
   const [phone, setPhone] = useState("");
+  const [meetingLink, setMeetingLink] = useState("");
+  const [savingMeetingLink, setSavingMeetingLink] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
@@ -60,6 +64,7 @@ export default function SettingsPage() {
           setProfile(data);
           setName(data.name || session?.user?.name || "");
           setPhone(data.phone || "");
+          setMeetingLink(data.roleDetails?.meetingLink || "");
           if (data.profileImage) setImagePreview(data.profileImage);
         }
       } catch (err) {
@@ -129,6 +134,22 @@ export default function SettingsPage() {
       // Create local preview immediately
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleMeetingLinkSave = async () => {
+    setSavingMeetingLink(true);
+    setMessage("");
+    try {
+      await api.scheduling.updateMeetingLink(meetingLink.trim());
+      setProfile((p) =>
+        p ? { ...p, roleDetails: { ...(p.roleDetails ?? {}), meetingLink: meetingLink.trim() } } : p,
+      );
+      setMessage("Meeting link updated.");
+    } catch (err) {
+      setMessage((err as Error).message);
+    } finally {
+      setSavingMeetingLink(false);
     }
   };
 
@@ -313,6 +334,36 @@ export default function SettingsPage() {
                   </dd>
                 </div>
               </dl>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Mentor meeting link */}
+        {profile?.role === UserRole.MENTOR && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Meeting Link</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-gray-500">
+                This link is prefilled on your session time-slots. You can also generate a Google
+                Meet link from your{" "}
+                <a href="/schedule" className="text-orange-700 hover:underline">
+                  Schedule
+                </a>{" "}
+                page.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="https://meet.google.com/your-room"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleMeetingLinkSave} disabled={savingMeetingLink}>
+                  {savingMeetingLink ? "Saving…" : "Save link"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

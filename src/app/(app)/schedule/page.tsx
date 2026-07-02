@@ -274,7 +274,8 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* Google Meet connection */}
+        {/* Google Meet connection — hidden once a meeting link is set */}
+        {!meetingLink && (
         <Card>
           <CardHeader>
             <CardTitle>Google Meet</CardTitle>
@@ -300,6 +301,7 @@ export default function SchedulePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Meeting link */}
         <Card>
