@@ -9,7 +9,7 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public routes — skip auth check
-  const publicPaths = ["/login", "/forgot-password", "/set-password", "/api/auth", "/api/seed"];
+  const publicPaths = ["/login", "/forgot-password", "/set-password", "/terms", "/privacy-policy", "/api/auth", "/api/seed"];
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }

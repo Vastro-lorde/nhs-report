@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
+import { LegalAcceptance } from "@/components/legal";
 import { APP_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 function LoginForm() {
@@ -19,12 +20,19 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!accepted) {
+      setError("Please accept the Terms of Service and Privacy Policy to continue.");
+      return;
+    }
+
     setLoading(true);
 
     const result = await signIn("credentials", {
@@ -103,7 +111,9 @@ function LoginForm() {
             </Link>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <LegalAcceptance checked={accepted} onChange={setAccepted} />
+
+          <Button type="submit" className="w-full" disabled={loading || !accepted}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>

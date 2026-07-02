@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { LegalAcceptance } from "@/components/legal";
 import { APP_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 function SetPasswordInner() {
@@ -22,6 +23,7 @@ function SetPasswordInner() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +67,10 @@ function SetPasswordInner() {
     }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+    if (!accepted) {
+      setError("Please accept the Terms of Service and Privacy Policy to continue.");
       return;
     }
 
@@ -156,7 +162,12 @@ function SetPasswordInner() {
                 required
                 autoComplete="new-password"
               />
-              <Button type="submit" className="w-full" disabled={loading}>
+              <LegalAcceptance checked={accepted} onChange={setAccepted} />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || !accepted}
+              >
                 {loading ? "Saving…" : "Set password & activate"}
               </Button>
             </form>

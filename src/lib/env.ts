@@ -88,9 +88,14 @@ export const env = {
       authUri: web.auth_uri ?? "https://accounts.google.com/o/oauth2/auth",
     };
   },
-  /** OAuth redirect URI for the Google Meet integration (derived from the app URL). */
-  GOOGLE_REDIRECT_URI: () =>
-    `${getEnvVar("NEXTAUTH_URL", "http://localhost:3000").replace(/\/$/, "")}/api/integrations/google/callback`,
+  /** OAuth redirect URI for the Google Meet integration. Prefer an explicit
+   *  override (must exactly match a URI registered on the OAuth client);
+   *  otherwise derive it from the app URL. */
+  GOOGLE_REDIRECT_URI: () => {
+    const override = process.env.GOOGLE_REDIRECT_URI?.trim();
+    if (override) return override;
+    return `${getEnvVar("NEXTAUTH_URL", "http://localhost:3000").replace(/\/$/, "")}/api/integrations/google/callback`;
+  },
   /** Whether the Google Meet integration is configured. */
   GOOGLE_ENABLED: () =>
     Boolean(
