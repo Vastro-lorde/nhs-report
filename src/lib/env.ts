@@ -51,21 +51,35 @@ export const env = {
   // AI (Gemini)
   GEMINI_API_KEY: () => getEnvVar("GEMINI_API_KEY", ""),
 
-  // Google (Meet integration) — parsed from the GOOGLESECRETS JSON string
+  // Google (Meet integration).
+  // Prefers discrete GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET env vars; otherwise
+  // falls back to the GOOGLESECRETS JSON blob (as downloaded from Google Cloud).
   GOOGLE_CREDENTIALS: () => {
+    const directId = process.env.GOOGLE_CLIENT_ID?.trim();
+    const directSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+    if (directId && directSecret) {
+      return {
+        clientId: directId,
+        clientSecret: directSecret,
+        tokenUri: process.env.GOOGLE_TOKEN_URI?.trim() || "https://oauth2.googleapis.com/token",
+        authUri: process.env.GOOGLE_AUTH_URI?.trim() || "https://accounts.google.com/o/oauth2/auth",
+      };
+    }
+
     const raw = process.env.GOOGLESECRETS;
     if (!raw) {
-      throw new Error("Missing environment variable: GOOGLESECRETS");
+      throw new Error(
+        "Google integration not configured: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or GOOGLESECRETS",
+      );
     }
-    let parsed: { web?: { client_id?: string; client_secret?: string; token_uri?: string; auth_uri?: string } };
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
+
+    const parsed = parseGoogleSecrets(raw);
+    if (!parsed) {
       throw new Error("GOOGLESECRETS is not valid JSON");
     }
-    const web = parsed.web ?? {};
+    const web = parsed.web ?? parsed.installed ?? parsed;
     if (!web.client_id || !web.client_secret) {
-      throw new Error("GOOGLESECRETS is missing web.client_id or web.client_secret");
+      throw new Error("GOOGLESECRETS is missing client_id or client_secret");
     }
     return {
       clientId: web.client_id,
@@ -78,5 +92,56 @@ export const env = {
   GOOGLE_REDIRECT_URI: () =>
     `${getEnvVar("NEXTAUTH_URL", "http://localhost:3000").replace(/\/$/, "")}/api/integrations/google/callback`,
   /** Whether the Google Meet integration is configured. */
-  GOOGLE_ENABLED: () => Boolean(process.env.GOOGLESECRETS),
+  GOOGLE_ENABLED: () =>
+    Boolean(
+      (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) || process.env.GOOGLESECRETS,
+    ),
 } as const;
+
+interface GoogleWebCreds {
+  client_id?: string;
+  client_secret?: string;
+  token_uri?: string;
+  auth_uri?: string;
+}
+
+/**
+ * Tolerantly parse the Google credentials blob. Handles:
+ *  - plain JSON,
+ *  - JSON wrapped in extra surrounding quotes,
+ *  - JSON with backslash-escaped quotes (from copying a .env value),
+ *  - base64-encoded JSON.
+ */
+function parseGoogleSecrets(raw: string): { web?: GoogleWebCreds; installed?: GoogleWebCreds } & GoogleWebCreds | null {
+  const candidates: string[] = [];
+  const trimmed = raw.trim();
+  candidates.push(trimmed);
+
+  // Strip one layer of surrounding quotes if present.
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    candidates.push(trimmed.slice(1, -1));
+  }
+
+  // Un-escape backslash-escaped quotes/newlines (common when copied from .env).
+  candidates.push(trimmed.replace(/\\"/g, '"').replace(/\\n/g, "").replace(/^"|"$/g, ""));
+
+  // Try base64 decode.
+  try {
+    const decoded = Buffer.from(trimmed, "base64").toString("utf8");
+    if (decoded.includes("client_id")) candidates.push(decoded);
+  } catch {
+    /* ignore */
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
+}
