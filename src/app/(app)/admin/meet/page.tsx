@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ScoreCard, Card, CardHeader, CardTitle, CardContent, SearchableSelect } from "@/components/ui";
 import { api, type MeetStatsResponse } from "@/lib/api-client";
+import { toExternalUrl } from "@/lib/utils";
 
 const TZ = "Africa/Lagos";
 
@@ -152,7 +153,7 @@ export default function AdminMeetPage() {
                 {stats.meetingLink && (
                   <p className="text-sm text-gray-700 break-all">
                     Current link:{" "}
-                    <a href={stats.meetingLink} target="_blank" rel="noopener noreferrer" className="text-orange-700 hover:underline">
+                    <a href={toExternalUrl(stats.meetingLink)} target="_blank" rel="noopener noreferrer" className="text-orange-700 hover:underline">
                       {stats.meetingLink}
                     </a>
                   </p>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type TimeSlotItem } from "@/lib/api-client";
+import { toExternalUrl } from "@/lib/utils";
 
 const TZ = "Africa/Lagos";
 
@@ -151,7 +152,15 @@ export default function BookPage() {
             </p>
             {selected.meetingLink && (
               <p className="text-xs text-gray-500 break-all">
-                Meeting link: {selected.meetingLink}
+                Meeting link:{" "}
+                <a
+                  href={toExternalUrl(selected.meetingLink)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-700 hover:underline"
+                >
+                  {selected.meetingLink}
+                </a>
               </p>
             )}
             <Textarea

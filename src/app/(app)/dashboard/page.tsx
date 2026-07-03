@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout";
 import { ScoreCard, Card, CardHeader, CardTitle, CardContent, Button, SearchableSelect, Select, Badge } from "@/components/ui";
 import { api, type DashboardData, type Mentor, type Fellow, type Report, type RollupItem, type BookingItem } from "@/lib/api-client";
+import { toExternalUrl } from "@/lib/utils";
 import { Users, FileText, AlertTriangle, BarChart3, UserCheck, Download, Trophy, GraduationCap, Clock, Calendar, BookOpen, AlertCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
@@ -885,7 +886,7 @@ function FellowDashboard() {
                     </div>
                     {b.meetingLink && (
                       <a
-                        href={b.meetingLink}
+                        href={toExternalUrl(b.meetingLink)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-orange-700 hover:underline"

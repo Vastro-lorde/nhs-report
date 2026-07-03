@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent } from "@/components/ui/Card";
 import { api, type BookingItem } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
+import { toExternalUrl } from "@/lib/utils";
 
 const TZ = "Africa/Lagos";
 
@@ -138,7 +139,7 @@ export default function SessionsPage() {
                     <div className="flex items-center gap-3">
                       {b.meetingLink && b.status === "confirmed" && (
                         <a
-                          href={b.meetingLink}
+                          href={toExternalUrl(b.meetingLink)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-orange-700 hover:underline"
