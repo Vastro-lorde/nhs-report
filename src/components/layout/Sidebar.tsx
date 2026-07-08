@@ -108,7 +108,7 @@ const NAV_ITEMS = [
     label: "Meet Monitoring",
     href: "/admin/meet",
     icon: CalendarCheck,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR],
   },
   {
     label: "Admins Management",

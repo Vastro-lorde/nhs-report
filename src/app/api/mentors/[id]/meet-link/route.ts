@@ -32,7 +32,7 @@ import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, withExceptionLog } from "@/lib/api-helpers";
 import { connectDB } from "@/lib/db";
-import { Mentor } from "@/models";
+import { Mentor, Coordinator } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { getAccessToken, createMeetSpace } from "@/lib/google-meet";
@@ -43,7 +43,7 @@ type Params = { params: Promise<{ id: string }> };
 export const POST = withExceptionLog(
     "POST /api/mentors/[id]/meet-link",
     async (_request: NextRequest, { params }: Params) => {
-        const { session, error } = await requireRole(UserRole.ADMIN);
+        const { session, error } = await requireRole(UserRole.ADMIN, UserRole.COORDINATOR);
         if (error) return error;
 
         if (!env.GOOGLE_ENABLED()) return jsonError("Google integration is not configured", 503);
@@ -53,6 +53,15 @@ export const POST = withExceptionLog(
 
         const mentor = await Mentor.findOne({ authId: id }).select("+google.refreshToken");
         if (!mentor) return jsonError("Mentor not found", 404);
+
+        if (session!.user.role === UserRole.COORDINATOR) {
+            const coordinator = await Coordinator.findOne({ authId: session.user.id }).lean();
+            if (!coordinator) return jsonError("Coordinator record not found", 404);
+            if (mentor.coordinator.toString() !== coordinator._id.toString()) {
+                return jsonError("Mentor not found", 404);
+            }
+        }
+
         if (!mentor.google?.refreshToken) {
             return jsonError("This mentor has not connected their Google account yet", 400);
         }
