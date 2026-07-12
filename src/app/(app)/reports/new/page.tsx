@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Select } from "@/components/ui/Select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type CreateReportInput, type MentorshipSessionInput } from "@/lib/api-client";
 import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
@@ -361,21 +362,19 @@ export default function NewReportPage() {
                     {loadingFellows ? (
                       <div className="flex items-center text-sm text-gray-500 h-10"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading fellows...</div>
                     ) : (
-                      <Select
+                      <SearchableSelect
                         label={i === 0 ? "Name" : undefined}
                         value={f.name}
-                        onChange={(e) => {
-                          updateFellow(i, "name", e.target.value);
-                          const matchedFellow = assignedFellows.find(af => af.name === e.target.value);
+                        onChange={(val) => {
+                          updateFellow(i, "name", val);
+                          const matchedFellow = assignedFellows.find(af => af.name === val);
                           if (matchedFellow) {
                             updateFellow(i, "lga", matchedFellow.lga);
                             updateFellow(i, "qualification", matchedFellow.qualification ?? "");
                           }
                         }}
-                        options={[
-                          { label: "Select Fellow", value: "" },
-                          ...assignedFellows.map(af => ({ label: af.name, value: af.name }))
-                        ]}
+                        placeholder="Select Fellow"
+                        options={assignedFellows.map(af => ({ label: af.name, value: af.name }))}
                       />
                     )}
                   </div>
@@ -442,15 +441,12 @@ export default function NewReportPage() {
                   {loadingFellows ? (
                     <div className="flex items-center text-sm text-gray-500 h-10"><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading fellows...</div>
                   ) : (
-                    <Select
+                    <SearchableSelect
                       label="Name of Mentee/Fellow *"
                       value={session.menteeName}
-                      onChange={(e) => updateSession(si, "menteeName", e.target.value)}
-                      required
-                      options={[
-                        { label: "Select Fellow", value: "" },
-                        ...assignedFellows.map(af => ({ label: af.name, value: af.name }))
-                      ]}
+                      onChange={(val) => updateSession(si, "menteeName", val)}
+                      placeholder="Select or search fellow..."
+                      options={assignedFellows.map(af => ({ label: af.name, value: af.name }))}
                     />
                   )}
                   <Select
