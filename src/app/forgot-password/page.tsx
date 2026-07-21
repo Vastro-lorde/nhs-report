@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { APP_NAME, APP_LOGO_URL } from "@/lib/constants";
+import { APP_PUBLIC_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 type Step = "email" | "reset";
 
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
             className="mx-auto h-14 w-14 rounded-xl object-cover mb-4"
           />
           <h1 className="text-2xl font-bold text-gray-900">
-            {APP_NAME.replace("CWCR-", "")}
+            {APP_PUBLIC_NAME}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {step === "email"

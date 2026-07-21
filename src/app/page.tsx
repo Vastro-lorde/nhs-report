@@ -9,9 +9,15 @@ import type { Metadata } from "next";
 import { APP_PUBLIC_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: `${APP_PUBLIC_NAME} — Home`,
+  title: APP_PUBLIC_NAME,
   description:
     "The CWC Research Mentorship Portal is a capacity-building platform that manages the National Health Fellows Mentorship Program, including zonal reporting, mentorship scheduling, and virtual tutoring.",
+  openGraph: {
+    siteName: APP_PUBLIC_NAME,
+    title: APP_PUBLIC_NAME,
+    description:
+      "The CWC Research Mentorship Portal is a capacity-building platform that manages the National Health Fellows Mentorship Program, including zonal reporting, mentorship scheduling, and virtual tutoring.",
+  },
 };
 
 const FEATURES = [
@@ -66,7 +72,7 @@ export default function Home() {
       {/* Hero */}
       <main className="mx-auto max-w-5xl px-4">
         <section className="py-16 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+          <h1 id="app-name" className="text-3xl font-bold text-gray-900 sm:text-4xl">
             {APP_PUBLIC_NAME}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-600">

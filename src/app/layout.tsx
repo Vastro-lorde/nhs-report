@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
-import { APP_NAME } from "@/lib/constants";
+import { APP_PUBLIC_NAME } from "@/lib/constants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: `Weekly mentor reporting, tracking, and analytics for ${APP_NAME} programme`,
+  title: APP_PUBLIC_NAME,
+  description: `Weekly mentor reporting, tracking, and analytics for the ${APP_PUBLIC_NAME} programme`,
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",

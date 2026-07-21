@@ -4,10 +4,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TermsContent } from "@/components/legal";
-import { APP_NAME, APP_LOGO_URL } from "@/lib/constants";
+import { APP_PUBLIC_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: `Terms of Service — ${APP_NAME}`,
+  title: `Terms of Service — ${APP_PUBLIC_NAME}`,
   description: "Terms of Service for the mentorship reporting platform.",
 };
 
@@ -19,7 +19,7 @@ export default function TermsPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={APP_LOGO_URL}
-            alt={APP_NAME}
+            alt={APP_PUBLIC_NAME}
             className="mx-auto mb-4 h-14 w-14 rounded-xl object-cover"
           />
           <h1 className="text-2xl font-bold text-gray-900">Terms of Service</h1>

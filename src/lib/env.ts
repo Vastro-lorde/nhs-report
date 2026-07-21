@@ -1,7 +1,7 @@
 /* ──────────────────────────────────────────
    Single source of truth: Environment config
    ────────────────────────────────────────── */
-import { APP_NAME } from "./constants";
+import { APP_NAME, APP_PUBLIC_NAME } from "./constants";
 
 function getEnvVar(key: string, fallback?: string): string {
   const value = process.env[key] ?? fallback;
@@ -41,6 +41,7 @@ export const env = {
 
   // App
   APP_NAME: () => getEnvVar("NEXT_PUBLIC_APP_NAME", APP_NAME),
+  APP_PUBLIC_NAME: () => getEnvVar("NEXT_PUBLIC_APP_PUBLIC_NAME", APP_PUBLIC_NAME),
   DIGEST_RECIPIENT_EMAILS: () =>
     getEnvVar("DIGEST_RECIPIENT_EMAILS", "")
       .split(",")
