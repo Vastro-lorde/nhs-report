@@ -3,13 +3,15 @@
    ────────────────────────────────────────── */
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { WeeklyReport, Mentor, Coordinator, DeskOfficer, ReportHistory, AppSettings } from "@/models";
+import { WeeklyReport, Alert, Mentor, Coordinator, DeskOfficer, ReportHistory, AppSettings } from "@/models";
 import {
   UserRole,
+  ReportStatus,
   ReportHistoryReportType,
   ReportHistoryAction,
   normalizeLocation,
   resolveMentorStates,
+  resolveStateForLGA,
 } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
@@ -47,6 +49,10 @@ export async function GET(_request: NextRequest, { params }: Params) {
     if (!myMentorDoc || mentorDoc._id.toString() !== myMentorDoc._id.toString()) {
       return jsonError("Forbidden", 403);
     }
+  } else if ((report as any).status === ReportStatus.DRAFT) {
+    // An unsubmitted draft is private to its author — it is excluded from every
+    // listing, so a direct link must not be a way around that.
+    return jsonError("Report not found", 404);
   }
 
   // Coordinators can only view reports from their assigned mentors
@@ -203,14 +209,56 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   // Apply updates
+  const wasDraft = report.status === ReportStatus.DRAFT;
   const snapshot = JSON.stringify(report.toObject());
   Object.assign(report, body);
+
+  const isDraft = report.status === ReportStatus.DRAFT;
+  // Quality flags belong to submitted work; recompute them on the way out of draft.
+  if (wasDraft && !isDraft) {
+    const flags: string[] = [];
+    if (report.sessionsCount < 0) flags.push("Negative session count");
+    if (report.urgentAlert && !report.urgentDetails) flags.push("Urgent alert marked but no details");
+    report.dataQualityFlags = flags;
+  }
+
   await report.save();
 
-  // Rebuild rollup for both old and new week if the key changed
-  await rebuildRollupForWeek(report.weekKey);
-  if (previousWeekKey && previousWeekKey !== report.weekKey) {
-    await rebuildRollupForWeek(previousWeekKey);
+  // A draft that has just been submitted raises its alert now — creating it at
+  // draft time would have paged coordinators about unfinished work.
+  if (wasDraft && !isDraft && report.urgentAlert && report.urgentDetails) {
+    const mentorDoc = await Mentor.findById(report.mentor);
+    const mentorStates = resolveMentorStates(mentorDoc);
+    const reportedStates = [
+      ...new Set(
+        [
+          ...(report.fellows ?? []).map((f) => f.lga),
+          ...(report.sessions ?? []).map((s) => s.menteeLGA),
+        ]
+          .map((lga) => resolveStateForLGA(lga, mentorStates))
+          .filter((s): s is string => Boolean(s)),
+      ),
+    ];
+    const alertStates = reportedStates.length ? reportedStates : mentorStates;
+
+    await Alert.create({
+      report: report._id,
+      mentor: mentorDoc?.authId,
+      weekKey: report.weekKey,
+      state: alertStates[0] ?? "",
+      states: alertStates,
+      urgentDetails: report.urgentDetails,
+    });
+  }
+
+  // Rebuild rollup for both old and new week if the key changed. Drafts are
+  // excluded from roll-ups, but a rebuild is still needed when one is submitted
+  // — or when a submitted report is pulled back into draft.
+  if (!isDraft || wasDraft !== isDraft) {
+    await rebuildRollupForWeek(report.weekKey);
+    if (previousWeekKey && previousWeekKey !== report.weekKey) {
+      await rebuildRollupForWeek(previousWeekKey);
+    }
   }
 
   void ReportHistory.create({

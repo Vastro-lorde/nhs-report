@@ -42,6 +42,10 @@ export async function GET(
             if (!mentorDoc || (report as any).mentor?._id?.toString() !== mentorDoc._id.toString()) {
                 return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
             }
+        } else if ((report as any).status === "draft") {
+            // Drafts are private to the mentor who is writing them, and are kept
+            // out of every listing — a direct link must not bypass that.
+            return NextResponse.json({ error: "Report not found." }, { status: 404 });
         }
 
         if (role === UserRole.COORDINATOR) {
@@ -158,6 +162,16 @@ export async function PATCH(
                     },
                     { status: 409 }
                 );
+            }
+        }
+
+        // Promoting a draft to submitted has to clear the same month window that
+        // creation enforces — the check is skipped while it is still a draft.
+        const wasDraft = report.status === "draft";
+        if (wasDraft && body.status === "submitted") {
+            const lockReason = monthLockReason(String(body.month ?? report.month));
+            if (lockReason) {
+                return NextResponse.json({ error: lockReason }, { status: 400 });
             }
         }
 

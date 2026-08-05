@@ -123,7 +123,11 @@ function resolve(value) {
     (c) => c.length >= 4 && (c.startsWith(key) || key.startsWith(c)),
   );
   if (prefix.length !== 1) return null;
-  return { states: keyToStates.get(prefix[0]), how: `prefix:${prefix[0]}` };
+
+  // A guess must never introduce cross-state ambiguity.
+  const prefixStates = keyToStates.get(prefix[0]);
+  if (!prefixStates || prefixStates.length !== 1) return null;
+  return { states: prefixStates, how: `prefix:${prefix[0]}` };
 }
 
 /** Where LGA values live across the schema. */

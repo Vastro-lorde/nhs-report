@@ -95,6 +95,7 @@ const RENAMES = {
   },
   Imo: {
     "Ihitte-Uboma Isinweke": "Ihitte/Uboma",
+    "Ezinihitte Mbaise": "Ezinihitte",
     Unuimo: "Onuimo",
     "Aboh-Mbaise": "Aboh Mbaise",
     "Ahiazu-Mbaise": "Ahiazu Mbaise",
@@ -120,6 +121,7 @@ const RENAMES = {
     Danmusa: "Dan Musa",
   },
   Kebbi: {
+    Arewa: "Arewa Dandi",
     "Koko/Bes": "Koko/Besse",
     "Danko Wasagu": "Danko/Wasagu",
   },
@@ -138,6 +140,9 @@ const RENAMES = {
     "Ajeromi/Ifelodun": "Ajeromi-Ifelodun",
     "Ibeju/Lekki": "Ibeju-Lekki",
     "Oshodi/Isolo": "Oshodi-Isolo",
+  },
+  Nasarawa: {
+    "Nasarawa Egon": "Nasarawa Eggon",
   },
   Niger: {
     Kontogur: "Kontagora",

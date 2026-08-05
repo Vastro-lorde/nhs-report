@@ -197,24 +197,35 @@ export function Sidebar() {
   const role = session?.user?.role as UserRole | undefined;
   const { isSidebarOpen, setSidebarOpen } = useSidebar();
   const [hasCurrentWeekReport, setHasCurrentWeekReport] = useState(false);
+  // Id of this week's saved-but-unsubmitted report, if there is one.
+  const [currentWeekDraftId, setCurrentWeekDraftId] = useState<string | null>(null);
 
   useEffect(() => {
     if (role !== UserRole.MENTOR) return;
     api.reports.checkCurrentWeek()
       .then((data) => {
-        if (data.hasReport) setHasCurrentWeekReport(true);
+        setHasCurrentWeekReport(data.hasReport);
+        setCurrentWeekDraftId(data.draftId ?? null);
       })
       .catch(() => {});
-  }, [role]);
+  }, [role, pathname]);
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => {
       if (!role || !item.roles.includes(role)) return false;
+      // Only a *submitted* report retires this entry — a draft leaves it in
+      // place so the mentor still has a way back to their unfinished report.
       if (item.label === "Submit Report" && hasCurrentWeekReport) return false;
       // Coordinators need AI access to see Zonal Audits
       if (item.label === "Zonal Audits" && role === UserRole.COORDINATOR && !session?.user?.aiAccessEnabled) return false;
       return true;
     }
+  ).map((item) =>
+    // Point straight at the draft so clicking "Submit Report" resumes it
+    // instead of opening a blank form that would collide on save.
+    item.label === "Submit Report" && currentWeekDraftId
+      ? { ...item, label: "Continue Draft Report", href: `/reports/${currentWeekDraftId}/edit` }
+      : item
   );
 
   if (status === "loading") {

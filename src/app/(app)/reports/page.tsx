@@ -198,8 +198,19 @@ export default function ReportsListPage() {
                       {format(new Date(report.createdAt), "MMM d, yyyy")}
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
-                      <Link href={`/reports/${report._id}`}>
-                        <Button variant="ghost" size="icon" aria-label="View Report">
+                      {/* A draft has nothing to show read-only — go straight to the form. */}
+                      <Link
+                        href={
+                          report.status === "draft"
+                            ? `/reports/${report._id}/edit`
+                            : `/reports/${report._id}`
+                        }
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={report.status === "draft" ? "Continue Draft" : "View Report"}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>

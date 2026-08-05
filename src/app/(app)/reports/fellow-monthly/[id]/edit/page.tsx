@@ -29,6 +29,9 @@ export default function EditMentorMonthlyReportPage() {
   // ─── Loading state ────────────────────────
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  // Drafts get an extra "submit" action; submitted reports just save changes.
+  const [isDraft, setIsDraft] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   // ─── Readonly fields ──────────────────────
   const [month, setMonth] = useState("");
@@ -77,6 +80,7 @@ export default function EditMentorMonthlyReportPage() {
 
         setMonth(report.month);
         setOriginalMonth(report.month);
+        setIsDraft(report.status === "draft");
         setFellowName(report.fellowName);
         setFellowLGA(report.fellowLGA);
         setFellowQualification(report.fellowQualification ?? "");
@@ -133,6 +137,13 @@ export default function EditMentorMonthlyReportPage() {
   // ─── Submit ───────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Saving an existing draft keeps it a draft — only the explicit Submit
+    // button below promotes it.
+    await save(isDraft ? "draft" : undefined);
+  }
+
+  async function save(status?: "draft" | "submitted") {
+    const keepingDraft = status === "draft";
     setError("");
 
     const filteredChallenges = challenges.filter(c => c.trim());
@@ -142,8 +153,9 @@ export default function EditMentorMonthlyReportPage() {
       setError("Reporting month is required.");
       return;
     }
-    // Only enforce the window when the report is being moved to another month
-    if (month !== originalMonth) {
+    // Enforce the window when moving to another month, and whenever a draft is
+    // being submitted (drafts may be prepared before the month opens).
+    if (month !== originalMonth || status === "submitted") {
       const lockReason = monthLockReason(month);
       if (lockReason) {
         setError(lockReason);
@@ -151,7 +163,8 @@ export default function EditMentorMonthlyReportPage() {
       }
     }
 
-    setSubmitting(true);
+    if (keepingDraft) setSavingDraft(true);
+    else setSubmitting(true);
     try {
       await api.reports.fellowMonthly.update(id, {
         month,
@@ -167,12 +180,14 @@ export default function EditMentorMonthlyReportPage() {
         recommendations: filteredRecommendations,
         achievements,
         progressRating,
+        ...(status ? { status } : {}),
       });
-      router.push(`/reports/fellow-monthly/${id}`);
+      router.push(keepingDraft ? "/reports/fellow-monthly" : `/reports/fellow-monthly/${id}`);
     } catch (err: any) {
       setError(err.message ?? "Failed to update report.");
     } finally {
       setSubmitting(false);
+      setSavingDraft(false);
     }
   }
 
@@ -493,16 +508,34 @@ export default function EditMentorMonthlyReportPage() {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? (
+          <Button type="submit" disabled={submitting || savingDraft}>
+            {submitting || savingDraft ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Saving…
               </>
+            ) : isDraft ? (
+              "Save as Draft"
             ) : (
               "Save Changes"
             )}
           </Button>
+          {isDraft && (
+            <Button
+              type="button"
+              disabled={submitting || savingDraft}
+              onClick={() => save("submitted")}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                "Submit Report"
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </>

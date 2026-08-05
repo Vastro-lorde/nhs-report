@@ -228,6 +228,8 @@ function lgaMatchKey(value?: string | null): string {
 const lgaToStatesMap = new Map<string, string[]>();
 /** Match key → states, used for the tolerant lookup. */
 const lgaKeyToStatesMap = new Map<string, string[]>();
+/** Match key → the dataset's own spelling, for normalising stored values. */
+const lgaKeyToNameMap = new Map<string, string>();
 
 function addLgaState(map: Map<string, string[]>, key: string, state: string) {
   if (!key) return;
@@ -244,6 +246,8 @@ for (const entry of statesLgaData) {
   for (const lga of entry.lgas as Array<{ name: string }>) {
     addLgaState(lgaToStatesMap, normalizeLocation(lga.name), state);
     addLgaState(lgaKeyToStatesMap, lgaMatchKey(lga.name), state);
+    const key = lgaMatchKey(lga.name);
+    if (key && !lgaKeyToNameMap.has(key)) lgaKeyToNameMap.set(key, lga.name);
   }
 }
 
@@ -308,7 +312,11 @@ export function getStatesForLGA(lga?: string | null): string[] {
       candidate.length >= 4 && (candidate.startsWith(key) || key.startsWith(candidate))
   );
   if (prefixMatches.length !== 1) return [];
-  return lgaKeyToStatesMap.get(prefixMatches[0]) ?? [];
+
+  // A guess must never introduce cross-state ambiguity: "NASARAWA EGGON" once
+  // matched the separate, shorter "Nasarawa" LGA and came back as Kano/Nasarawa.
+  const prefixStates = lgaKeyToStatesMap.get(prefixMatches[0]) ?? [];
+  return prefixStates.length === 1 ? prefixStates : [];
 }
 
 /** True when the LGA name exists in more than one state and needs disambiguating. */
@@ -339,6 +347,39 @@ export function resolveStateForLGA(
   const candidates = (candidateStates ?? []).map(normalizeLocation).filter(Boolean);
   const narrowed = matches.filter((s) => candidates.includes(s));
   return narrowed[0] ?? matches[0];
+}
+
+/**
+ * The dataset's own spelling of an LGA, plus the state it resolves to.
+ *
+ * Use it to normalise user input and stored values so "IKPOBA-OKHA LGA",
+ * "ABUA/ODUAL (RIVERS)" and "KALGO LGA, KEBBI STATE" all settle on one form.
+ * Returns null when the name cannot be matched at all.
+ */
+export function resolveCanonicalLGA(
+  lga?: string | null,
+  candidateStates?: readonly string[] | null
+): { name: string; state: string } | null {
+  const state = resolveStateForLGA(lga, candidateStates);
+  if (!state) return null;
+
+  // Find the dataset entry for the resolved state, so shared names such as
+  // SURULERE pick the spelling belonging to the right state.
+  const key = lgaMatchKey(lga);
+  const direct = lgaKeyToNameMap.get(key);
+  if (direct) return { name: direct, state };
+
+  const aliased = LGA_ALIASES[key];
+  if (aliased) return { name: aliased, state };
+
+  const prefixMatch = lgaMatchKeys.find(
+    (candidate) =>
+      candidate.length >= 4 &&
+      key.length >= 4 &&
+      (candidate.startsWith(key) || key.startsWith(candidate))
+  );
+  const viaPrefix = prefixMatch ? lgaKeyToNameMap.get(prefixMatch) : undefined;
+  return viaPrefix ? { name: viaPrefix, state } : null;
 }
 
 /** @deprecated Prefer {@link resolveStateForLGA} and pass the known candidate states. */

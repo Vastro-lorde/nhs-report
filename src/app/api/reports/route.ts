@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/db";
 import { WeeklyReport, Alert, User, Mentor, Coordinator, DeskOfficer, ReportHistory } from "@/models";
 import {
   UserRole,
+  ReportStatus,
   ReportHistoryReportType,
   ReportHistoryAction,
   normalizeLocation,
@@ -57,6 +58,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (session!.user.role !== UserRole.MENTOR) {
+    // A draft belongs to its author alone — nobody else sees it in any listing.
+    filter.status = { $ne: ReportStatus.DRAFT };
+
     const mentorFilter: Record<string, unknown> = {};
     let mustFilterByMentorIds = false;
     // States the caller is allowed to see, if their role is state-scoped.
@@ -195,6 +199,8 @@ interface CreateReportBody {
   urgentDetails?: string;
   supportNeeded?: string;
   evidence?: { url: string; comment: string }[];
+  /** "draft" keeps the report private and out of every roll-up until submitted. */
+  status?: ReportStatus;
 }
 
 export async function POST(request: NextRequest) {
@@ -221,15 +227,28 @@ export async function POST(request: NextRequest) {
   if (!mentorDoc) return jsonError("Mentor profile not found", 403);
   const mentorId = mentorDoc._id;
 
-  // Validate data quality
-  const flags: string[] = [];
-  if (body.sessionsCount < 0) flags.push("Negative session count");
-  if (body.urgentAlert && !body.urgentDetails) flags.push("Urgent alert marked but no details");
+  const isDraft = body.status === ReportStatus.DRAFT;
 
-  // Check for duplicate
+  // Validate data quality. Drafts are work in progress, so quality flags are
+  // only raised once the mentor actually submits.
+  const flags: string[] = [];
+  if (!isDraft) {
+    if (body.sessionsCount < 0) flags.push("Negative session count");
+    if (body.urgentAlert && !body.urgentDetails) flags.push("Urgent alert marked but no details");
+  }
+
+  // Check for duplicate. A saved draft occupies the same mentor+week slot, so
+  // point the mentor at it rather than reporting it as already submitted.
   const existingReport = await WeeklyReport.findOne({ mentor: mentorId, weekKey });
   if (existingReport) {
-    return jsonError(`Report for ${weekKey} already submitted. Use PATCH to update.`, 409);
+    const asDraft = existingReport.status === ReportStatus.DRAFT;
+    return jsonError(
+      asDraft
+        ? `You already have a draft for ${weekKey}. Open it to continue.`
+        : `Report for ${weekKey} already submitted. Use PATCH to update.`,
+      409,
+      asDraft ? { draftId: String(existingReport._id) } : undefined,
+    );
   }
 
   // Derive session count from sessions array if provided
@@ -263,10 +282,11 @@ export async function POST(request: NextRequest) {
     evidenceUrls: (body.evidence ?? []).map(e => e.url),
     evidenceComments: (body.evidence ?? []).map(e => e.comment),
     dataQualityFlags: flags,
+    status: isDraft ? ReportStatus.DRAFT : ReportStatus.SUBMITTED,
   });
 
-  // Create alert if urgent
-  if (body.urgentAlert && body.urgentDetails) {
+  // Create alert if urgent — a draft raises nothing until it is submitted.
+  if (!isDraft && body.urgentAlert && body.urgentDetails) {
     const mentorStates = resolveMentorStates(mentorDoc);
     // Prefer the states the reported-on fellows actually sit in; fall back to
     // everything the mentor covers. Never assume a single state.
@@ -294,10 +314,16 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Rebuild rollup for this week
-  await rebuildRollupForWeek(weekKey);
+  // Drafts are invisible to roll-ups until submitted.
+  if (!isDraft) await rebuildRollupForWeek(weekKey);
 
-  void logActivity({ session, action: "SUBMIT_REPORT", targetType: "Report", targetId: String(report._id), targetName: weekKey });
+  void logActivity({
+    session,
+    action: isDraft ? "SAVE_REPORT_DRAFT" : "SUBMIT_REPORT",
+    targetType: "Report",
+    targetId: String(report._id),
+    targetName: weekKey,
+  });
 
   void ReportHistory.create({
     reportId: report._id,

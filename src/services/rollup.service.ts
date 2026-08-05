@@ -4,6 +4,7 @@
    ────────────────────────────────────────── */
 import { connectDB } from "@/lib/db";
 import { WeeklyReport, WeeklyRollup, User, Alert } from "@/models";
+import { ReportStatus } from "@/lib/constants";
 
 export async function rebuildRollupForWeek(weekKey: string) {
   await connectDB();
@@ -14,8 +15,12 @@ export async function rebuildRollupForWeek(weekKey: string) {
     active: true,
   });
 
-  // Aggregate report data for the week
-  const reports = await WeeklyReport.find({ weekKey }).populate("mentor", "state");
+  // Aggregate report data for the week. Drafts are unfinished work and must not
+  // count towards submissions, sessions, check-ins or alerts.
+  const reports = await WeeklyReport.find({
+    weekKey,
+    status: { $ne: ReportStatus.DRAFT },
+  }).populate("mentor", "state");
 
   const submitted = reports.length;
   let totalSessions = 0;

@@ -55,8 +55,10 @@ export async function GET(request: Request) {
             fellowName: null as string | null,
         };
 
-        // A locked month can never hold a report, and no fellow means nothing to check
-        if (lockReason || !fellowId) return NextResponse.json(base);
+        // Drafts may be saved for a month that has not unlocked yet, so the
+        // duplicate check has to run even when locked — only a missing fellow
+        // means there is nothing to check.
+        if (!fellowId) return NextResponse.json(base);
 
         await connectDB();
 
@@ -67,7 +69,7 @@ export async function GET(request: Request) {
         if (!fellowDoc) return NextResponse.json({ error: "Fellow not found." }, { status: 404 });
 
         const existing = await MentorMonthlyReport.findOne({ fellow: fellowDoc._id, month })
-            .select("_id mentor")
+            .select("_id mentor status")
             .lean();
 
         if (!existing) {
@@ -75,14 +77,18 @@ export async function GET(request: Request) {
         }
 
         const mine = String(existing.mentor) === String(mentorDoc._id);
+        const isDraft = existing.status === "draft";
         return NextResponse.json({
             ...base,
             fellowName: fellowDoc.name,
             exists: true,
             existingIsMine: mine,
+            existingIsDraft: mine && isDraft,
             existingReportId: mine ? String(existing._id) : null,
             duplicateReason: mine
-                ? `You have already submitted a report for ${fellowDoc.name} for ${monthLabel(month)}.`
+                ? isDraft
+                    ? `You already have a draft for ${fellowDoc.name} for ${monthLabel(month)}. Open it from Drafts to continue.`
+                    : `You have already submitted a report for ${fellowDoc.name} for ${monthLabel(month)}.`
                 : `A report for ${fellowDoc.name} for ${monthLabel(month)} has already been submitted by another mentor.`,
         });
     } catch (error: any) {

@@ -15,7 +15,7 @@ import { Select } from "@/components/ui/Select";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type Report, type MentorshipSessionInput } from "@/lib/api-client";
-import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
+import { OUTREACH_TYPES, CHALLENGE_TYPES, ReportStatus } from "@/lib/constants";
 import { mentorLgaSelectOptions } from "@/lib/lga-options";
 import { parseInputDate, weekRangeLabelFromDate } from "@/lib/date-helpers";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
@@ -39,6 +39,9 @@ export default function EditReportPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [canEdit, setCanEdit] = useState(true);
+  // Drafts get an extra "submit" action; submitted reports just save changes.
+  const [isDraft, setIsDraft] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
@@ -97,6 +100,8 @@ export default function EditReportPage() {
         if (profileJson.roleDetails?.states) {
           setMentorStates(profileJson.roleDetails.states as string[]);
         }
+        setIsDraft(report.status === ReportStatus.DRAFT);
+
         if (report.canEdit === false) {
           setCanEdit(false);
           return;
@@ -257,8 +262,16 @@ export default function EditReportPage() {
   // ─── Submit (PATCH) ─────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Saving an existing draft keeps it a draft; the explicit Submit button
+    // below is the only thing that promotes it.
+    await save(isDraft ? ReportStatus.DRAFT : undefined);
+  };
+
+  const save = async (status?: ReportStatus) => {
+    const keepingDraft = status === ReportStatus.DRAFT;
     setError("");
-    setLoading(true);
+    if (keepingDraft) setSavingDraft(true);
+    else setLoading(true);
 
     const cleanSessions = sessions
       .filter((s) => s.menteeName.trim())
@@ -286,15 +299,18 @@ export default function EditReportPage() {
       urgentDetails: urgentDetails || undefined,
       supportNeeded: supportNeeded || undefined,
       evidence,
+      ...(status ? { status } : {}),
     };
 
     try {
       await api.reports.update(id, payload);
-      router.push(`/reports/${id}`);
+      // Keep the mentor on the form while the report is still a draft.
+      router.push(keepingDraft ? "/reports" : `/reports/${id}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+      setSavingDraft(false);
     }
   };
 
@@ -791,13 +807,28 @@ export default function EditReportPage() {
         </Card>
 
         {/* ── Submit ──────────────────── */}
-        <div className="flex justify-end gap-3 pb-8">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pb-8">
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saving…" : "Save Changes"}
+          <Button type="submit" disabled={loading || savingDraft}>
+            {isDraft
+              ? savingDraft
+                ? "Saving…"
+                : "Save as Draft"
+              : loading
+                ? "Saving…"
+                : "Save Changes"}
           </Button>
+          {isDraft && (
+            <Button
+              type="button"
+              disabled={loading || savingDraft}
+              onClick={() => save(ReportStatus.SUBMITTED)}
+            >
+              {loading ? "Submitting…" : "Submit Report"}
+            </Button>
+          )}
         </div>
       </form>
     </>

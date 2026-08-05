@@ -135,7 +135,11 @@ function statesForLga(value) {
     (c) => c.length >= 4 && (c.startsWith(key) || key.startsWith(c)),
   );
   if (prefix.length !== 1) return null;
-  return keyToStates.get(prefix[0]);
+
+  // A guess must never introduce cross-state ambiguity.
+  const prefixStates = keyToStates.get(prefix[0]);
+  if (!prefixStates || prefixStates.length !== 1) return null;
+  return prefixStates;
 }
 
 async function main() {

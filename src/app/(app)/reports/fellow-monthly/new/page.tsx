@@ -63,6 +63,7 @@ export default function NewMentorMonthlyReportPage() {
   const lockReason = checked ? checked.lockReason : monthLockReason(month);
   const duplicateReason = checked?.exists ? checked.duplicateReason : null;
   const existingReportId = checked?.existingReportId ?? null;
+  const existingIsDraft = checked?.existingIsDraft ?? false;
   const blocked = Boolean(lockReason) || Boolean(duplicateReason);
 
   // Section 1 – Fellow details (auto-filled, readonly)
@@ -96,6 +97,7 @@ export default function NewMentorMonthlyReportPage() {
 
   // Submit state
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
 
   // ─── Load mentor's fellows on mount ──────
@@ -215,6 +217,15 @@ export default function NewMentorMonthlyReportPage() {
   // ─── Submit ───────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    await save("submitted");
+  }
+
+  /**
+   * A draft only needs a fellow and a month — everything else can still be
+   * blank, and the month-window lock is deferred until it is submitted.
+   */
+  async function save(status: "draft" | "submitted") {
+    const isDraft = status === "draft";
     setError("");
 
     if (!selectedFellowId) {
@@ -225,7 +236,7 @@ export default function NewMentorMonthlyReportPage() {
       setError("Please select a reporting month.");
       return;
     }
-    if (lockReason) {
+    if (!isDraft && lockReason) {
       setError(lockReason);
       return;
     }
@@ -237,11 +248,13 @@ export default function NewMentorMonthlyReportPage() {
     const filteredChallenges = challenges.filter(c => c.trim());
     const filteredRecommendations = recommendations.filter(r => r.trim());
 
-    setSubmitting(true);
+    if (isDraft) setSavingDraft(true);
+    else setSubmitting(true);
     try {
       const report = await api.reports.fellowMonthly.create({
         fellow: selectedFellowId,
         month,
+        status,
         sessionsHeld,
         sessionsAttended,
         sessionsAbsent,
@@ -256,11 +269,14 @@ export default function NewMentorMonthlyReportPage() {
         progressRating,
         weeklyReportIds: prefillData?.weeklyReportIds ?? [],
       });
-      router.push(`/reports/fellow-monthly/${report._id}`);
+      router.push(
+        isDraft ? `/reports/fellow-monthly/${report._id}/edit` : `/reports/fellow-monthly/${report._id}`,
+      );
     } catch (err: any) {
-      setError(err.message ?? "Failed to submit report.");
+      setError(err.message ?? (isDraft ? "Failed to save draft." : "Failed to submit report."));
     } finally {
       setSubmitting(false);
+      setSavingDraft(false);
     }
   }
 
@@ -293,17 +309,21 @@ export default function NewMentorMonthlyReportPage() {
         )}
 
         {/* ── Report already exists for this fellow + month ── */}
-        {!lockReason && duplicateReason && (
+        {duplicateReason && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm flex gap-2">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium">{duplicateReason}</p>
               {existingReportId ? (
                 <Link
-                  href={`/reports/fellow-monthly/${existingReportId}`}
+                  href={
+                    existingIsDraft
+                      ? `/reports/fellow-monthly/${existingReportId}/edit`
+                      : `/reports/fellow-monthly/${existingReportId}`
+                  }
                   className="mt-1 inline-block underline hover:no-underline"
                 >
-                  View the existing report
+                  {existingIsDraft ? "Continue the draft" : "View the existing report"}
                 </Link>
               ) : (
                 <p className="mt-1 text-red-600">
@@ -633,7 +653,22 @@ export default function NewMentorMonthlyReportPage() {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting || blocked || checkingAvailability}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => save("draft")}
+            disabled={submitting || savingDraft || Boolean(duplicateReason) || checkingAvailability}
+          >
+            {savingDraft ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving…
+              </>
+            ) : (
+              "Save as Draft"
+            )}
+          </Button>
+          <Button type="submit" disabled={submitting || savingDraft || blocked || checkingAvailability}>
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

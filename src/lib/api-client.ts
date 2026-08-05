@@ -3,7 +3,7 @@
    Single source of truth for all API calls
    ────────────────────────────────────────── */
 
-import type { ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
+import type { ReportHistoryReportType, ReportHistoryAction, ReportStatus } from "@/lib/constants";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
 import type {
   INationalAuditReport,
@@ -13,9 +13,13 @@ import type {
 } from "@/types/national-audit";
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /** Extra fields the endpoint returned alongside `error`, e.g. `draftId`. */
+  readonly draftId?: string;
+
+  constructor(public status: number, message: string, extra?: Record<string, unknown>) {
     super(message);
     this.name = "ApiError";
+    if (typeof extra?.draftId === "string") this.draftId = extra.draftId;
   }
 }
 
@@ -31,7 +35,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     }
 
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new ApiError(res.status, body.error || "Request failed");
+    throw new ApiError(res.status, body.error || "Request failed", body);
   }
 
   return res.json();
@@ -222,7 +226,7 @@ export const api = {
     delete: (id: string) =>
       request<{ message: string }>(`/api/reports/${id}`, { method: "DELETE" }),
     checkCurrentWeek: () =>
-      request<{ hasReport: boolean }>("/api/reports/check-current-week"),
+      request<{ hasReport: boolean; draftId: string | null }>("/api/reports/check-current-week"),
     history: (id: string) =>
       request<ReportHistoryEntry[]>(`/api/reports/${id}/history`),
 
@@ -833,6 +837,8 @@ export interface CreateReportInput {
   urgentDetails?: string;
   supportNeeded?: string;
   evidence?: { url: string; comment: string }[];
+  /** "draft" keeps the report out of every roll-up until it is submitted. */
+  status?: ReportStatus;
 }
 
 export interface AlertItem {
@@ -1014,6 +1020,8 @@ export interface CreateMentorMonthlyReportInput {
   achievements?: string;
   progressRating?: string;
   weeklyReportIds?: string[];
+  /** "draft" keeps the report private until the mentor submits it. */
+  status?: "draft" | "submitted";
 }
 
 export interface MentorMonthlyReportPrefill {
@@ -1038,6 +1046,8 @@ export interface MentorMonthlyReportAvailability {
   exists: boolean;
   existingReportId: string | null;
   existingIsMine: boolean;
+  /** true when the caller's existing report is still an unsubmitted draft */
+  existingIsDraft?: boolean;
   duplicateReason: string | null;
   fellowName: string | null;
 }

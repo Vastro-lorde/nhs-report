@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer, Fellow } from "@/models";
 import mongoose from "mongoose";
-import { UserRole, AlertStatus, resolveMentorStates, resolveStateForLGA } from "@/lib/constants";
+import { UserRole, AlertStatus, ReportStatus, resolveMentorStates, resolveStateForLGA } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
 import { currentWeekKey, isoWeekKey } from "@/lib/date-helpers";
@@ -63,11 +63,14 @@ export async function GET(request: NextRequest) {
 
     const activeMentorFilter: any = { ...baseMentorFilter, active: true };
 
-    const reportFilter: any = { weekKey };
+    // Drafts are not submissions — they must never inflate the weekly counts
+    // or the submission-rate figure derived from them.
+    const notDraft = { $ne: ReportStatus.DRAFT };
+    const reportFilter: any = { weekKey, status: notDraft };
     if (mentorDocIds) reportFilter.mentor = { $in: mentorDocIds };
 
     // Date-ranged report filter: used for scoped counts when a date range is specified
-    const rangedReportFilter: any = {};
+    const rangedReportFilter: any = { status: notDraft };
     if (mentorDocIds) rangedReportFilter.mentor = { $in: mentorDocIds };
     if (hasDateRange) {
       rangedReportFilter.weekKey = {};
@@ -117,7 +120,7 @@ export async function GET(request: NextRequest) {
     const aggregatePipeline: any[] = [];
 
     // Date range match
-    const reportMatchStage: any = {};
+    const reportMatchStage: any = { status: notDraft };
     if (mentorDocIds) {
       reportMatchStage.mentor = { $in: mentorDocIds.map((id: string) => new mongoose.Types.ObjectId(id)) };
     }
@@ -235,7 +238,10 @@ async function buildZoneScopedRollups(mentorDocIds: string[], scopedMentorCount:
 
   const mentorObjectIds = mentorDocIds.map(id => new mongoose.Types.ObjectId(id));
 
-  const matchStage: any = { mentor: { $in: mentorObjectIds } };
+  const matchStage: any = {
+    mentor: { $in: mentorObjectIds },
+    status: { $ne: ReportStatus.DRAFT },
+  };
   if (fromWeekKey || toWeekKey) {
     matchStage.weekKey = {};
     if (fromWeekKey) matchStage.weekKey.$gte = fromWeekKey;

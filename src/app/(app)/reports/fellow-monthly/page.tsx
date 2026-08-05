@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole, STATES } from "@/lib/constants";
 import { safeFormatISO } from "@/lib/date-helpers";
-import { Eye, FileText, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, FilePen, FileText, Plus, Trash2, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const RATING_COLORS: Record<string, string> = {
   Excellent: "bg-green-100 text-green-800",
@@ -22,6 +22,133 @@ const RATING_COLORS: Record<string, string> = {
   Fair: "bg-yellow-100 text-yellow-800",
   "Needs Improvement": "bg-red-100 text-red-800",
 };
+
+
+/* ─── Drafts Modal ──────────────────────────
+   Mentors' unsubmitted reports. Drafts are excluded from the main listing (and
+   from every roll-up), so this is the only way back to them.
+   ────────────────────────────────────────── */
+function DraftsModal({
+  open,
+  onClose,
+  onChanged,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [drafts, setDrafts] = useState<MentorMonthlyReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await api.reports.fellowMonthly.list({ status: "draft", limit: "100" });
+      setDrafts(result.data);
+    } catch (err) {
+      setError((err as Error).message ?? "Failed to load drafts.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) load();
+  }, [open, load]);
+
+  if (!open) return null;
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Discard this draft? This cannot be undone.")) return;
+    setDeletingId(id);
+    try {
+      await api.reports.fellowMonthly.delete(id);
+      await load();
+      onChanged();
+    } catch (err) {
+      setError((err as Error).message ?? "Failed to delete draft.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div>
+            <h2 className="text-lg font-semibold">Draft Reports</h2>
+            <p className="text-sm text-gray-500">
+              Saved but not yet submitted. They are not counted in any report until you submit them.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+            aria-label="Close drafts"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2 mb-3">
+              {error}
+            </p>
+          )}
+
+          {loading ? (
+            <p className="text-sm text-gray-500 py-6 text-center">Loading drafts…</p>
+          ) : drafts.length === 0 ? (
+            <p className="text-sm text-gray-500 py-6 text-center">
+              You have no draft reports.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {drafts.map((d) => (
+                <li key={d._id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{d.fellowName}</p>
+                    <p className="text-xs text-gray-500">
+                      {safeFormatISO(`${d.month}-01`, "MMMM yyyy")}
+                      {d.fellowLGA ? ` · ${d.fellowLGA}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link href={`/reports/fellow-monthly/${d._id}/edit`}>
+                      <Button size="sm" onClick={onClose}>
+                        Continue
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={deletingId === d._id}
+                      onClick={() => handleDelete(d._id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="border-t px-6 py-4 flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MentorMonthlyReportsPage() {
   const { data: session } = useSession();
@@ -38,6 +165,8 @@ export default function MentorMonthlyReportsPage() {
   const [nameFilter, setNameFilter] = useState("");
   const [debouncedName, setDebouncedName] = useState("");
   const [scopedStates, setScopedStates] = useState<string[]>([]);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [draftCount, setDraftCount] = useState(0);
 
   // Debounce name input so we don't refetch on every keystroke
   useEffect(() => {
@@ -88,9 +217,25 @@ export default function MentorMonthlyReportsPage() {
     fetchScopedStates();
   }, [session?.user?.role]);
 
+  // Badge on the Drafts button, so an unfinished report is visible without
+  // opening the modal.
+  const fetchDraftCount = useCallback(async () => {
+    if (!canCreate) return;
+    try {
+      const result = await api.reports.fellowMonthly.list({ status: "draft", limit: "1" });
+      setDraftCount(result.pagination.total);
+    } catch {
+      // non-critical
+    }
+  }, [canCreate]);
+
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
+
+  useEffect(() => {
+    fetchDraftCount();
+  }, [fetchDraftCount]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this report? This cannot be undone.")) return;
@@ -140,11 +285,22 @@ export default function MentorMonthlyReportsPage() {
               )}
             </div>
             {canCreate && (
-              <Link href="/reports/fellow-monthly/new">
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-1" /> New Fellow Monthly Report
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowDrafts(true)}>
+                  <FilePen className="h-4 w-4 mr-1" />
+                  Drafts
+                  {draftCount > 0 && (
+                    <span className="ml-1.5 rounded-full bg-orange-100 text-orange-700 px-1.5 text-xs font-semibold">
+                      {draftCount}
+                    </span>
+                  )}
                 </Button>
-              </Link>
+                <Link href="/reports/fellow-monthly/new">
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-1" /> New Fellow Monthly Report
+                  </Button>
+                </Link>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -279,6 +435,16 @@ export default function MentorMonthlyReportsPage() {
           </div>
         )}
       </div>
+      {canCreate && (
+        <DraftsModal
+          open={showDrafts}
+          onClose={() => setShowDrafts(false)}
+          onChanged={() => {
+            fetchDraftCount();
+            fetchReports();
+          }}
+        />
+      )}
     </>
   );
 }

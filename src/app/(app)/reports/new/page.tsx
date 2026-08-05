@@ -15,7 +15,7 @@ import { Select } from "@/components/ui/Select";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type CreateReportInput, type MentorshipSessionInput } from "@/lib/api-client";
-import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
+import { OUTREACH_TYPES, CHALLENGE_TYPES, ReportStatus } from "@/lib/constants";
 import { mentorLgaSelectOptions } from "@/lib/lga-options";
 import { parseInputDate, weekRangeLabelFromDate } from "@/lib/date-helpers";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
@@ -39,6 +39,7 @@ const EMPTY_SESSION: MentorshipSessionInput = {
 export default function NewReportPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
@@ -264,8 +265,18 @@ export default function NewReportPage() {
   // ─── Submit ─────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await save(ReportStatus.SUBMITTED);
+  };
+
+  /**
+   * Saving a draft skips HTML validation on purpose — a draft is by definition
+   * incomplete, so it must be storable with fields still empty.
+   */
+  const save = async (status: ReportStatus) => {
+    const isDraft = status === ReportStatus.DRAFT;
     setError("");
-    setLoading(true);
+    if (isDraft) setSavingDraft(true);
+    else setLoading(true);
 
     // Clean sessions — remove empty bullet items
     const cleanSessions = sessions
@@ -294,15 +305,24 @@ export default function NewReportPage() {
       urgentDetails: urgentDetails || undefined,
       supportNeeded: supportNeeded || undefined,
       evidence,
+      status,
     };
 
     try {
-      await api.reports.create(payload);
-      router.push("/reports");
+      const created = await api.reports.create(payload);
+      // Stay on the draft instead of bouncing to the list, so the mentor can
+      // keep working; the edit page owns the report from here on.
+      router.push(isDraft ? `/reports/${created._id}/edit` : "/reports");
     } catch (err) {
+      const draftId = (err as { draftId?: string }).draftId;
+      if (draftId) {
+        router.push(`/reports/${draftId}/edit`);
+        return;
+      }
       setError((err as Error).message);
     } finally {
       setLoading(false);
+      setSavingDraft(false);
     }
   };
 
@@ -782,11 +802,19 @@ export default function NewReportPage() {
         </Card>
 
         {/* ── Submit ──────────────────── */}
-        <div className="flex justify-end gap-3 pb-8">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pb-8">
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading || savingDraft}
+            onClick={() => save(ReportStatus.DRAFT)}
+          >
+            {savingDraft ? "Saving…" : "Save as Draft"}
+          </Button>
+          <Button type="submit" disabled={loading || savingDraft}>
             {loading ? "Submitting…" : "Submit Report"}
           </Button>
         </div>

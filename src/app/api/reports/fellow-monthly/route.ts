@@ -26,7 +26,17 @@ export async function GET(request: Request) {
         const stateParam = rawStateParam ? rawStateParam.toUpperCase().trim() : "";
         const qParam = (searchParams.get("q") || "").trim();
         const mentorIdParam = searchParams.get("mentorId");
+        const statusParam = searchParams.get("status");
         const filter: Record<string, any> = {};
+
+        // Drafts belong to their author alone. Only a mentor asking for
+        // ?status=draft sees them, and then only their own; every other listing
+        // shows submitted reports.
+        const wantsDrafts = statusParam === "draft";
+        if (wantsDrafts && session.user.role !== UserRole.MENTOR) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        filter.status = wantsDrafts ? "draft" : { $ne: "draft" };
 
         if (qParam) {
             // Case-insensitive search against denormalised fellow name
@@ -111,8 +121,11 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         const month = String(body.month ?? "");
+        const isDraft = body.status === "draft";
+        // A draft may be prepared before the month unlocks; the lock is enforced
+        // when it is actually submitted.
         const lockReason = monthLockReason(month);
-        if (lockReason) {
+        if (lockReason && !isDraft) {
             return NextResponse.json({ error: lockReason }, { status: 400 });
         }
 
@@ -121,14 +134,16 @@ export async function POST(request: Request) {
 
         // One report per fellow per month, whichever mentor submits it
         const duplicate = await MentorMonthlyReport.findOne({ fellow: fellowDoc._id, month })
-            .select("_id mentor")
+            .select("_id mentor status")
             .lean();
         if (duplicate) {
             const mine = String(duplicate.mentor) === String(mentorDoc._id);
             return NextResponse.json(
                 {
                     error: mine
-                        ? `You have already submitted a report for ${fellowDoc.name} for ${monthLabel(month)}.`
+                        ? duplicate.status === "draft"
+                            ? `You already have a draft for ${fellowDoc.name} for ${monthLabel(month)}. Open it from Drafts to continue.`
+                            : `You have already submitted a report for ${fellowDoc.name} for ${monthLabel(month)}.`
                         : `A report for ${fellowDoc.name} for ${monthLabel(month)} has already been submitted by another mentor.`,
                     existingReportId: mine ? String(duplicate._id) : null,
                 },
@@ -138,6 +153,7 @@ export async function POST(request: Request) {
 
         const report = await MentorMonthlyReport.create({
             ...body,
+            status: isDraft ? "draft" : "submitted",
             mentor: mentorDoc._id,
             fellowName: fellowDoc.name,
             fellowLGA: fellowDoc.lga ?? "",
@@ -146,7 +162,7 @@ export async function POST(request: Request) {
 
         void logActivity({
             session,
-            action: "CREATE_MENTOR_MONTHLY_REPORT",
+            action: isDraft ? "SAVE_MENTOR_MONTHLY_DRAFT" : "CREATE_MENTOR_MONTHLY_REPORT",
             targetType: "MentorMonthlyReport",
             targetId: String(report._id),
             targetName: `${fellowDoc.name} – ${body.month}`,
