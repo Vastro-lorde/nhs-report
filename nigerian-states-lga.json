@@ -483,7 +483,7 @@
         ]
       },
       {
-        "name": "Oboma Ngwa",
+        "name": "Obi Ngwa",
         "wards": [
           {
             "name": "Abayi  I",
@@ -823,7 +823,7 @@
         ]
       },
       {
-        "name": "Umu-Nneochi",
+        "name": "Umunneochi",
         "wards": [
           {
             "name": "Amuda",
@@ -1183,7 +1183,7 @@
         ]
       },
       {
-        "name": "Girie",
+        "name": "Girei",
         "wards": [
           {
             "name": "Dakri",
@@ -2073,7 +2073,7 @@
         ]
       },
       {
-        "name": "Teungo",
+        "name": "Toungo",
         "wards": [
           {
             "name": "Dawo I",
@@ -3938,7 +3938,7 @@
         ]
       },
       {
-        "name": "Urue Offong|Oruko",
+        "name": "Urue-Offong/Oruko",
         "wards": [
           {
             "name": "Oruko I",
@@ -6208,7 +6208,7 @@
         ]
       },
       {
-        "name": "Gamjuwa",
+        "name": "Ganjuwa",
         "wards": [
           {
             "name": "Ganjuwa",
@@ -7083,7 +7083,7 @@
         ]
       },
       {
-        "name": "Kolokuma-Opokuma",
+        "name": "Kolokuma/Opokuma",
         "wards": [
           {
             "name": "Igbedi",
@@ -8073,7 +8073,7 @@
         ]
       },
       {
-        "name": "Katsina- Ala",
+        "name": "Katsina-Ala",
         "wards": [
           {
             "name": "Ikurav Tiev I",
@@ -8708,7 +8708,7 @@
         ]
       },
       {
-        "name": "Oturkpo",
+        "name": "Otukpo",
         "wards": [
           {
             "name": "Adoka-Haje",
@@ -11793,7 +11793,7 @@
     "state": "Delta",
     "lgas": [
       {
-        "name": "AniochaN",
+        "name": "Aniocha North",
         "wards": [
           {
             "name": "Ezi",
@@ -11848,7 +11848,7 @@
         ]
       },
       {
-        "name": "AniochaS",
+        "name": "Aniocha South",
         "wards": [
           {
             "name": "Aba - Unor",
@@ -12083,7 +12083,7 @@
         ]
       },
       {
-        "name": "EthiopeE",
+        "name": "Ethiope East",
         "wards": [
           {
             "name": "Abraka  I",
@@ -12143,7 +12143,7 @@
         ]
       },
       {
-        "name": "IkaNorth",
+        "name": "Ika North East",
         "wards": [
           {
             "name": "Akumazi",
@@ -12218,7 +12218,7 @@
         ]
       },
       {
-        "name": "IkaSouth",
+        "name": "Ika South",
         "wards": [
           {
             "name": "Abavo I",
@@ -12283,7 +12283,7 @@
         ]
       },
       {
-        "name": "IsokoNor",
+        "name": "Isoko North",
         "wards": [
           {
             "name": "Ellu/Radheo/Ovrode",
@@ -12353,7 +12353,7 @@
         ]
       },
       {
-        "name": "IsokoSou",
+        "name": "Isoko South",
         "wards": [
           {
             "name": "Aviara",
@@ -13213,7 +13213,7 @@
         ]
       },
       {
-        "name": "Warri South-West",
+        "name": "Warri South West",
         "wards": [
           {
             "name": "Aja - Udaibo",
@@ -13273,7 +13273,7 @@
     "state": "Ebonyi",
     "lgas": [
       {
-        "name": "Abakalik",
+        "name": "Abakaliki",
         "wards": [
           {
             "name": "Abakpa",
@@ -14308,7 +14308,7 @@
         ]
       },
       {
-        "name": "Esan Centtral",
+        "name": "Esan Central",
         "wards": [
           {
             "name": "Ewu I",
@@ -14883,7 +14883,7 @@
         ]
       },
       {
-        "name": "Orhionmw",
+        "name": "Orhionmwon",
         "wards": [
           {
             "name": "Aibiokula II",
@@ -15618,7 +15618,7 @@
         ]
       },
       {
-        "name": "Gboyin",
+        "name": "Gbonyin",
         "wards": [
           {
             "name": "Agbado",
@@ -15978,7 +15978,7 @@
         ]
       },
       {
-        "name": "Irepodun-Ifelodun",
+        "name": "Irepodun/Ifelodun",
         "wards": [
           {
             "name": "Afao",
@@ -16038,7 +16038,7 @@
         ]
       },
       {
-        "name": "Ise-Orun",
+        "name": "Ise/Orun",
         "wards": [
           {
             "name": "Erinwa I",
@@ -16473,7 +16473,7 @@
         ]
       },
       {
-        "name": "EnuguSou",
+        "name": "Enugu South",
         "wards": [
           {
             "name": "Achara Layout east",
@@ -16648,7 +16648,7 @@
         ]
       },
       {
-        "name": "Igbo-Eti",
+        "name": "Igbo Etiti",
         "wards": [
           {
             "name": "Aku I",
@@ -16753,7 +16753,7 @@
         ]
       },
       {
-        "name": "Igbo-eze North",
+        "name": "Igbo Eze North",
         "wards": [
           {
             "name": "Essodo I",
@@ -16858,7 +16858,7 @@
         ]
       },
       {
-        "name": "Igbo-eze South",
+        "name": "Igbo Eze South",
         "wards": [
           {
             "name": "Alor Agu",
@@ -17888,7 +17888,7 @@
         ]
       },
       {
-        "name": "Municipal",
+        "name": "Abuja Municipal Area Council",
         "wards": [
           {
             "name": "City Centre",
@@ -18468,7 +18468,7 @@
         ]
       },
       {
-        "name": "Shomgom",
+        "name": "Shongom",
         "wards": [
           {
             "name": "Bangunji",
@@ -18523,7 +18523,7 @@
         ]
       },
       {
-        "name": "Yalmatu / Deba",
+        "name": "Yamaltu/Deba",
         "wards": [
           {
             "name": "Deba",
@@ -18588,7 +18588,7 @@
     "state": "Imo",
     "lgas": [
       {
-        "name": "Aboh-Mbaise",
+        "name": "Aboh Mbaise",
         "wards": [
           {
             "name": "Amuzu",
@@ -18653,7 +18653,7 @@
         ]
       },
       {
-        "name": "Ahiazu-Mbaise",
+        "name": "Ahiazu Mbaise",
         "wards": [
           {
             "name": "Amuzi/Ihenworie",
@@ -18718,7 +18718,7 @@
         ]
       },
       {
-        "name": "Ehime-Mbano",
+        "name": "Ehime Mbano",
         "wards": [
           {
             "name": "Agbaja",
@@ -18988,7 +18988,7 @@
         ]
       },
       {
-        "name": "Ihitte-Uboma Isinweke",
+        "name": "Ihitte/Uboma",
         "wards": [
           {
             "name": "Abueke",
@@ -19298,7 +19298,7 @@
         ]
       },
       {
-        "name": "Ngor-Okpala",
+        "name": "Ngor Okpala",
         "wards": [
           {
             "name": "Amala/Alulu/Oburu/Obokwe/Ntu",
@@ -19648,7 +19648,7 @@
         ]
       },
       {
-        "name": "Ohaji-Egbema",
+        "name": "Ohaji/Egbema",
         "wards": [
           {
             "name": "Assa/Obile",
@@ -19903,7 +19903,7 @@
         ]
       },
       {
-        "name": "Oru-East",
+        "name": "Oru East",
         "wards": [
           {
             "name": "Akata",
@@ -19958,7 +19958,7 @@
         ]
       },
       {
-        "name": "Oru-West",
+        "name": "Oru West",
         "wards": [
           {
             "name": "Aji",
@@ -20193,7 +20193,7 @@
         ]
       },
       {
-        "name": "Unuimo",
+        "name": "Onuimo",
         "wards": [
           {
             "name": "Aboh/Okohia",
@@ -21253,7 +21253,7 @@
         ]
       },
       {
-        "name": "Kirika Samma",
+        "name": "Kiri Kasamma",
         "wards": [
           {
             "name": "Baturiya",
@@ -21428,7 +21428,7 @@
         ]
       },
       {
-        "name": "Malam Mado",
+        "name": "Malam Madori",
         "wards": [
           {
             "name": "Arki",
@@ -24063,7 +24063,7 @@
         ]
       },
       {
-        "name": "Garum Mallam",
+        "name": "Garun Malam",
         "wards": [
           {
             "name": "Chiromawa",
@@ -25608,7 +25608,7 @@
         ]
       },
       {
-        "name": "Tundun Wada",
+        "name": "Tudun Wada",
         "wards": [
           {
             "name": "Baburi",
@@ -26338,7 +26338,7 @@
         ]
       },
       {
-        "name": "Danmusa",
+        "name": "Dan Musa",
         "wards": [
           {
             "name": "Dan Ali",
@@ -26513,7 +26513,7 @@
         ]
       },
       {
-        "name": "Dutsin-M",
+        "name": "Dutsin-Ma",
         "wards": [
           {
             "name": "Bagagadi",
@@ -26978,7 +26978,7 @@
         ]
       },
       {
-        "name": "Kankiya",
+        "name": "Kankia",
         "wards": [
           {
             "name": "Gachi",
@@ -27033,7 +27033,7 @@
         ]
       },
       {
-        "name": "Katsina (K)",
+        "name": "Katsina",
         "wards": [
           {
             "name": "Kangiwa",
@@ -28333,7 +28333,7 @@
         ]
       },
       {
-        "name": "Danko Wasagu",
+        "name": "Danko/Wasagu",
         "wards": [
           {
             "name": "Ayu",
@@ -28618,7 +28618,7 @@
         ]
       },
       {
-        "name": "Koko/Bes",
+        "name": "Koko/Besse",
         "wards": [
           {
             "name": "Besse",
@@ -29653,7 +29653,7 @@
         ]
       },
       {
-        "name": "Kabba-Bunu",
+        "name": "Kabba/Bunu",
         "wards": [
           {
             "name": "Aiyeteju",
@@ -29733,7 +29733,7 @@
         ]
       },
       {
-        "name": "Koton-Karfe",
+        "name": "Kogi/Koton Karfe",
         "wards": [
           {
             "name": "Akpasu",
@@ -29963,7 +29963,7 @@
         ]
       },
       {
-        "name": "Ogori Magongo",
+        "name": "Ogori/Magongo",
         "wards": [
           {
             "name": "Aiyeromi",
@@ -31498,7 +31498,7 @@
         ]
       },
       {
-        "name": "Ajeromi/Ifelodun",
+        "name": "Ajeromi-Ifelodun",
         "wards": [
           {
             "name": "Ago Hausa",
@@ -31618,7 +31618,7 @@
         ]
       },
       {
-        "name": "Amuwo Odofin",
+        "name": "Amuwo-Odofin",
         "wards": [
           {
             "name": "Amuwo",
@@ -31733,7 +31733,7 @@
         ]
       },
       {
-        "name": "Badagary",
+        "name": "Badagry",
         "wards": [
           {
             "name": "Ajara",
@@ -31948,7 +31948,7 @@
         ]
       },
       {
-        "name": "Ibeju/Lekki",
+        "name": "Ibeju-Lekki",
         "wards": [
           {
             "name": "02, (Orimedu II)",
@@ -32008,7 +32008,7 @@
         ]
       },
       {
-        "name": "Ifako/Ijaye",
+        "name": "Ifako-Ijaiye",
         "wards": [
           {
             "name": "Ajegunle/Akinde/Animashaun",
@@ -32573,7 +32573,7 @@
         ]
       },
       {
-        "name": "Oshodi/Isolo",
+        "name": "Oshodi-Isolo",
         "wards": [
           {
             "name": "Ajao Estate",
@@ -34153,7 +34153,7 @@
         ]
       },
       {
-        "name": "Kontogur",
+        "name": "Kontagora",
         "wards": [
           {
             "name": "Arewa",
@@ -34578,7 +34578,7 @@
         ]
       },
       {
-        "name": "Muya",
+        "name": "Munya",
         "wards": [
           {
             "name": "Beni",
@@ -35238,7 +35238,7 @@
         ]
       },
       {
-        "name": "Ado Odo-Ota",
+        "name": "Ado-Odo/Ota",
         "wards": [
           {
             "name": "Ado Odo I",
@@ -35323,7 +35323,7 @@
         ]
       },
       {
-        "name": "Egbado North",
+        "name": "Yewa North",
         "wards": [
           {
             "name": "Aye Toro I",
@@ -35383,7 +35383,7 @@
         ]
       },
       {
-        "name": "Egbado South",
+        "name": "Yewa South",
         "wards": [
           {
             "name": "Ajilete",
@@ -35728,7 +35728,7 @@
         ]
       },
       {
-        "name": "Ijebu-Ode",
+        "name": "Ijebu Ode",
         "wards": [
           {
             "name": "Ijade/Imepe I",
@@ -35843,7 +35843,7 @@
         ]
       },
       {
-        "name": "Imeko-Afon",
+        "name": "Imeko Afon",
         "wards": [
           {
             "name": "Afon",
@@ -35963,7 +35963,7 @@
         ]
       },
       {
-        "name": "Obafemi-Owode",
+        "name": "Obafemi Owode",
         "wards": [
           {
             "name": "Ajebo",
@@ -36568,7 +36568,7 @@
         ]
       },
       {
-        "name": "AkokoNorthWest",
+        "name": "Akoko North West",
         "wards": [
           {
             "name": "Ajowa/Igasi/Eriti/Gedegede",
@@ -36978,7 +36978,7 @@
         ]
       },
       {
-        "name": "IleOluji/Okeigbo",
+        "name": "Ile Oluji/Okeigbo",
         "wards": [
           {
             "name": "Ileoluji I",
@@ -37468,7 +37468,7 @@
     "state": "Osun",
     "lgas": [
       {
-        "name": "Atakumosa East",
+        "name": "Atakunmosa East",
         "wards": [
           {
             "name": "Ajebandele",
@@ -37523,7 +37523,7 @@
         ]
       },
       {
-        "name": "Atakumosa West",
+        "name": "Atakunmosa West",
         "wards": [
           {
             "name": "Ibodi",
@@ -37583,7 +37583,7 @@
         ]
       },
       {
-        "name": "Ayedaade",
+        "name": "Aiyedaade",
         "wards": [
           {
             "name": "Anlugbua",
@@ -37643,7 +37643,7 @@
         ]
       },
       {
-        "name": "Ayedire",
+        "name": "Aiyedire",
         "wards": [
           {
             "name": "Ileogbo  I",
@@ -38213,7 +38213,7 @@
         ]
       },
       {
-        "name": "IfeCentral",
+        "name": "Ife Central",
         "wards": [
           {
             "name": "Akarabata",
@@ -38453,7 +38453,7 @@
         ]
       },
       {
-        "name": "Ilesha East",
+        "name": "Ilesa East",
         "wards": [
           {
             "name": "Biladu",
@@ -38513,7 +38513,7 @@
         ]
       },
       {
-        "name": "Ilesha West",
+        "name": "Ilesa West",
         "wards": [
           {
             "name": "Ayeso",
@@ -38883,7 +38883,7 @@
         ]
       },
       {
-        "name": "Odo Otin",
+        "name": "Odo-Otin",
         "wards": [
           {
             "name": "Asi/Asaba",
@@ -38963,7 +38963,7 @@
         ]
       },
       {
-        "name": "Ola-Oluwa",
+        "name": "Ola Oluwa",
         "wards": [
           {
             "name": "Ajagba/Iwooke",
@@ -42088,7 +42088,7 @@
         ]
       },
       {
-        "name": "Qua'anpa",
+        "name": "Qua'an Pan",
         "wards": [
           {
             "name": "Bwall",
@@ -42333,7 +42333,7 @@
     "state": "Rivers",
     "lgas": [
       {
-        "name": "Abua/Odu",
+        "name": "Abua/Odual",
         "wards": [
           {
             "name": "Abua  IV",
@@ -42538,7 +42538,7 @@
         ]
       },
       {
-        "name": "Akukutor",
+        "name": "Akuku-Toru",
         "wards": [
           {
             "name": "Alise Group",
@@ -42628,7 +42628,7 @@
         ]
       },
       {
-        "name": "Andoni/Odual",
+        "name": "Andoni",
         "wards": [
           {
             "name": "Agwut-Obolo",
@@ -42968,7 +42968,7 @@
         ]
       },
       {
-        "name": "Emuoha",
+        "name": "Emohua",
         "wards": [
           {
             "name": "Egbeda",
@@ -43493,7 +43493,7 @@
         ]
       },
       {
-        "name": "Ogba/Egbema/Andoni",
+        "name": "Ogba/Egbema/Ndoni",
         "wards": [
           {
             "name": "Egbema I",
@@ -43713,7 +43713,7 @@
         ]
       },
       {
-        "name": "Omumma",
+        "name": "Omuma",
         "wards": [
           {
             "name": "Ariraniiri/Owu-Ahia Community",
@@ -44398,7 +44398,7 @@
         ]
       },
       {
-        "name": "Gwadabaw",
+        "name": "Gwadabawa",
         "wards": [
           {
             "name": "Asara  Arewa",
@@ -45038,7 +45038,7 @@
         ]
       },
       {
-        "name": "Tambawal",
+        "name": "Tambuwal",
         "wards": [
           {
             "name": "Bagida/Lukkingo",
@@ -45098,7 +45098,7 @@
         ]
       },
       {
-        "name": "Tangazar",
+        "name": "Tangaza",
         "wards": [
           {
             "name": "Gidan Madi",
@@ -46368,7 +46368,7 @@
         ]
       },
       {
-        "name": "Borsari",
+        "name": "Bursari",
         "wards": [
           {
             "name": "Bayamari",
@@ -47403,7 +47403,7 @@
         ]
       },
       {
-        "name": "Birnin Magaji",
+        "name": "Birnin Magaji/Kiyaw",
         "wards": [
           {
             "name": "Birnin Magaji",
@@ -47693,7 +47693,7 @@
         ]
       },
       {
-        "name": "Kaura-Namoda",
+        "name": "Kaura Namoda",
         "wards": [
           {
             "name": "Banga",
@@ -47918,7 +47918,7 @@
         ]
       },
       {
-        "name": "Talata-Mafara",
+        "name": "Talata Mafara",
         "wards": [
           {
             "name": "Garbadu",

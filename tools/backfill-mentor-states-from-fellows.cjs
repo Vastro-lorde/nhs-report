@@ -93,6 +93,29 @@ for (const entry of statesLgaData) {
 
 const allKeys = [...keyToStates.keys()];
 
+/**
+ * Alternate spellings and abbreviations seen in real records — mirrors
+ * LGA_ALIASES in src/lib/constants.ts. Keep the two in step.
+ */
+const LGA_ALIASES = {
+  BIRNIWA: "Biriniwa",
+  EITHOPEEAST: "Ethiope East",
+  EITHOPEWEST: "Ethiope West",
+  ILELA: "Illela",
+  KMC: "Kano Municipal",
+  ONAORA: "Ona-Ara",
+  WASAGUDANKO: "Danko/Wasagu",
+  WATERSIDE: "Ogun Waterside",
+  YAKUUR: "Yakurr",
+};
+
+const aliasToStates = new Map();
+for (const [alias, canonical] of Object.entries(LGA_ALIASES)) {
+  const states = keyToStates.get(matchKey(canonical));
+  if (states) aliasToStates.set(alias, states);
+}
+
+
 function statesForLga(value) {
   const exact = exactToStates.get(norm(value));
   if (exact) return exact;
@@ -102,6 +125,10 @@ function statesForLga(value) {
 
   const normalized = keyToStates.get(key);
   if (normalized) return normalized;
+
+
+  const aliased = aliasToStates.get(key);
+  if (aliased) return aliased;
 
   if (key.length < 4) return null;
   const prefix = allKeys.filter(

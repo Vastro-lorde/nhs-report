@@ -250,6 +250,36 @@ for (const entry of statesLgaData) {
 const lgaMatchKeys = [...lgaKeyToStatesMap.keys()];
 
 /**
+ * Alternate spellings, abbreviations and misspellings that appear in real
+ * records and cannot be derived by normalisation or prefix matching.
+ *
+ * Keys are match keys (see `lgaMatchKey`); values are the canonical LGA name in
+ * `nigerian-states-lga.json`. Add an entry only for a variant actually observed
+ * in the data — `tools/audit-stored-lga-values.cjs` lists anything unresolved.
+ */
+const LGA_ALIASES: Record<string, string> = {
+  BIRNIWA: "Biriniwa", // Jigawa — common short form
+  EITHOPEEAST: "Ethiope East", // Delta — misspelling
+  EITHOPEWEST: "Ethiope West", // Delta — misspelling
+  ILELA: "Illela", // Sokoto — single-l spelling
+  KMC: "Kano Municipal", // Kano — "Kano Municipal Council"
+  ONAORA: "Ona-Ara", // Oyo — misspelling
+  WASAGUDANKO: "Danko/Wasagu", // Kebbi — both orderings are in official use
+  WATERSIDE: "Ogun Waterside", // Ogun — short form
+  YAKUUR: "Yakurr", // Cross River — misspelling
+};
+
+const lgaAliasToStates = new Map<string, string[]>();
+for (const [alias, canonical] of Object.entries(LGA_ALIASES)) {
+  const states = lgaKeyToStatesMap.get(lgaMatchKey(canonical));
+  // A typo in the table itself would silently do nothing, so fail loudly in dev.
+  if (!states && process.env.NODE_ENV !== "production") {
+    console.warn(`LGA alias "${alias}" points at unknown LGA "${canonical}"`);
+  }
+  if (states) lgaAliasToStates.set(alias, states);
+}
+
+/**
  * Every state the given LGA name exists in (empty when nothing matches).
  *
  * Falls back to prefix matching because the reference dataset abbreviates some
@@ -265,6 +295,9 @@ export function getStatesForLGA(lga?: string | null): string[] {
 
   const normalized = lgaKeyToStatesMap.get(key);
   if (normalized) return normalized;
+
+  const aliased = lgaAliasToStates.get(key);
+  if (aliased) return aliased;
 
   // One side is an abbreviation of the other. Require ≥4 characters so short
   // names can't swallow unrelated ones, and ignore anything matching several
