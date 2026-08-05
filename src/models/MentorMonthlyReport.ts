@@ -79,9 +79,11 @@ const MentorMonthlyReportSchema = new Schema<IMentorMonthlyReport>(
     { timestamps: true }
 );
 
-// One report per mentor per fellow per month
+// One report per fellow per month (the "yyyy-MM" key carries the year), regardless
+// of which mentor submits it. Run tools/migrate-fellow-monthly-unique-index.cjs to
+// drop the older, wider mentor+fellow+month index on existing databases.
 MentorMonthlyReportSchema.index(
-    { mentor: 1, fellow: 1, month: 1 },
+    { fellow: 1, month: 1 },
     { unique: true }
 );
 

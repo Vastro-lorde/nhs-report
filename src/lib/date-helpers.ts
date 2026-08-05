@@ -153,6 +153,87 @@ export function weekRangeFilenameCodeFromWeekKey(weekKey: string): string {
     .replace(/[^A-Za-z0-9_-]/g, "-");
 }
 
+/* ──────────────────────────────────────────
+   Fellow monthly report window
+   A month only becomes reportable once it has
+   run past the 27th — before that the month is
+   still in progress.
+   ────────────────────────────────────────── */
+
+/** Day of the month from which that month's fellow monthly report may be created. */
+export const MONTHLY_REPORT_UNLOCK_DAY = 27;
+
+/**
+ * Floor for a reporting month — without one, any well-formed past year
+ * ("1999-03", "0001-05") would pass. Set comfortably before the earliest
+ * real activity in the programme (weekly reports start Mar 2025).
+ */
+export const EARLIEST_REPORTABLE_MONTH = "2025-01";
+
+/** true for a well-formed "yyyy-MM" month key */
+export function isValidMonthKey(month: string | null | undefined): boolean {
+  return !!month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month);
+}
+
+/** "yyyy-MM" for a date */
+export function monthKey(date: Date): string {
+  return format(date, "yyyy-MM");
+}
+
+/** Human label for a "yyyy-MM" key, e.g. "March 2026" */
+export function monthLabel(month: string): string {
+  if (!isValidMonthKey(month)) return month;
+  return format(parseISO(`${month}-01`), "MMMM yyyy");
+}
+
+/**
+ * The most recent month a fellow monthly report may be created for.
+ * On/after the 27th that is the current month, otherwise the previous one.
+ */
+export function latestReportableMonth(now: Date = new Date()): string {
+  const unlocked = now.getDate() >= MONTHLY_REPORT_UNLOCK_DAY;
+  return monthKey(new Date(now.getFullYear(), now.getMonth() + (unlocked ? 0 : -1), 1));
+}
+
+/** The date on which `month` becomes reportable (the 27th of that month). */
+export function monthUnlockDate(month: string): Date | null {
+  if (!isValidMonthKey(month)) return null;
+  const [year, m] = month.split("-").map(Number);
+  return new Date(year, m - 1, MONTHLY_REPORT_UNLOCK_DAY);
+}
+
+/**
+ * Zero-padded "yyyy-MM" keys sort lexicographically the same way they sort
+ * chronologically, so plain string compares cover both month and year.
+ */
+export function isMonthReportable(month: string, now: Date = new Date()): boolean {
+  if (!isValidMonthKey(month)) return false;
+  return month >= EARLIEST_REPORTABLE_MONTH && month <= latestReportableMonth(now);
+}
+
+/**
+ * Why `month` cannot be reported on yet, or `null` when it can.
+ * Shared by the form and the API so both show the same wording.
+ */
+export function monthLockReason(month: string, now: Date = new Date()): string | null {
+  if (!isValidMonthKey(month)) return "Enter a valid reporting month (YYYY-MM).";
+  if (month < EARLIEST_REPORTABLE_MONTH) {
+    return `${monthLabel(month)} is before the programme started — reports only go back to ${monthLabel(
+      EARLIEST_REPORTABLE_MONTH,
+    )}.`;
+  }
+  if (isMonthReportable(month, now)) return null;
+
+  const current = monthKey(now);
+  if (month > current) {
+    return `${monthLabel(month)} is in the future — reports can only be created for months that have already run.`;
+  }
+  return `${monthLabel(month)} is still in progress. Reports for it unlock on ${format(
+    monthUnlockDate(month)!,
+    "dd MMM yyyy",
+  )}.`;
+}
+
 export function getSundaysInMonth(monthString: string): number {
   if (!monthString || !/^\d{4}-\d{2}$/.test(monthString)) return 4;
   const [year, month] = monthString.split("-").map(Number);

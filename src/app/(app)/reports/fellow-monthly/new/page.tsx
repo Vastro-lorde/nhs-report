@@ -5,16 +5,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
-import { api, type Fellow, type MentorMonthlyReportPrefill } from "@/lib/api-client";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  api,
+  type Fellow,
+  type MentorMonthlyReportAvailability,
+  type MentorMonthlyReportPrefill,
+} from "@/lib/api-client";
+import {
+  EARLIEST_REPORTABLE_MONTH,
+  MONTHLY_REPORT_UNLOCK_DAY,
+  latestReportableMonth,
+  monthLabel,
+  monthLockReason,
+} from "@/lib/date-helpers";
+import { AlertTriangle, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
 const PROGRESS_RATINGS = ["Excellent", "Good", "Fair", "Needs Improvement"] as const;
 
@@ -26,10 +38,32 @@ export default function NewMentorMonthlyReportPage() {
   const [loadingFellows, setLoadingFellows] = useState(true);
   const [prefilling, setPrefilling] = useState(false);
 
+  // ─── Reporting window ─────────────────────
+  // A month can only be reported on once it has run past the 27th, so the form
+  // opens on the newest month that is actually reportable.
+  const [maxMonth] = useState(() => latestReportableMonth());
+
   // ─── Form state ───────────────────────────
-  const [month, setMonth] = useState(format(new Date(), "yyyy-MM"));
+  const [month, setMonth] = useState(maxMonth);
   const [selectedFellowId, setSelectedFellowId] = useState("");
   const [prefillData, setPrefillData] = useState<MentorMonthlyReportPrefill | null>(null);
+
+  // ─── Availability (month lock + duplicate check) ──
+  const availabilityKey = `${month}|${selectedFellowId}`;
+  const [availability, setAvailability] = useState<{
+    key: string;
+    data: MentorMonthlyReportAvailability;
+  } | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  // Only trust a result that was fetched for the month + fellow currently selected.
+  const checked = availability?.key === availabilityKey ? availability.data : null;
+
+  // Client-side lock check keeps the banner instant; the API is the source of truth.
+  const lockReason = checked ? checked.lockReason : monthLockReason(month);
+  const duplicateReason = checked?.exists ? checked.duplicateReason : null;
+  const existingReportId = checked?.existingReportId ?? null;
+  const blocked = Boolean(lockReason) || Boolean(duplicateReason);
 
   // Section 1 – Fellow details (auto-filled, readonly)
   const [fellowName, setFellowName] = useState("");
@@ -79,6 +113,38 @@ export default function NewMentorMonthlyReportPage() {
     load();
   }, []);
 
+  // ─── Check the month lock + existing report ──
+  useEffect(() => {
+    if (!month) {
+      setAvailability(null);
+      return;
+    }
+
+    let cancelled = false;
+    const key = `${month}|${selectedFellowId}`;
+
+    async function check() {
+      setCheckingAvailability(true);
+      try {
+        const data = await api.reports.fellowMonthly.availability(
+          month,
+          selectedFellowId || undefined,
+        );
+        if (!cancelled) setAvailability({ key, data });
+      } catch {
+        // fall back to the client-side lock check
+        if (!cancelled) setAvailability(null);
+      } finally {
+        if (!cancelled) setCheckingAvailability(false);
+      }
+    }
+    check();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [month, selectedFellowId]);
+
   // ─── Prefill when fellow + month are set ─
   useEffect(() => {
     if (!selectedFellowId || !month) return;
@@ -88,6 +154,12 @@ export default function NewMentorMonthlyReportPage() {
       setFellowName(fellow.name);
       setFellowLGA(fellow.lga);
       setFellowQualification(fellow.qualification ?? "");
+    }
+
+    // Nothing meaningful to derive from a month that is still running
+    if (monthLockReason(month)) {
+      setPrefillData(null);
+      return;
     }
 
     async function prefill() {
@@ -153,6 +225,14 @@ export default function NewMentorMonthlyReportPage() {
       setError("Please select a reporting month.");
       return;
     }
+    if (lockReason) {
+      setError(lockReason);
+      return;
+    }
+    if (duplicateReason) {
+      setError(duplicateReason);
+      return;
+    }
 
     const filteredChallenges = challenges.filter(c => c.trim());
     const filteredRecommendations = recommendations.filter(r => r.trim());
@@ -198,6 +278,42 @@ export default function NewMentorMonthlyReportPage() {
           </div>
         )}
 
+        {/* ── Month still locked ── */}
+        {lockReason && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm flex gap-2">
+            <Lock className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium">{lockReason}</p>
+              <p className="mt-1 text-amber-700">
+                Reports open from the {MONTHLY_REPORT_UNLOCK_DAY}th of the month they cover. The
+                latest month you can report on right now is {monthLabel(maxMonth)}.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Report already exists for this fellow + month ── */}
+        {!lockReason && duplicateReason && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm flex gap-2">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium">{duplicateReason}</p>
+              {existingReportId ? (
+                <Link
+                  href={`/reports/fellow-monthly/${existingReportId}`}
+                  className="mt-1 inline-block underline hover:no-underline"
+                >
+                  View the existing report
+                </Link>
+              ) : (
+                <p className="mt-1 text-red-600">
+                  Pick a different month or fellow.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── Section 0: Reporting Period ── */}
         <Card>
           <CardHeader>
@@ -211,9 +327,16 @@ export default function NewMentorMonthlyReportPage() {
               <Input
                 type="month"
                 value={month}
+                min={EARLIEST_REPORTABLE_MONTH}
+                max={maxMonth}
                 onChange={e => setMonth(e.target.value)}
                 required
+                aria-invalid={Boolean(lockReason)}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                {monthLabel(EARLIEST_REPORTABLE_MONTH)} – {monthLabel(maxMonth)} — a month opens on
+                the {MONTHLY_REPORT_UNLOCK_DAY}th.
+              </p>
             </div>
 
             <div>
@@ -496,7 +619,12 @@ export default function NewMentorMonthlyReportPage() {
         </Card>
 
         {/* ── Submit ── */}
-        <div className="flex justify-end gap-3 pb-6">
+        <div className="flex justify-end items-center gap-3 pb-6">
+          {checkingAvailability && (
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Checking availability…
+            </span>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -505,7 +633,7 @@ export default function NewMentorMonthlyReportPage() {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" disabled={submitting || blocked || checkingAvailability}>
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

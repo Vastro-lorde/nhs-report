@@ -9,6 +9,7 @@ import { DeskOfficer } from "@/models/DeskOfficer";
 import { ReportHistory } from "@/models/ReportHistory";
 import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
+import { monthLockReason, monthLabel } from "@/lib/date-helpers";
 
 export async function GET(
     _request: Request,
@@ -121,6 +122,32 @@ export async function PATCH(
 
         const snapshot = JSON.stringify(report.toObject());
         const body = await request.json();
+
+        // Moving a report to another month must respect the same window and
+        // one-report-per-fellow-per-month rule as creation.
+        if (body.month !== undefined && String(body.month) !== report.month) {
+            const month = String(body.month ?? "");
+            const lockReason = monthLockReason(month);
+            if (lockReason) {
+                return NextResponse.json({ error: lockReason }, { status: 400 });
+            }
+
+            const duplicate = await MentorMonthlyReport.findOne({
+                fellow: report.fellow,
+                month,
+                _id: { $ne: report._id },
+            })
+                .select("_id")
+                .lean();
+            if (duplicate) {
+                return NextResponse.json(
+                    {
+                        error: `A report for ${report.fellowName} for ${monthLabel(month)} already exists.`,
+                    },
+                    { status: 409 }
+                );
+            }
+        }
 
         Object.assign(report, body);
         await report.save();

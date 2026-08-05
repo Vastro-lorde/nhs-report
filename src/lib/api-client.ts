@@ -262,6 +262,14 @@ export const api = {
         request<ReportHistoryEntry[]>(`/api/reports/fellow-monthly/${id}/history`),
       prefill: (fellowId: string, month: string) =>
         request<MentorMonthlyReportPrefill>(`/api/reports/fellow-monthly/prefill?fellowId=${fellowId}&month=${encodeURIComponent(month)}`),
+      availability: (month: string, fellowId?: string) => {
+        const qs = new URLSearchParams({ month });
+        if (fellowId) qs.set("fellowId", fellowId);
+        return request<MentorMonthlyReportAvailability>(
+          `/api/reports/fellow-monthly/availability?${qs.toString()}`,
+          { cache: "no-store" },
+        );
+      },
     },
 
     zonalAudits: {
@@ -1016,6 +1024,22 @@ export interface MentorMonthlyReportPrefill {
   challenges: string[];
   recommendations: string[];
   weeklyReportIds: string[];
+}
+
+export interface MentorMonthlyReportAvailability {
+  month: string;
+  latestReportableMonth: string;
+  unlockDay: number;
+  /** true when the month has not run past the unlock day yet (or is in the future) */
+  locked: boolean;
+  lockReason: string | null;
+  unlockDate: string | null;
+  /** true when a report already exists for this fellow + month */
+  exists: boolean;
+  existingReportId: string | null;
+  existingIsMine: boolean;
+  duplicateReason: string | null;
+  fellowName: string | null;
 }
 
 export interface DocumentType {

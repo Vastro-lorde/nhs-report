@@ -11,6 +11,13 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
+import {
+  EARLIEST_REPORTABLE_MONTH,
+  MONTHLY_REPORT_UNLOCK_DAY,
+  latestReportableMonth,
+  monthLabel,
+  monthLockReason,
+} from "@/lib/date-helpers";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
 const PROGRESS_RATINGS = ["Excellent", "Good", "Fair", "Needs Improvement"] as const;
@@ -25,6 +32,11 @@ export default function EditMentorMonthlyReportPage() {
 
   // ─── Readonly fields ──────────────────────
   const [month, setMonth] = useState("");
+  // The month this report was loaded with. Reports predating the reporting
+  // window (or created before it existed) must stay editable, so the bounds
+  // always stretch to include their own month — the window is only enforced
+  // when the mentor actually moves the report to a different month.
+  const [originalMonth, setOriginalMonth] = useState("");
   const [fellowName, setFellowName] = useState("");
   const [fellowLGA, setFellowLGA] = useState("");
   const [fellowQualification, setFellowQualification] = useState("");
@@ -49,6 +61,14 @@ export default function EditMentorMonthlyReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Same window as creation, widened to keep this report's own month selectable
+  const latest = latestReportableMonth();
+  const maxMonth = originalMonth > latest ? originalMonth : latest;
+  const minMonth =
+    originalMonth && originalMonth < EARLIEST_REPORTABLE_MONTH
+      ? originalMonth
+      : EARLIEST_REPORTABLE_MONTH;
+
   // ─── Load existing report ─────────────────
   useEffect(() => {
     async function load() {
@@ -56,6 +76,7 @@ export default function EditMentorMonthlyReportPage() {
         const report: MentorMonthlyReport = await api.reports.fellowMonthly.get(id);
 
         setMonth(report.month);
+        setOriginalMonth(report.month);
         setFellowName(report.fellowName);
         setFellowLGA(report.fellowLGA);
         setFellowQualification(report.fellowQualification ?? "");
@@ -120,6 +141,14 @@ export default function EditMentorMonthlyReportPage() {
     if (!month) {
       setError("Reporting month is required.");
       return;
+    }
+    // Only enforce the window when the report is being moved to another month
+    if (month !== originalMonth) {
+      const lockReason = monthLockReason(month);
+      if (lockReason) {
+        setError(lockReason);
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -194,9 +223,15 @@ export default function EditMentorMonthlyReportPage() {
               <Input
                 type="month"
                 value={month}
+                min={minMonth}
+                max={maxMonth}
                 onChange={(e) => setMonth(e.target.value)}
                 required
               />
+              <p className="mt-1 text-xs text-gray-500">
+                {monthLabel(minMonth)} – {monthLabel(maxMonth)} — a month opens on the{" "}
+                {MONTHLY_REPORT_UNLOCK_DAY}th.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fellow</label>

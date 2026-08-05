@@ -9,6 +9,7 @@ import { DeskOfficer } from "@/models/DeskOfficer";
 import { ReportHistory } from "@/models/ReportHistory";
 import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
+import { monthLockReason, monthLabel } from "@/lib/date-helpers";
 
 export async function GET(request: Request) {
     try {
@@ -109,8 +110,31 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
+        const month = String(body.month ?? "");
+        const lockReason = monthLockReason(month);
+        if (lockReason) {
+            return NextResponse.json({ error: lockReason }, { status: 400 });
+        }
+
         const fellowDoc = await Fellow.findById(body.fellow).lean();
         if (!fellowDoc) return NextResponse.json({ error: "Fellow not found." }, { status: 400 });
+
+        // One report per fellow per month, whichever mentor submits it
+        const duplicate = await MentorMonthlyReport.findOne({ fellow: fellowDoc._id, month })
+            .select("_id mentor")
+            .lean();
+        if (duplicate) {
+            const mine = String(duplicate.mentor) === String(mentorDoc._id);
+            return NextResponse.json(
+                {
+                    error: mine
+                        ? `You have already submitted a report for ${fellowDoc.name} for ${monthLabel(month)}.`
+                        : `A report for ${fellowDoc.name} for ${monthLabel(month)} has already been submitted by another mentor.`,
+                    existingReportId: mine ? String(duplicate._id) : null,
+                },
+                { status: 409 }
+            );
+        }
 
         const report = await MentorMonthlyReport.create({
             ...body,
