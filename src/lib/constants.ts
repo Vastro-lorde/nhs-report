@@ -172,15 +172,206 @@ export function getStatesInZone(zoneName: string): string[] {
   return GEOPOLITICAL_ZONES[zoneName] ?? [];
 }
 
+/** Every zone touched by the given states — a mentor or coordinator can straddle zones. */
+export function getZonesForStates(states: readonly string[] | null | undefined): string[] {
+  const zones = new Set<string>();
+  for (const state of states ?? []) {
+    const zone = getZoneForState(state);
+    if (zone) zones.add(zone);
+  }
+  return [...zones];
+}
+
+// ─── Location normalisation ─────────────────
+/** Canonical form used for every stored/compared state or LGA name. */
+export function normalizeLocation(value?: string | null): string {
+  return (value ?? "").trim().toUpperCase();
+}
+
+const stateKeyToName = new Map<string, string>(
+  STATE_LGA_DATA.map((entry) => [normalizeLocation(entry.state), entry.state])
+);
+
+/** Title-cased state name as it appears in the reference data, or the input unchanged. */
+export function displayState(state?: string | null): string {
+  const key = normalizeLocation(state);
+  return stateKeyToName.get(key) ?? (state ?? "");
+}
+
+export function isKnownState(state?: string | null): boolean {
+  return stateKeyToName.has(normalizeLocation(state));
+}
+
 // ─── LGA → State reverse lookup ─────────────
-const lgaToStateMap = new Map<string, string>();
-for (const entry of statesLgaData) {
-  const state = (entry.state as string).toUpperCase();
-  for (const lga of entry.lgas as Array<{ name: string }>) {
-    lgaToStateMap.set(lga.name.toUpperCase(), state);
+// LGA names are NOT unique nationwide: SURULERE exists in both Lagos and Oyo,
+// OBI in Benue and Nasarawa, BASSA in Kogi and Plateau, IFELODUN/IREPODUN in
+// Kwara and Osun, NASARAWA in Kano and Nasarawa. The map therefore records every
+// state an LGA name appears in, and callers pass the states they already know
+// about (e.g. a mentor's assigned states) so the right one is chosen.
+/**
+ * Aggressive key for matching LGA names across sources.
+ *
+ * Stored LGA names come from CSV uploads and hand entry, while the reference
+ * dataset holds its own abbreviations, so the same LGA appears as "ABUA/ODUAL",
+ * "Abua/Odu", "Akuku-Toru (Rivers)" or "Uvwie Local Government". Dropping the
+ * state suffix, the "local government"/"LGA" wording and every non-alphanumeric
+ * character reduces them all to one comparable key.
+ */
+function lgaMatchKey(value?: string | null): string {
+  return normalizeLocation(value)
+    .replace(/\(([^)]*)\)/g, " ")
+    .replace(/\bLOCAL\s+GOVERNMENT(\s+AREA)?\b/g, " ")
+    .replace(/\bL\.?G\.?A\.?\b/g, " ")
+    .replace(/[^A-Z0-9]/g, "");
+}
+
+const lgaToStatesMap = new Map<string, string[]>();
+/** Match key → states, used for the tolerant lookup. */
+const lgaKeyToStatesMap = new Map<string, string[]>();
+
+function addLgaState(map: Map<string, string[]>, key: string, state: string) {
+  if (!key) return;
+  const existing = map.get(key);
+  if (existing) {
+    if (!existing.includes(state)) existing.push(state);
+  } else {
+    map.set(key, [state]);
   }
 }
 
-export function getStateForLGA(lga: string): string | null {
-  return lgaToStateMap.get(lga.toUpperCase()) ?? null;
+for (const entry of statesLgaData) {
+  const state = normalizeLocation(entry.state as string);
+  for (const lga of entry.lgas as Array<{ name: string }>) {
+    addLgaState(lgaToStatesMap, normalizeLocation(lga.name), state);
+    addLgaState(lgaKeyToStatesMap, lgaMatchKey(lga.name), state);
+  }
+}
+
+const lgaMatchKeys = [...lgaKeyToStatesMap.keys()];
+
+/**
+ * Every state the given LGA name exists in (empty when nothing matches).
+ *
+ * Falls back to prefix matching because the reference dataset abbreviates some
+ * names ("IsokoSou" for Isoko South, "AniochaN" for Aniocha North); without it
+ * a large share of real, correctly-entered LGAs would resolve to no state.
+ */
+export function getStatesForLGA(lga?: string | null): string[] {
+  const exact = lgaToStatesMap.get(normalizeLocation(lga));
+  if (exact) return exact;
+
+  const key = lgaMatchKey(lga);
+  if (!key) return [];
+
+  const normalized = lgaKeyToStatesMap.get(key);
+  if (normalized) return normalized;
+
+  // One side is an abbreviation of the other. Require ≥4 characters so short
+  // names can't swallow unrelated ones, and ignore anything matching several
+  // different LGAs.
+  if (key.length < 4) return [];
+  const prefixMatches = lgaMatchKeys.filter(
+    (candidate) =>
+      candidate.length >= 4 && (candidate.startsWith(key) || key.startsWith(candidate))
+  );
+  if (prefixMatches.length !== 1) return [];
+  return lgaKeyToStatesMap.get(prefixMatches[0]) ?? [];
+}
+
+/** True when the LGA name exists in more than one state and needs disambiguating. */
+export function isAmbiguousLGA(lga?: string | null): boolean {
+  return getStatesForLGA(lga).length > 1;
+}
+
+export function isKnownLGA(lga?: string | null): boolean {
+  return getStatesForLGA(lga).length > 0;
+}
+
+/**
+ * Resolve the state an LGA belongs to.
+ *
+ * `candidateStates` (typically a mentor's assigned states) disambiguates names
+ * shared by several states. When the LGA is not in any candidate state we still
+ * return its real state — a mentor whose `states` list is missing an entry is a
+ * data gap, not a reason to mis-attribute the fellow.
+ */
+export function resolveStateForLGA(
+  lga?: string | null,
+  candidateStates?: readonly string[] | null
+): string | null {
+  const matches = getStatesForLGA(lga);
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
+
+  const candidates = (candidateStates ?? []).map(normalizeLocation).filter(Boolean);
+  const narrowed = matches.filter((s) => candidates.includes(s));
+  return narrowed[0] ?? matches[0];
+}
+
+/** @deprecated Prefer {@link resolveStateForLGA} and pass the known candidate states. */
+export function getStateForLGA(
+  lga: string,
+  candidateStates?: readonly string[] | null
+): string | null {
+  return resolveStateForLGA(lga, candidateStates);
+}
+
+/**
+ * Best-effort state for a fellow / mentee / per-fellow report.
+ *
+ * The fellow's own LGA is authoritative. Only when the LGA is unknown do we fall
+ * back to the mentor — and then only if that mentor works in exactly one state.
+ * Mentors spanning several states must never have their fellows silently
+ * attributed to `states[0]`.
+ */
+export function resolveFellowState(
+  lga?: string | null,
+  mentorStates?: readonly string[] | null
+): string | null {
+  const fromLga = resolveStateForLGA(lga, mentorStates);
+  if (fromLga) return fromLga;
+
+  const states = [...new Set((mentorStates ?? []).map(normalizeLocation).filter(Boolean))];
+  return states.length === 1 ? states[0] : null;
+}
+
+/**
+ * Every state a mentor actually covers: the states recorded on the profile plus
+ * any state implied by an assigned LGA (profiles are frequently missing the
+ * second state when a mentor picked up LGAs across a border).
+ */
+export function resolveMentorStates(mentor?: {
+  states?: readonly string[] | null;
+  lgas?: readonly string[] | null;
+} | null): string[] {
+  const declared = (mentor?.states ?? []).map(normalizeLocation).filter(Boolean);
+  const implied = (mentor?.lgas ?? []).flatMap((lga) => {
+    const matches = getStatesForLGA(lga);
+    // Only trust an unambiguous LGA to introduce a state the profile omitted.
+    return matches.length === 1 ? matches : [];
+  });
+  return [...new Set([...declared, ...implied])];
+}
+
+/** LGAs belonging to the given states, each tagged with the state it came from. */
+export function lgasForStates(
+  states: readonly string[]
+): Array<{ lga: string; state: string }> {
+  const wanted = new Set(states.map(normalizeLocation).filter(Boolean));
+  const result: Array<{ lga: string; state: string }> = [];
+  for (const entry of STATE_LGA_DATA) {
+    if (!wanted.has(normalizeLocation(entry.state))) continue;
+    for (const lga of entry.lgas) {
+      result.push({ lga: lga.name, state: entry.state });
+    }
+  }
+  return result;
+}
+
+/** True when the LGA exists inside at least one of the given states. */
+export function lgaBelongsToStates(lga: string, states: readonly string[]): boolean {
+  const matches = getStatesForLGA(lga);
+  if (matches.length === 0) return false;
+  const wanted = new Set(states.map(normalizeLocation).filter(Boolean));
+  return matches.some((s) => wanted.has(s));
 }

@@ -156,6 +156,11 @@ export default function BulkUploadFellowsPage() {
             if (response.failed > 0) {
                 msg += ` Failed to upload ${response.failed} fellows.`;
             }
+            // Rows whose LGA sits in a state that was missing from the mentor's
+            // profile — uploaded, but worth calling out.
+            if (response.warnings?.length) {
+                msg += `\n${response.warnings.join("\n")}`;
+            }
             setSuccessMsg(msg);
 
             if (response.errors.length > 0) {
@@ -187,7 +192,7 @@ export default function BulkUploadFellowsPage() {
                 )}
 
                 {successMsg && (
-                    <div className="bg-orange-50 text-orange-700 p-4 rounded-md">
+                    <div className="bg-orange-50 text-orange-700 p-4 rounded-md whitespace-pre-wrap">
                         {successMsg}
                     </div>
                 )}

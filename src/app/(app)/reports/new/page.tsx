@@ -16,6 +16,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { api, type CreateReportInput, type MentorshipSessionInput } from "@/lib/api-client";
 import { OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
+import { mentorLgaSelectOptions } from "@/lib/lga-options";
 import { parseInputDate, weekRangeLabelFromDate } from "@/lib/date-helpers";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
@@ -47,6 +48,8 @@ export default function NewReportPage() {
 
   // Mentor's assigned LGAs
   const [mentorLGAs, setMentorLGAs] = useState<string[]>([]);
+  // A mentor can cover LGAs in several states; the LGA names alone are ambiguous.
+  const [mentorStates, setMentorStates] = useState<string[]>([]);
 
   // Fetch fellows + mentor profile on mount
   useEffect(() => {
@@ -74,6 +77,9 @@ export default function NewReportPage() {
         const profileJson = await profileRes.json();
         if (profileJson.roleDetails?.lgas) {
           setMentorLGAs(profileJson.roleDetails.lgas as string[]);
+        }
+        if (profileJson.roleDetails?.states) {
+          setMentorStates(profileJson.roleDetails.states as string[]);
         }
         // Prefill week number from last report + 1
         const reportsJson = await reportsRes.json();
@@ -383,10 +389,7 @@ export default function NewReportPage() {
                       label={i === 0 ? "LGA" : undefined}
                       value={f.lga}
                       onChange={(e) => updateFellow(i, "lga", e.target.value)}
-                      options={[
-                        { label: "Select LGA", value: "" },
-                        ...mentorLGAs.map((l) => ({ label: l, value: l })),
-                      ]}
+                      options={mentorLgaSelectOptions(mentorLGAs, mentorStates)}
                     />
                   </div>
                   <div className="flex-1">
@@ -453,10 +456,7 @@ export default function NewReportPage() {
                     label="Mentee LGA"
                     value={session.menteeLGA}
                     onChange={(e) => updateSession(si, "menteeLGA", e.target.value)}
-                    options={[
-                      { label: "Select LGA", value: "" },
-                      ...mentorLGAs.map((l) => ({ label: l, value: l })),
-                    ]}
+                    options={mentorLgaSelectOptions(mentorLGAs, mentorStates)}
                   />
                 </div>
 

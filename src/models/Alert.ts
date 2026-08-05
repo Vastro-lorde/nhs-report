@@ -8,7 +8,10 @@ export interface IAlert extends Document {
   report: Types.ObjectId;
   mentor: Types.ObjectId;
   weekKey: string;
+  /** Primary state — kept for backwards compatibility. Prefer `states`. */
   state: string;
+  /** Every state the raising mentor covers. */
+  states: string[];
   urgentDetails: string;
   status: AlertStatus;
   notes?: string;
@@ -24,6 +27,7 @@ const AlertSchema = new Schema<IAlert>(
     mentor: { type: Schema.Types.ObjectId, ref: "User", required: true },
     weekKey: { type: String, required: true, index: true },
     state: { type: String, default: "" },
+    states: { type: [String], uppercase: true, default: [] },
     urgentDetails: { type: String, required: true },
     status: {
       type: String,

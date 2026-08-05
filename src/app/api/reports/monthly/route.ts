@@ -6,7 +6,7 @@ import { WeeklyReport } from "@/models/WeeklyReport";
 import { Coordinator } from "@/models/Coordinator";
 import { Mentor } from "@/models/Mentor";
 import { DeskOfficer } from "@/models/DeskOfficer";
-import { UserRole } from "@/lib/constants";
+import { UserRole, normalizeLocation, resolveMentorStates } from "@/lib/constants";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
 
 export async function GET(request: Request) {
@@ -69,14 +69,26 @@ export async function GET(request: Request) {
 
         if (session.user.role === UserRole.ZONAL_DESK_OFFICER) {
             const deskOfficerDoc = await DeskOfficer.findOne({ authId: session.user.id });
-            if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
-                filter.state = { $in: deskOfficerDoc.states };
-            } else {
+            const officerStates = (deskOfficerDoc?.states ?? [])
+                .map((s: string) => normalizeLocation(s))
+                .filter(Boolean);
+            if (!officerStates.length) {
                 return NextResponse.json({
                     data: [],
                     pagination: { page, limit, total: 0, totalPages: 0 },
                 });
             }
+            // Scope by the mentors/coordinators who actually work in these states.
+            // The denormalised `state` field only ever stored states[0], so a
+            // mentor covering LAGOS + OYO was invisible to the OYO desk officer.
+            const [mentorIds, coordinatorIds] = await Promise.all([
+                Mentor.find({ states: { $in: officerStates } }).distinct("_id"),
+                Coordinator.find({ states: { $in: officerStates } }).distinct("_id"),
+            ]);
+            filter.$or = [
+                { type: "mentor", mentor: { $in: mentorIds } },
+                { type: "zonal", coordinator: { $in: coordinatorIds } },
+            ];
         }
 
         // Admin, ME Officer, Team Research Lead see all — no filter needed
@@ -107,19 +119,24 @@ export async function GET(request: Request) {
         const normalizedData = data.map((report: any) => {
             const normalized: any = { ...report };
             if (report.coordinator?.authId) {
+                const states: string[] = report.coordinator.states ?? [];
                 normalized.coordinator = {
                     _id: report.coordinator._id,
                     name: report.coordinator.authId.name,
                     email: report.coordinator.authId.email,
-                    state: report.coordinator.states?.[0] ?? "",
+                    // Show every state, not just the first — coordinators can span states.
+                    state: states.join(", "),
+                    states,
                 };
             }
             if (report.mentor?.authId) {
+                const states = resolveMentorStates(report.mentor);
                 normalized.mentor = {
                     _id: report.mentor._id,
                     name: report.mentor.authId.name,
                     email: report.mentor.authId.email,
-                    state: report.mentor.states?.[0] ?? "",
+                    state: states.join(", "),
+                    states,
                 };
             }
             return normalized;
@@ -175,12 +192,13 @@ export async function POST(request: Request) {
                 status: "submitted",
             });
 
-            const mentorState = mentorDoc.states?.[0] || "Not Specified";
+            const mentorStates = resolveMentorStates(mentorDoc);
 
             const monthlyReport = await MonthlyReport.create({
                 type: "mentor",
                 mentor: mentorDoc._id,
-                state: mentorState,
+                state: mentorStates[0] || "Not Specified",
+                states: mentorStates,
                 month,
                 summaryText,
                 weeklyReports: weeklyReports.map((wr) => wr._id),
@@ -209,12 +227,15 @@ export async function POST(request: Request) {
             status: "submitted",
         });
 
-        const stateToSave = coordinatorDoc.states[0] || "Not Specified";
+        const coordinatorStates = (coordinatorDoc.states ?? [])
+            .map((s: string) => normalizeLocation(s))
+            .filter(Boolean);
 
         const monthlyReport = await MonthlyReport.create({
             type: "zonal",
             coordinator: coordinatorDoc._id,
-            state: stateToSave,
+            state: coordinatorStates[0] || "Not Specified",
+            states: coordinatorStates,
             month,
             summaryText,
             zonalAuditData: zonalAuditData || null,

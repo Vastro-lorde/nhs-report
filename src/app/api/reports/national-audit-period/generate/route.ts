@@ -14,8 +14,9 @@ import {
   TOTAL_NIGERIAN_LGAS,
   TOTAL_STATE_ENTITIES,
   UserRole,
-  getStateForLGA,
   getZoneForState,
+  resolveFellowState,
+  resolveMentorStates,
 } from "@/lib/constants";
 import { generatePeriodicNationalAudit } from "@/lib/gemini";
 import { Mentor } from "@/models/Mentor";
@@ -317,8 +318,12 @@ function buildStateSourceSkeleton(): Map<string, StateSource> {
 }
 
 function stateForReport(report: SourceMonthlyReport, mentorInfo?: SourceMentor): string {
-  const stateFromLga = report.fellowLGA ? getStateForLGA(report.fellowLGA) : null;
-  return displayStateName(stateFromLga ?? mentorInfo?.states?.[0] ?? "Unknown");
+  // The fellow's LGA is authoritative; the mentor's states only disambiguate
+  // LGA names shared between two states. Falling back to states[0] filed every
+  // fellow of a multi-state mentor under the wrong state — and because the
+  // caller looks the row up by state+LGA, those reports were dropped entirely.
+  const resolved = resolveFellowState(report.fellowLGA, resolveMentorStates(mentorInfo));
+  return displayStateName(resolved ?? "Unknown");
 }
 
 function scoreLga(stat: LgaStats): number {

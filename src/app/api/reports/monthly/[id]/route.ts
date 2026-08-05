@@ -5,7 +5,7 @@ import { MonthlyReport } from "@/models/MonthlyReport";
 import { Mentor } from "@/models/Mentor";
 import { Coordinator } from "@/models/Coordinator";
 import { DeskOfficer } from "@/models/DeskOfficer";
-import { UserRole } from "@/lib/constants";
+import { UserRole, normalizeLocation, resolveMentorStates } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
 
 export async function GET(
@@ -82,7 +82,25 @@ export async function GET(
 
         if (role === UserRole.ZONAL_DESK_OFFICER) {
             const deskDoc = await DeskOfficer.findOne({ authId: session.user.id });
-            if (!deskDoc || !deskDoc.states?.includes(report.state)) {
+            const officerStates = (deskDoc?.states ?? []).map((s) => normalizeLocation(s)).filter(Boolean);
+
+            // Match against every state the author covers. Checking only the
+            // denormalised `state` (which held states[0]) locked desk officers
+            // out of reports from mentors whose first state is another zone.
+            const author = (report as any).mentor ?? (report as any).coordinator;
+            const authorStates = report.type === "mentor"
+                ? resolveMentorStates(author)
+                : (author?.states ?? []).map((s: string) => normalizeLocation(s));
+            const reportStates = [
+                ...new Set([
+                    ...((report as any).states ?? []).map((s: string) => normalizeLocation(s)),
+                    ...authorStates,
+                    normalizeLocation(report.state),
+                ].filter(Boolean)),
+            ];
+
+            const hasOverlap = reportStates.some((s) => officerStates.includes(s));
+            if (!officerStates.length || !hasOverlap) {
                 return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
             }
         }
@@ -94,11 +112,13 @@ export async function GET(
             const mentorUser = mentorDoc?.authId;
             const mentorName = mentorUser?.name;
             const mentorEmail = mentorUser?.email;
-            const mentorState = mentorDoc?.states?.[0] ?? wr?.state ?? "";
+            const mentorStates = resolveMentorStates(mentorDoc);
+            const mentorState = mentorStates.length ? mentorStates.join(", ") : (wr?.state ?? "");
 
             return {
                 ...wr,
                 state: mentorState,
+                states: mentorStates,
                 mentorName,
                 mentor: mentorDoc
                     ? {
@@ -106,6 +126,7 @@ export async function GET(
                         name: mentorName,
                         email: mentorEmail,
                         state: mentorState,
+                        states: mentorStates,
                     }
                     : wr?.mentor,
             };
@@ -116,21 +137,25 @@ export async function GET(
 
         if (report.type === "mentor" && (report as any).mentor?.authId) {
             const m = (report as any).mentor;
+            const states = resolveMentorStates(m);
             normalized.mentor = {
                 _id: m._id,
                 name: m.authId?.name,
                 email: m.authId?.email,
-                state: m.states?.[0] ?? "",
+                state: states.join(", "),
+                states,
             };
         }
 
         if ((report as any).coordinator?.authId) {
             const c = (report as any).coordinator;
+            const states: string[] = c.states ?? [];
             normalized.coordinator = {
                 _id: c._id,
                 name: c.authId?.name,
                 email: c.authId?.email,
-                state: c.states?.[0] ?? "",
+                state: states.join(", "),
+                states,
             };
         }
 

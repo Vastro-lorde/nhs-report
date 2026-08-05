@@ -8,7 +8,7 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Fellow, Mentor, Coordinator, DeskOfficer } from "@/models";
-import { UserRole } from "@/lib/constants";
+import { UserRole, resolveFellowState, resolveMentorStates, normalizeLocation } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
 import mongoose from "mongoose";
@@ -111,31 +111,36 @@ export async function GET(request: NextRequest) {
 
     // Fetch fellows and mentors with scoping
     const fellows = await Fellow.find(fellowFilter)
-      .populate({ path: "mentor", select: "states" })
+      .populate({ path: "mentor", select: "states lgas" })
       .lean();
 
     const mentors = await Mentor.find(mentorFilter).lean();
 
-    // ── Fellows by state (via mentor.states) ──
+    // ── Fellows by state ──
+    // A fellow belongs to exactly one state — the one its own LGA sits in.
+    // Mentors may cover several states, so their `states` list can only be used
+    // to disambiguate shared LGA names, never to attribute the fellow itself
+    // (doing that counted every fellow once per mentor state and inflated totals).
     const fellowsByState: Record<string, number> = {};
     const fellowsByGender: Record<string, number> = {};
     const fellowsByStateGender: Record<string, Record<string, number>> = {};
     const qualificationCounts: Record<string, number> = {};
+    let fellowsWithUnresolvedState = 0;
 
     for (const f of fellows) {
       // Gender distribution
       const gender = (f.gender || "Unknown").toUpperCase();
       fellowsByGender[gender] = (fellowsByGender[gender] || 0) + 1;
 
-      // State distribution (from mentor)
-      const mentor = f.mentor as unknown as { states?: string[] } | null;
-      const states = mentor?.states ?? [];
-      for (const state of states) {
-        const s = state.toUpperCase();
+      // State distribution (fellow's LGA first, mentor only as a tie-breaker)
+      const mentor = f.mentor as unknown as { states?: string[]; lgas?: string[] } | null;
+      const s = resolveFellowState(f.lga, resolveMentorStates(mentor));
+      if (s) {
         fellowsByState[s] = (fellowsByState[s] || 0) + 1;
-
         if (!fellowsByStateGender[s]) fellowsByStateGender[s] = {};
         fellowsByStateGender[s][gender] = (fellowsByStateGender[s][gender] || 0) + 1;
+      } else {
+        fellowsWithUnresolvedState++;
       }
 
       // Qualification classification
@@ -146,11 +151,13 @@ export async function GET(request: NextRequest) {
     }
 
     // ── Mentors by state ──
+    // A mentor genuinely appears in each state they cover, so the per-state
+    // counts here intentionally sum to more than `totalMentors`.
     const mentorsByState: Record<string, number> = {};
     for (const m of mentors) {
-      for (const state of m.states) {
-        const s = state.toUpperCase();
-        mentorsByState[s] = (mentorsByState[s] || 0) + 1;
+      for (const state of resolveMentorStates(m)) {
+        const s = normalizeLocation(state);
+        if (s) mentorsByState[s] = (mentorsByState[s] || 0) + 1;
       }
     }
 
@@ -187,6 +194,9 @@ export async function GET(request: NextRequest) {
       fellowsByStateGender: fellowStateGenderData,
       mentorsByState: mentorStateData,
       qualifications: qualificationData,
+      // Fellows whose LGA could not be matched to a state (and whose mentor
+      // covers more than one), surfaced instead of being guessed into a bucket.
+      fellowsWithUnresolvedState,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";

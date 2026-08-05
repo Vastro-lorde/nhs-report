@@ -9,6 +9,7 @@ import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
+import { normalizeMentorLocations } from "@/services/mentor-coverage.service";
 
 // GET /api/mentors — list mentors (admin/coordinator)
 export async function GET(request: NextRequest) {
@@ -167,6 +168,12 @@ export async function POST(request: NextRequest) {
   const existing = await User.findOne({ email: body.email.toLowerCase().trim() });
   if (existing) return jsonError("A user with this email already exists", 409);
 
+  // Mentors regularly cover LGAs in more than one state — reconcile the two
+  // lists before saving, since every state-scoped view downstream resolves
+  // through them. Unmatched LGA names are reported, not rejected.
+  const locations = normalizeMentorLocations(body.states, body.lgas);
+  if (locations.errors.length) return jsonError(locations.errors.join(" "), 400);
+
   const hashedPassword = await bcrypt.hash(body.password, 12);
 
   const user = await User.create({
@@ -181,8 +188,8 @@ export async function POST(request: NextRequest) {
   const mentorDoc = await Mentor.create({
     authId: user._id,
     coordinator: resolvedCoordinatorId,
-    states: body.states ? body.states.map((s: string) => s.toUpperCase().trim()) : [],
-    lgas: body.lgas ? body.lgas.map((lga: string) => lga.toUpperCase().trim()) : [],
+    states: locations.states,
+    lgas: locations.lgas,
   });
 
   const userObj = user.toObject() as unknown as Record<string, unknown>;
@@ -197,5 +204,11 @@ export async function POST(request: NextRequest) {
     targetName: user.name,
   });
 
-  return jsonCreated({ ...safeUser, states: mentorDoc.states, lgas: mentorDoc.lgas, coordinator: mentorDoc.coordinator });
+  return jsonCreated({
+    ...safeUser,
+    states: mentorDoc.states,
+    lgas: mentorDoc.lgas,
+    coordinator: mentorDoc.coordinator,
+    ...(locations.warnings.length ? { warnings: locations.warnings } : {}),
+  });
 }

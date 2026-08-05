@@ -8,6 +8,7 @@ import { UserRole } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
+import { normalizeMentorLocations } from "@/services/mentor-coverage.service";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -119,8 +120,20 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // Update Mentor details
   const mentorUpdate: Record<string, unknown> = {};
-  if (states !== undefined) mentorUpdate.states = Array.isArray(states) ? states.map(s => String(s).toUpperCase().trim()) : states;
-  if (lgas !== undefined) mentorUpdate.lgas = Array.isArray(lgas) ? lgas.map(l => String(l).toUpperCase().trim()) : lgas;
+  let locationWarnings: string[] = [];
+  if (states !== undefined || lgas !== undefined) {
+    // Reconcile the pair together: an LGA is only meaningful alongside its state,
+    // and mentors legitimately span several states.
+    const existingMentor = await Mentor.findOne({ authId: id }).lean();
+    const locations = normalizeMentorLocations(
+      states !== undefined ? states : existingMentor?.states ?? [],
+      lgas !== undefined ? lgas : existingMentor?.lgas ?? []
+    );
+    if (locations.errors.length) return jsonError(locations.errors.join(" "), 400);
+    mentorUpdate.states = locations.states;
+    mentorUpdate.lgas = locations.lgas;
+    locationWarnings = locations.warnings;
+  }
 
   // Reassign coordinator — admin only
   const isReassign = coordinatorId !== undefined && session?.user.role === UserRole.ADMIN;
@@ -150,7 +163,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const merged = {
     ...updatedUser,
     states: mentorDoc?.states || [],
-    lgas: mentorDoc?.lgas || []
+    lgas: mentorDoc?.lgas || [],
+    ...(locationWarnings.length ? { warnings: locationWarnings } : {}),
   };
 
   return jsonOk(merged);

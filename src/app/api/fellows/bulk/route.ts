@@ -1,10 +1,17 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Fellow } from "@/models";
-import { UserRole } from "@/lib/constants";
+import {
+    UserRole,
+    getStatesForLGA,
+    isKnownState,
+    normalizeLocation,
+    resolveMentorStates,
+} from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { Mentor } from "@/models/Mentor";
+import { ensureMentorCoversLga, resolveFellowLga } from "@/services/mentor-coverage.service";
 
 type BulkCreateFellowInput = {
     name?: string;
@@ -40,6 +47,10 @@ export async function POST(request: NextRequest) {
         let successful = 0;
         let failed = 0;
         const errors: string[] = [];
+        const warnings: string[] = [];
+        // Grows as rows introduce LGAs from states the profile did not list, so
+        // later rows in the same upload resolve against the widened coverage.
+        let mentorStates = resolveMentorStates(mentorDoc);
 
         for (let i = 0; i < body.fellows.length; i++) {
             const rowNumber = i + 1;
@@ -49,6 +60,9 @@ export async function POST(request: NextRequest) {
             const gender = (row.gender ?? "").trim();
             const lga = (row.lga ?? "").trim();
             const qualification = (row.qualification ?? "").trim();
+            // Optional CSV column — the only reliable way to tell apart LGA names
+            // that exist in two states (SURULERE: Lagos & Oyo, OBI: Benue & Nasarawa …).
+            const rowState = normalizeLocation(row.state);
 
             if (!name || !gender || !lga) {
                 failed++;
@@ -56,14 +70,39 @@ export async function POST(request: NextRequest) {
                 continue;
             }
 
+            const hint = rowState ? [rowState, ...mentorStates] : mentorStates;
+            const resolved = resolveFellowLga(lga, hint);
+            if ("error" in resolved) {
+                failed++;
+                errors.push(`Row ${rowNumber}: ${resolved.error}`);
+                continue;
+            }
+            if (resolved.warning) {
+                warnings.push(`Row ${rowNumber}: ${resolved.warning}`);
+            } else if (rowState && isKnownState(rowState) && resolved.state !== rowState) {
+                // The CSV's own State column contradicts the LGA — worth flagging,
+                // but the LGA is the more reliable of the two.
+                warnings.push(
+                    `Row ${rowNumber}: "${lga}" belongs to ${getStatesForLGA(lga).join(" / ")}, not ${rowState} — recorded under ${resolved.state}.`
+                );
+            } else if (resolved.outsideMentorStates) {
+                warnings.push(
+                    `Row ${rowNumber}: ${resolved.lga} is in ${resolved.state}, which was not on your profile — it has been added to your assigned states.`
+                );
+            }
+
             try {
                 await Fellow.create({
                     mentor: mentorDoc._id,
                     name,
                     gender,
-                    lga,
+                    lga: resolved.lga,
                     ...(qualification ? { qualification } : {}),
                 });
+                await ensureMentorCoversLga(mentorDoc._id, resolved.lga, mentorStates);
+                if (resolved.state && !mentorStates.includes(resolved.state)) {
+                    mentorStates = [...mentorStates, resolved.state];
+                }
                 successful++;
             } catch (e: any) {
                 failed++;
@@ -71,7 +110,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        return jsonOk({ successful, failed, errors });
+        return jsonOk({ successful, failed, errors, warnings });
     } catch (globalErr: any) {
         console.error("Fellow Bulk Create Error:", globalErr);
         return jsonError(`Internal Server Error: ${globalErr.message}`, 500);

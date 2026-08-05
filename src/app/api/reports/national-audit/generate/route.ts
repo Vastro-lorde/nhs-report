@@ -8,7 +8,12 @@ import { connectDB } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody, withExceptionLog } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
-import { getZoneForState, GEOPOLITICAL_ZONES } from "@/lib/constants";
+import {
+  getZoneForState,
+  GEOPOLITICAL_ZONES,
+  resolveFellowState,
+  resolveMentorStates,
+} from "@/lib/constants";
 import { generateNationalAudit } from "@/lib/gemini";
 import { Mentor } from "@/models/Mentor";
 import { Fellow } from "@/models/Fellow";
@@ -75,17 +80,21 @@ export const POST = withExceptionLog(
         m._id.toString(),
         {
           name: (m.authId as unknown as { name: string })?.name ?? "Unknown",
-          states: m.states,
+          // Includes states implied by assigned LGAs, not just the declared list.
+          states: resolveMentorStates(m),
           lgas: m.lgas,
         },
       ]),
     );
 
-    // Group fellows by zone → state → LGA
+    // Group fellows by zone → state → LGA.
+    // The fellow's LGA decides its state and therefore its zone — a mentor with
+    // fellows on both sides of a state border no longer has all of them filed
+    // under states[0] (and, worse, under the wrong geopolitical zone).
     const fellowsByZoneStateLGA: Record<string, Record<string, Record<string, number>>> = {};
     for (const f of fellows) {
       const mentorInfo = mentorMap.get(f.mentor.toString());
-      const state = mentorInfo?.states?.[0] ?? "UNKNOWN";
+      const state = resolveFellowState(f.lga, mentorInfo?.states) ?? "UNKNOWN";
       const zone = getZoneForState(state) ?? "Unknown Zone";
       if (!fellowsByZoneStateLGA[zone]) fellowsByZoneStateLGA[zone] = {};
       if (!fellowsByZoneStateLGA[zone][state]) fellowsByZoneStateLGA[zone][state] = {};
@@ -93,12 +102,13 @@ export const POST = withExceptionLog(
       fellowsByZoneStateLGA[zone][state][lga] = (fellowsByZoneStateLGA[zone][state][lga] || 0) + 1;
     }
 
-    // Count totals
+    // Count totals — keyed by state so identically-named LGAs in different
+    // states (SURULERE in Lagos and Oyo, OBI in Benue and Nasarawa …) count twice.
     const allLGAs = new Set<string>();
     for (const zoneObj of Object.values(fellowsByZoneStateLGA)) {
-      for (const stateObj of Object.values(zoneObj)) {
+      for (const [state, stateObj] of Object.entries(zoneObj)) {
         for (const lga of Object.keys(stateObj)) {
-          allLGAs.add(lga);
+          allLGAs.add(`${state}::${lga}`);
         }
       }
     }
@@ -135,7 +145,7 @@ export const POST = withExceptionLog(
 
     for (const r of reports) {
       const mentorInfo = mentorMap.get(r.mentor.toString());
-      const state = mentorInfo?.states?.[0] ?? "UNKNOWN";
+      const state = resolveFellowState(r.fellowLGA, mentorInfo?.states) ?? "UNKNOWN";
       const zone = getZoneForState(state) ?? "Unknown Zone";
 
       if (!zoneData[zone]) zoneData[zone] = {};
@@ -173,7 +183,7 @@ export const POST = withExceptionLog(
       totalMentors: mentors.length,
       totalReports: reports.length,
       totalStates: new Set(
-        mentors.flatMap((m) => m.states),
+        mentors.flatMap((m) => resolveMentorStates(m)),
       ).size,
       zones: Object.fromEntries(
         zoneNames.map((zoneName) => {

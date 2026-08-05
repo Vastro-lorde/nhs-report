@@ -344,7 +344,7 @@ export const api = {
         request<FellowDocument[]>(`/api/fellows/${fellowId}/documents`, { method: "POST", body: JSON.stringify(data) }),
     },
     bulkCreate: (data: { fellows: BulkFellowInput[] }) =>
-      request<{ successful: number; failed: number; errors: string[] }>("/api/fellows/bulk", {
+      request<{ successful: number; failed: number; errors: string[]; warnings?: string[] }>("/api/fellows/bulk", {
         method: "POST",
         body: JSON.stringify(data),
       }),
@@ -1116,6 +1116,9 @@ export interface AnalyticsData {
   fellowsByState: { state: string; count: number }[];
   fellowsByGender: { gender: string; count: number }[];
   fellowsByStateGender: { state: string; total: number; [gender: string]: string | number }[];
+  /** A mentor covering several states is counted in each — this sums to ≥ totalMentors. */
   mentorsByState: { state: string; count: number }[];
   qualifications: { name: string; count: number }[];
+  /** Fellows whose LGA could not be matched to a state. */
+  fellowsWithUnresolvedState?: number;
 }

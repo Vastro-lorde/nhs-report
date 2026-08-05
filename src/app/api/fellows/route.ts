@@ -6,8 +6,9 @@ import { FellowDocument } from "@/models/FellowDocument";
 import { Mentor } from "@/models/Mentor";
 import { DeskOfficer } from "@/models/DeskOfficer";
 import { Coordinator } from "@/models/Coordinator";
-import { UserRole } from "@/lib/constants";
+import { UserRole, resolveMentorStates } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
+import { ensureMentorCoversLga, resolveFellowLga } from "@/services/mentor-coverage.service";
 
 export async function GET(request: Request) {
     try {
@@ -109,13 +110,27 @@ export async function POST(request: Request) {
         const mentorDoc = await Mentor.findOne({ authId: session.user.id });
         if (!mentorDoc) return NextResponse.json({ error: "Mentor profile not found" }, { status: 403 });
 
+        const mentorStates = resolveMentorStates(mentorDoc);
+        const resolved = resolveFellowLga(body.lga, mentorStates);
+        if ("error" in resolved) {
+            return NextResponse.json({ error: resolved.error }, { status: 400 });
+        }
+
         const fellow = await Fellow.create({
             ...body,
+            lga: resolved.lga,
             mentor: mentorDoc._id,
         });
 
+        // Mentors often gain fellows in an LGA their profile never listed —
+        // keep coverage in step so state-scoped views still find them.
+        await ensureMentorCoversLga(mentorDoc._id, resolved.lga, mentorStates);
+
         void logActivity({ session, action: "CREATE_FELLOW", targetType: "Fellow", targetId: String(fellow._id), targetName: fellow.name });
-        return NextResponse.json(fellow, { status: 201 });
+        return NextResponse.json(
+            { ...fellow.toObject(), ...(resolved.warning ? { warning: resolved.warning } : {}) },
+            { status: 201 }
+        );
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }

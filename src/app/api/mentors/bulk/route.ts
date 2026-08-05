@@ -11,6 +11,7 @@ import { jsonOk, jsonError, jsonCreated, parseBody } from "@/lib/api-helpers";
 import { sendMailWithRetry, delay } from "@/lib/mailer";
 import { newMentorEmailTemplate } from "@/lib/email-templates";
 import { env } from "@/lib/env";
+import { normalizeMentorLocations } from "@/services/mentor-coverage.service";
 
 interface BulkMentorInput {
     name: string;
@@ -72,6 +73,8 @@ export async function POST(request: NextRequest) {
             successful: 0,
             failed: 0,
             errors: [] as string[],
+            // LGA names that could not be matched to a state — saved anyway.
+            warnings: [] as string[],
         };
 
         const BATCH_SIZE = 20;
@@ -97,13 +100,18 @@ export async function POST(request: NextRequest) {
                 const rawPassword = generatePassword();
                 const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
-                const lgasArray = mentorInput.lgas
-                    ? mentorInput.lgas.split(",").map((lga) => lga.trim().toUpperCase()).filter(Boolean)
-                    : [];
-
-                const statesArray = mentorInput.states
-                    ? mentorInput.states.split(",").map((st) => st.trim().toUpperCase()).filter(Boolean)
-                    : [];
+                // Both columns are comma-separated lists — a mentor may cover
+                // several states, and LGAs in each of them.
+                const locations = normalizeMentorLocations(
+                    mentorInput.states ? mentorInput.states.split(",") : [],
+                    mentorInput.lgas ? mentorInput.lgas.split(",") : []
+                );
+                if (locations.errors.length) {
+                    throw new Error(`${email}: ${locations.errors.join(" ")}`);
+                }
+                if (locations.warnings.length) {
+                    results.warnings.push(`${email}: ${locations.warnings.join(" ")}`);
+                }
 
                 const newUser = await User.create({
                     name: mentorInput.name.trim(),
@@ -117,8 +125,8 @@ export async function POST(request: NextRequest) {
                 await Mentor.create({
                     authId: newUser._id,
                     coordinator: coordinatorId,
-                    states: statesArray,
-                    lgas: lgasArray,
+                    states: locations.states,
+                    lgas: locations.lgas,
                 });
 
                 const emailContent = newMentorEmailTemplate(

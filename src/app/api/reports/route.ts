@@ -4,7 +4,14 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { WeeklyReport, Alert, User, Mentor, Coordinator, DeskOfficer, ReportHistory } from "@/models";
-import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
+import {
+  UserRole,
+  ReportHistoryReportType,
+  ReportHistoryAction,
+  normalizeLocation,
+  resolveMentorStates,
+  resolveStateForLGA,
+} from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/lib/api-helpers";
 import { isoWeekKey, parseInputDate, canonicalWeekEnding } from "@/lib/date-helpers";
@@ -52,6 +59,8 @@ export async function GET(request: NextRequest) {
   if (session!.user.role !== UserRole.MENTOR) {
     const mentorFilter: Record<string, unknown> = {};
     let mustFilterByMentorIds = false;
+    // States the caller is allowed to see, if their role is state-scoped.
+    let allowedStates: string[] | undefined;
 
     if (session!.user.role === UserRole.COORDINATOR) {
       const coordinatorDoc = await Coordinator.findOne({ authId: session!.user.id });
@@ -64,8 +73,9 @@ export async function GET(request: NextRequest) {
       }
     } else if (session!.user.role === UserRole.ZONAL_DESK_OFFICER) {
       const deskOfficerDoc = await DeskOfficer.findOne({ authId: session!.user.id });
-      if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
-        mentorFilter.states = { $in: deskOfficerDoc.states };
+      const officerStates = (deskOfficerDoc?.states ?? []).map((s) => normalizeLocation(s)).filter(Boolean);
+      if (officerStates.length > 0) {
+        allowedStates = officerStates;
         mustFilterByMentorIds = true;
       } else {
         // Desk Officer without a profile, return empty
@@ -74,8 +84,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (state) {
-      mentorFilter.states = state.toUpperCase();
+      // Intersect with the caller's own scope — assigning the requested state
+      // directly used to overwrite the desk officer's restriction and expose
+      // reports from outside their zone.
+      const requested = normalizeLocation(state);
+      if (allowedStates && !allowedStates.includes(requested)) {
+        return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+      }
+      allowedStates = [requested];
       mustFilterByMentorIds = true;
+    }
+
+    if (allowedStates) {
+      mentorFilter.states = { $in: allowedStates };
     }
     if (mentorId) {
       // mentorId from the UI may be either Mentor._id or the user's authId
@@ -108,7 +129,9 @@ export async function GET(request: NextRequest) {
     const mentorUser = mentorDoc?.authId;
     const mentorName = mentorUser?.name;
     const mentorEmail = mentorUser?.email;
-    const mentorState = mentorDoc?.states?.[0] ?? report.state ?? "";
+    // A mentor can cover several states — show them all rather than the first.
+    const mentorStates = resolveMentorStates(mentorDoc);
+    const mentorState = mentorStates.length ? mentorStates.join(", ") : (report.state ?? "");
 
     const evidence = (report.evidenceUrls ?? []).map((url: string, i: number) => ({
       url,
@@ -121,6 +144,7 @@ export async function GET(request: NextRequest) {
       ...rest,
       evidence,
       state: mentorState,
+      states: mentorStates,
       mentorName,
       mentor: mentorDoc
         ? {
@@ -128,6 +152,7 @@ export async function GET(request: NextRequest) {
             name: mentorName,
             email: mentorEmail,
             state: mentorState,
+            states: mentorStates,
           }
         : report.mentor,
     };
@@ -242,11 +267,29 @@ export async function POST(request: NextRequest) {
 
   // Create alert if urgent
   if (body.urgentAlert && body.urgentDetails) {
+    const mentorStates = resolveMentorStates(mentorDoc);
+    // Prefer the states the reported-on fellows actually sit in; fall back to
+    // everything the mentor covers. Never assume a single state.
+    const reportedStates = [
+      ...new Set(
+        [
+          ...(body.fellows ?? []).map((f) => f.lga),
+          ...sessionsArr.map((s) => s.menteeLGA),
+        ]
+          .map((lga) => resolveStateForLGA(lga, mentorStates))
+          .filter((s): s is string => Boolean(s))
+      ),
+    ];
+    const alertStates = reportedStates.length ? reportedStates : mentorStates;
+
     await Alert.create({
       report: report._id,
-      mentor: mentorId,
+      // Alert.mentor references User — store the auth id, not the Mentor doc id,
+      // otherwise the coordinator/desk-officer alert filters match nothing.
+      mentor: mentorDoc.authId,
       weekKey,
-      state: mentorDoc.states?.[0] ?? "", // Best effort for simple alerts
+      state: alertStates[0] ?? "",
+      states: alertStates,
       urgentDetails: body.urgentDetails,
     });
   }

@@ -43,24 +43,52 @@ export function LocationSelector({
             .slice(0, 10); // Show up to 10 suggestions
     }, [stateSearch, selectedStates, allStates]);
 
+    /**
+     * LGAs of the selected states, each carrying the state(s) it came from.
+     * LGA names repeat across Nigeria (SURULERE in Lagos and Oyo, OBI in Benue
+     * and Nasarawa, …), so a bare name is ambiguous once a mentor covers more
+     * than one state — every option is labelled with its state.
+     */
     const availableLgas = useMemo(() => {
         if (selectedStates.length === 0) return [];
-        const lgas = new Set<string>();
+        const byName = new Map<string, string[]>();
         locationsData.forEach((d: any) => {
-            if (selectedStates.includes(d.state)) {
-                d.lgas.forEach((l: string) => lgas.add(l));
-            }
+            if (!selectedStates.includes(d.state)) return;
+            d.lgas.forEach((l: string) => {
+                const states = byName.get(l);
+                if (states) {
+                    if (!states.includes(d.state)) states.push(d.state);
+                } else {
+                    byName.set(l, [d.state]);
+                }
+            });
         });
-        return Array.from(lgas);
+        return Array.from(byName, ([lga, states]) => ({ lga, states }));
     }, [selectedStates]);
+
+    const lgaStates = useMemo(
+        () => new Map(availableLgas.map(({ lga, states }) => [lga, states])),
+        [availableLgas]
+    );
+
+    /** Selected LGA names that exist in more than one of the selected states. */
+    const ambiguousSelectedLgas = useMemo(
+        () =>
+            selectedLgas
+                .map((lga) => ({ lga, states: lgaStates.get(lga) ?? [] }))
+                .filter(({ states }) => states.length > 1),
+        [selectedLgas, lgaStates]
+    );
 
     const suggestedLgas = useMemo(() => {
         if (!lgaSearch.trim()) return [];
+        const needle = lgaSearch.trim().toLowerCase();
         return availableLgas
             .filter(
-                (l: string) =>
-                    l.toLowerCase().includes(lgaSearch.trim().toLowerCase()) &&
-                    !selectedLgas.includes(l)
+                ({ lga, states }) =>
+                    (lga.toLowerCase().includes(needle) ||
+                        states.some((s) => s.toLowerCase().includes(needle))) &&
+                    !selectedLgas.includes(lga)
             )
             .slice(0, 10);
     }, [lgaSearch, selectedLgas, availableLgas]);
@@ -164,6 +192,9 @@ export function LocationSelector({
                             {selectedLgas.map((lga) => (
                                 <Badge key={lga} variant="secondary" className="flex items-center gap-1">
                                     {lga}
+                                    <span className="text-[10px] text-gray-500">
+                                        {(lgaStates.get(lga) ?? []).join(" / ")}
+                                    </span>
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveLga(lga)}
@@ -179,7 +210,7 @@ export function LocationSelector({
                     {/* LGA Suggestions */}
                     {suggestedLgas.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2 max-h-32 overflow-y-auto">
-                            {suggestedLgas.map((lga) => (
+                            {suggestedLgas.map(({ lga, states }) => (
                                 <button
                                     key={lga}
                                     type="button"
@@ -187,6 +218,7 @@ export function LocationSelector({
                                     onClick={() => handleAddLga(lga)}
                                 >
                                     + {lga}
+                                    <span className="ml-1 text-blue-500">({states.join(" / ")})</span>
                                 </button>
                             ))}
                         </div>
@@ -200,6 +232,16 @@ export function LocationSelector({
                         placeholder="Type to search and add LGAs..."
                         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent"
                     />
+
+                    {ambiguousSelectedLgas.length > 0 && (
+                        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                            {ambiguousSelectedLgas
+                                .map(({ lga, states }) => `${lga} (${states.join(" & ")})`)
+                                .join(", ")}{" "}
+                            {ambiguousSelectedLgas.length === 1 ? "exists" : "exist"} in more than one
+                            of the selected states, so this assignment covers all of them.
+                        </p>
+                    )}
                 </div>
             )}
         </div>

@@ -12,7 +12,10 @@ export interface IMonthlyReport extends Document {
     type: "mentor" | "zonal";
     coordinator?: Types.ObjectId;
     mentor?: Types.ObjectId;
+    /** Primary state — kept for backwards compatibility. Prefer `states`. */
     state: string;
+    /** Every state the author covers. Mentors/coordinators can span several. */
+    states: string[];
     month: string; // e.g., "2025-08"
     summaryText: string;
     zonalAuditData?: IZonalAuditReport | null;
@@ -28,6 +31,7 @@ const MonthlyReportSchema = new Schema<IMonthlyReport>(
         coordinator: { type: Schema.Types.ObjectId, ref: "Coordinator", index: true },
         mentor: { type: Schema.Types.ObjectId, ref: "Mentor", index: true },
         state: { type: String, required: true },
+        states: { type: [String], uppercase: true, default: [] },
         month: { type: String, required: true },
         summaryText: { type: String, required: true, trim: true },
         zonalAuditData: { type: Schema.Types.Mixed, default: null },

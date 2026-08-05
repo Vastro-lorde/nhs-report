@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { WeeklyReport, User, Alert, WeeklyRollup, Mentor, Coordinator, DeskOfficer, Fellow } from "@/models";
 import mongoose from "mongoose";
-import { UserRole, AlertStatus } from "@/lib/constants";
+import { UserRole, AlertStatus, resolveMentorStates, resolveStateForLGA } from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
 import { currentWeekKey, isoWeekKey } from "@/lib/date-helpers";
@@ -76,8 +76,9 @@ export async function GET(request: NextRequest) {
     }
 
     const alertFilter: any = { status: { $ne: AlertStatus.RESOLVED } };
-    // Note: Alert schema uses User ID for mentor field.
-    if (mentorAuthIds) alertFilter.mentor = { $in: mentorAuthIds };
+    // Alert.mentor references User (authId), but older rows stored the Mentor
+    // document id — match both so scoped counts don't silently miss alerts.
+    if (mentorAuthIds) alertFilter.mentor = { $in: [...mentorAuthIds, ...(mentorDocIds ?? [])] };
 
     const isZoneScoped = user.role === UserRole.COORDINATOR || user.role === UserRole.ZONAL_DESK_OFFICER;
 
@@ -129,6 +130,11 @@ export async function GET(request: NextRequest) {
       aggregatePipeline.push({ $match: reportMatchStage });
     }
 
+    // Project one compact row per report and resolve its state in JS. Unwinding
+    // `mentorData.states` counted a report (and all its sessions) once per state
+    // the mentor covers, so a mentor working across two states doubled every
+    // figure on this chart. A report belongs to one state: the one most of its
+    // mentees' LGAs sit in.
     aggregatePipeline.push(
       {
         $lookup: {
@@ -138,21 +144,69 @@ export async function GET(request: NextRequest) {
           as: "mentorData",
         },
       },
-      { $unwind: "$mentorData" },
-      { $unwind: { path: "$mentorData.states", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$mentorData", preserveNullAndEmptyArrays: true } },
+      { $sort: { weekKey: -1 } },
+      { $limit: 5000 },
       {
-        $group: {
-          _id: { state: "$mentorData.states", weekKey: "$weekKey" },
-          count: { $sum: 1 },
-          sessions: { $sum: "$sessionsCount" },
-          checkins: { $sum: "$menteesCheckedIn" },
+        $project: {
+          _id: 0,
+          weekKey: 1,
+          sessionsCount: 1,
+          menteesCheckedIn: 1,
+          mentorStates: "$mentorData.states",
+          mentorLgas: "$mentorData.lgas",
+          sessionLgas: "$sessions.menteeLGA",
+          fellowLgas: "$fellows.lga",
         },
-      },
-      { $sort: { "_id.weekKey": -1 } },
-      { $limit: 200 }
+      }
     );
 
-    const submissionsByState = await WeeklyReport.aggregate(aggregatePipeline);
+    const reportRows = await WeeklyReport.aggregate(aggregatePipeline);
+
+    const stateWeekTotals = new Map<
+      string,
+      { state: string; weekKey: string; count: number; sessions: number; checkins: number }
+    >();
+
+    for (const row of reportRows) {
+      const mentorStates = resolveMentorStates({
+        states: row.mentorStates,
+        lgas: row.mentorLgas,
+      });
+      const lgas = [...(row.sessionLgas ?? []), ...(row.fellowLgas ?? [])].filter(Boolean);
+
+      // Majority state across the LGAs actually worked in this week.
+      const tally = new Map<string, number>();
+      for (const lga of lgas) {
+        const state = resolveStateForLGA(lga, mentorStates);
+        if (state) tally.set(state, (tally.get(state) ?? 0) + 1);
+      }
+      let state = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (!state) state = mentorStates.length === 1 ? mentorStates[0] : "Unknown";
+
+      const key = `${state}::${row.weekKey}`;
+      const bucket = stateWeekTotals.get(key) ?? {
+        state,
+        weekKey: row.weekKey,
+        count: 0,
+        sessions: 0,
+        checkins: 0,
+      };
+      bucket.count += 1;
+      bucket.sessions += row.sessionsCount ?? 0;
+      bucket.checkins += row.menteesCheckedIn ?? 0;
+      stateWeekTotals.set(key, bucket);
+    }
+
+    const submissionsByState = [...stateWeekTotals.values()]
+      .sort((a, b) => (a.weekKey < b.weekKey ? 1 : a.weekKey > b.weekKey ? -1 : 0))
+      .slice(0, 200)
+      .map(({ state, weekKey, count, sessions, checkins }) => ({
+        _id: { state, weekKey },
+        count,
+        sessions,
+        checkins,
+      }));
 
     return jsonOk({
       currentWeekKey: weekKey,

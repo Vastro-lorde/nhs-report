@@ -7,7 +7,14 @@ import { Mentor } from "@/models/Mentor";
 import { Coordinator } from "@/models/Coordinator";
 import { DeskOfficer } from "@/models/DeskOfficer";
 import { ReportHistory } from "@/models/ReportHistory";
-import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
+import {
+    UserRole,
+    ReportHistoryReportType,
+    ReportHistoryAction,
+    normalizeLocation,
+    resolveMentorStates,
+    resolveStateForLGA,
+} from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
 import { monthLockReason, monthLabel } from "@/lib/date-helpers";
 
@@ -52,8 +59,13 @@ export async function GET(
                 return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
             }
             const mentorOfReport = await Mentor.findById((report as any).mentor?._id).lean();
-            const mentorStates: string[] = (mentorOfReport as any)?.states ?? [];
-            const hasOverlap = mentorStates.some(s => deskOfficerDoc.states!.includes(s));
+            const officerStates = deskOfficerDoc.states!.map((s) => normalizeLocation(s));
+            const mentorStates = resolveMentorStates(mentorOfReport);
+            // The report also belongs to the state its fellow's LGA sits in —
+            // that may be a state the mentor's profile never listed.
+            const fellowState = resolveStateForLGA((report as any).fellowLGA, mentorStates);
+            const reportStates = [...new Set([...mentorStates, ...(fellowState ? [fellowState] : [])])];
+            const hasOverlap = reportStates.some(s => officerStates.includes(s));
             if (!hasOverlap) {
                 return NextResponse.json({ error: "Unauthorized." }, { status: 403 });
             }

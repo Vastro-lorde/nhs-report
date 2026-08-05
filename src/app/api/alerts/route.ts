@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Alert, Coordinator, DeskOfficer, Mentor } from "@/models";
-import { UserRole } from "@/lib/constants";
+import { UserRole, normalizeLocation } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, parsePagination } from "@/lib/api-helpers";
 
@@ -25,22 +25,32 @@ export async function GET(request: NextRequest) {
   if (status) filter.status = status;
   if (weekKey) filter.weekKey = weekKey;
 
+  /**
+   * Alert.mentor references User (authId), but older rows were written with the
+   * Mentor document id — match on both so no alert is silently dropped.
+   */
+  async function mentorRefsFor(mentorQuery: Record<string, unknown>) {
+    const docs = await Mentor.find(mentorQuery).select("_id authId").lean();
+    return docs.flatMap((m) => [m.authId, m._id]);
+  }
+
   if (session!.user.role === UserRole.COORDINATOR) {
     const coordinatorDoc = await Coordinator.findOne({ authId: session!.user.id });
     if (coordinatorDoc) {
-      // Alert.mentor stores User IDs (authId), so get mentor authIds under this coordinator
-      const mentorAuthIds = await Mentor.find({ coordinator: coordinatorDoc._id }).distinct("authId");
-      filter.mentor = { $in: mentorAuthIds };
+      filter.mentor = { $in: await mentorRefsFor({ coordinator: coordinatorDoc._id }) };
     } else {
       return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
     }
   } else if (session!.user.role === UserRole.ZONAL_DESK_OFFICER) {
     const deskOfficerDoc = await DeskOfficer.findOne({ authId: session!.user.id });
-    if (deskOfficerDoc && deskOfficerDoc.states && deskOfficerDoc.states.length > 0) {
-      filter.state = { $in: deskOfficerDoc.states };
-    } else {
+    const officerStates = (deskOfficerDoc?.states ?? []).map((s) => normalizeLocation(s)).filter(Boolean);
+    if (!officerStates.length) {
       return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
     }
+    // Resolve through the mentors working in these states rather than the
+    // alert's single `state` field: a mentor covering two states only ever
+    // stamped the first one, so alerts went missing from the other zone.
+    filter.mentor = { $in: await mentorRefsFor({ states: { $in: officerStates } }) };
   }
 
   const [alerts, total] = await Promise.all([

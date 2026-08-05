@@ -8,7 +8,7 @@ import { connectDB } from "@/lib/db";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody, withExceptionLog } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
-import { getZoneForState, getStateForLGA } from "@/lib/constants";
+import { getZoneForState, resolveFellowState, resolveMentorStates } from "@/lib/constants";
 import { generateZonalAudit } from "@/lib/gemini";
 import { Coordinator } from "@/models/Coordinator";
 import { Mentor } from "@/models/Mentor";
@@ -97,28 +97,32 @@ export const POST = withExceptionLog(
         m._id.toString(),
         {
           name: (m.authId as unknown as { name: string })?.name ?? "Unknown",
-          states: m.states,
+          // Includes states implied by assigned LGAs, not just the declared list.
+          states: resolveMentorStates(m),
           lgas: m.lgas,
         },
       ]),
     );
 
-    // Group fellows by state → LGA
+    // Group fellows by state → LGA.
+    // The fellow's own LGA decides the state; the mentor's states only
+    // disambiguate LGA names shared by two states (e.g. IREPODUN in Kwara and
+    // Osun). Mentors covering several states must never collapse to states[0].
     const fellowsByStateLGA: Record<string, Record<string, number>> = {};
     for (const f of fellows) {
-      // Determine the state from the fellow's own LGA first, fallback to mentor's first state
       const mentorInfo = mentorMap.get(f.mentor.toString());
-      const state = getStateForLGA(f.lga) ?? mentorInfo?.states?.[0] ?? "UNKNOWN";
+      const state = resolveFellowState(f.lga, mentorInfo?.states) ?? "UNKNOWN";
       if (!fellowsByStateLGA[state]) fellowsByStateLGA[state] = {};
       const lga = f.lga || "UNKNOWN";
       fellowsByStateLGA[state][lga] = (fellowsByStateLGA[state][lga] || 0) + 1;
     }
 
-    // Count total unique LGAs and active fellows
+    // Count total unique LGAs — keyed by state so same-named LGAs in different
+    // states are not merged into one.
     const allLGAs = new Set<string>();
-    for (const stateObj of Object.values(fellowsByStateLGA)) {
+    for (const [state, stateObj] of Object.entries(fellowsByStateLGA)) {
       for (const lga of Object.keys(stateObj)) {
-        allLGAs.add(lga);
+        allLGAs.add(`${state}::${lga}`);
       }
     }
 
@@ -151,7 +155,7 @@ export const POST = withExceptionLog(
 
     for (const r of reports) {
       const mentorInfo = mentorMap.get(r.mentor.toString());
-      const state = getStateForLGA(r.fellowLGA) ?? mentorInfo?.states?.[0] ?? "UNKNOWN";
+      const state = resolveFellowState(r.fellowLGA, mentorInfo?.states) ?? "UNKNOWN";
 
       if (!stateData[state]) {
         stateData[state] = { mentors: new Set(), fellows: new Set(), reports: [] };

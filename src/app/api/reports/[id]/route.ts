@@ -4,7 +4,13 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
 import { WeeklyReport, Mentor, Coordinator, DeskOfficer, ReportHistory, AppSettings } from "@/models";
-import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
+import {
+  UserRole,
+  ReportHistoryReportType,
+  ReportHistoryAction,
+  normalizeLocation,
+  resolveMentorStates,
+} from "@/lib/constants";
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { rebuildRollupForWeek } from "@/services/rollup.service";
@@ -57,8 +63,11 @@ export async function GET(_request: NextRequest, { params }: Params) {
     if (!deskOfficerDoc || !deskOfficerDoc.states?.length) {
       return jsonError("Forbidden", 403);
     }
-    const mentorStates = mentorDoc?.states ?? [];
-    const hasOverlap = mentorStates.some((s: string) => deskOfficerDoc.states.includes(s));
+    // Include states implied by the mentor's LGAs — profiles often omit the
+    // second state when a mentor picked up LGAs across a border.
+    const mentorStates = resolveMentorStates(mentorDoc);
+    const officerStates = deskOfficerDoc.states.map((s) => normalizeLocation(s));
+    const hasOverlap = mentorStates.some((s: string) => officerStates.includes(s));
     if (!hasOverlap) {
       return jsonError("Forbidden", 403);
     }
@@ -78,7 +87,10 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const mentorUser = mentorDoc?.authId;
   const mentorName = mentorUser?.name;
   const mentorEmail = mentorUser?.email;
-  const mentorState = mentorDoc?.states?.[0] ?? (report as any).state ?? "";
+  const mentorStatesForDisplay = resolveMentorStates(mentorDoc);
+  const mentorState = mentorStatesForDisplay.length
+    ? mentorStatesForDisplay.join(", ")
+    : ((report as any).state ?? "");
 
   const reportObj = (report as any);
   const evidence = (reportObj.evidenceUrls ?? []).map((url: string, i: number) => ({
@@ -92,6 +104,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
     canEdit,
     evidence,
     state: mentorState,
+    states: mentorStatesForDisplay,
     mentorName,
     mentor: mentorDoc
       ? {
@@ -99,6 +112,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
           name: mentorName,
           email: mentorEmail,
           state: mentorState,
+          states: mentorStatesForDisplay,
         }
       : reportObj.mentor,
   });
