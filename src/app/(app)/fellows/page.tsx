@@ -91,10 +91,10 @@ function AddFellowModal({
                         />
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel and close dialog">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} tooltip="Register and add new fellow">
                             {loading ? "Adding…" : "Add Fellow"}
                         </Button>
                     </div>
@@ -190,10 +190,10 @@ function EditFellowModal({
                         />
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel without saving">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} tooltip="Save changes to fellow details">
                             {loading ? "Saving…" : "Save Changes"}
                         </Button>
                     </div>
@@ -286,10 +286,10 @@ function InviteFellowModal({
                         </p>
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel and close dialog">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} tooltip="Send email invitation to activate fellow account">
                             {loading ? "Sending…" : "Send Invitation"}
                         </Button>
                     </div>
@@ -460,9 +460,9 @@ export default function FellowsPage() {
                             className="w-full pl-9 pr-4 h-10 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-600"
                         />
                     </div>
-                    <Button type="submit" size="sm" variant="outline">Search</Button>
+                    <Button type="submit" size="sm" variant="outline" tooltip="Search fellows by query">Search</Button>
                     {search && (
-                        <Button type="button" size="sm" variant="ghost" onClick={handleClearSearch}>Clear</Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={handleClearSearch} tooltip="Clear search filter">Clear</Button>
                     )}
                 </form>
 
@@ -479,6 +479,7 @@ export default function FellowsPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
+                                tooltip="Export current fellows list to a CSV spreadsheet"
                                 onClick={() => {
                                     const data = fellows.map((f) => ({
                                         Name: f.name,
@@ -492,13 +493,19 @@ export default function FellowsPage() {
                                 <FileDown className="h-4 w-4 mr-1" /> Export CSV
                             </Button>
                             {canWrite && selectedIds.length > 0 && (
-                                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
+                                <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={handleBulkDelete}
+                                    disabled={isDeletingBulk}
+                                    tooltip={`Permanently delete ${selectedIds.length} selected fellow(s)`}
+                                >
                                     <Trash2 className="h-4 w-4 mr-1" />
                                     {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
                                 </Button>
                             )}
                             {role === UserRole.MENTOR && (
-                                <Button size="sm" onClick={() => setShowAdd(true)}>
+                                <Button size="sm" onClick={() => setShowAdd(true)} tooltip="Add a new fellow to your mentoring cohort">
                                     <Plus className="h-4 w-4 mr-1" /> Add Fellow
                                 </Button>
                             )}
@@ -595,7 +602,7 @@ export default function FellowsPage() {
                                                              setEditingFellow(f);
                                                             setShowEdit(true);
                                                         }}
-                                                        title="Edit Fellow"
+                                                        tooltip="Edit fellow profile and details"
                                                     >
                                                         <Pencil className="h-4 w-4 text-blue-600" />
                                                     </Button>
@@ -603,13 +610,13 @@ export default function FellowsPage() {
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => handleInvite(f)}
-                                                        title={f.inviteStatus === "active" ? "Fellow account active" : "Invite Fellow"}
+                                                        tooltip={f.inviteStatus === "active" ? "Fellow account is active" : "Send invitation email to fellow"}
                                                         disabled={f.inviteStatus === "active"}
                                                     >
                                                         <Mail className="h-4 w-4 text-orange-600" />
                                                     </Button>
                                                     <Link href={`/fellows/${f._id}/documents/upload`}>
-                                                        <Button variant="secondary" size="sm">
+                                                        <Button variant="secondary" size="sm" tooltip="Upload or view required documents for this fellow">
                                                             <FileUp className="h-3 w-3 mr-1" /> Documents
                                                         </Button>
                                                     </Link>
@@ -617,7 +624,7 @@ export default function FellowsPage() {
                                             )}
                                             {session?.user?.role === UserRole.ADMIN && (
                                                 <Link href={`/fellows/${f._id}/documents/upload`}>
-                                                    <Button variant="secondary" size="sm">
+                                                    <Button variant="secondary" size="sm" tooltip="Review uploaded documents for this fellow">
                                                         <FileUp className="h-3 w-3 mr-1" /> Documents
                                                     </Button>
                                                 </Link>
@@ -627,6 +634,7 @@ export default function FellowsPage() {
                                                 size="icon"
                                                 className="text-red-500 hover:text-red-600 hover:bg-red-50"
                                                 onClick={() => handleDelete(f._id)}
+                                                tooltip="Remove fellow from system"
                                             >
                                                 <UserMinus className="h-4 w-4" />
                                             </Button>
@@ -651,6 +659,7 @@ export default function FellowsPage() {
                                 size="sm"
                                 disabled={page <= 1}
                                 onClick={() => setPage((p) => p - 1)}
+                                tooltip="Previous page"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
@@ -659,6 +668,7 @@ export default function FellowsPage() {
                                 size="sm"
                                 disabled={page >= totalPages}
                                 onClick={() => setPage((p) => p + 1)}
+                                tooltip="Next page"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>

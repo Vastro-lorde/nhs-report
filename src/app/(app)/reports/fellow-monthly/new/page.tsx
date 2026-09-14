@@ -322,6 +322,7 @@ export default function NewMentorMonthlyReportPage() {
                       : `/reports/fellow-monthly/${existingReportId}`
                   }
                   className="mt-1 inline-block underline hover:no-underline"
+                  data-tooltip={existingIsDraft ? "Continue editing existing draft" : "View existing report"}
                 >
                   {existingIsDraft ? "Continue the draft" : "View the existing report"}
                 </Link>
@@ -534,6 +535,7 @@ export default function NewMentorMonthlyReportPage() {
                   disabled={challenges.length === 1}
                   aria-label="Remove"
                   className="shrink-0 mt-0.5"
+                  tooltip="Remove this challenge"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </Button>
@@ -545,6 +547,7 @@ export default function NewMentorMonthlyReportPage() {
               size="sm"
               onClick={() => addItem(challenges, setChallenges)}
               className="mt-1 text-orange-600"
+              tooltip="Add another challenge"
             >
               <Plus className="h-4 w-4 mr-1" /> Add Challenge
             </Button>
@@ -573,6 +576,7 @@ export default function NewMentorMonthlyReportPage() {
                   disabled={recommendations.length === 1}
                   aria-label="Remove"
                   className="shrink-0 mt-0.5"
+                  tooltip="Remove this recommendation"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </Button>
@@ -584,6 +588,7 @@ export default function NewMentorMonthlyReportPage() {
               size="sm"
               onClick={() => addItem(recommendations, setRecommendations)}
               className="mt-1 text-orange-600"
+              tooltip="Add another recommendation"
             >
               <Plus className="h-4 w-4 mr-1" /> Add Recommendation
             </Button>
@@ -615,6 +620,7 @@ export default function NewMentorMonthlyReportPage() {
                   type="button"
                   onClick={() => setProgressRating("")}
                   className="text-xs text-gray-400 hover:text-gray-600 underline"
+                  data-tooltip="Clear progress rating selection"
                 >
                   Clear
                 </button>
@@ -650,6 +656,7 @@ export default function NewMentorMonthlyReportPage() {
             variant="outline"
             onClick={() => router.push("/reports/fellow-monthly")}
             disabled={submitting}
+            tooltip="Cancel and return to reports list"
           >
             Cancel
           </Button>
@@ -658,6 +665,7 @@ export default function NewMentorMonthlyReportPage() {
             variant="outline"
             onClick={() => save("draft")}
             disabled={submitting || savingDraft || Boolean(duplicateReason) || checkingAvailability}
+            tooltip="Save progress as draft to continue later"
           >
             {savingDraft ? (
               <>
@@ -668,7 +676,11 @@ export default function NewMentorMonthlyReportPage() {
               "Save as Draft"
             )}
           </Button>
-          <Button type="submit" disabled={submitting || savingDraft || blocked || checkingAvailability}>
+          <Button
+            type="submit"
+            disabled={submitting || savingDraft || blocked || checkingAvailability}
+            tooltip="Finalize and submit monthly report"
+          >
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

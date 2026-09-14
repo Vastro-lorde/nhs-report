@@ -426,13 +426,14 @@ export default function NewReportPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeFellow(i)}
+                      tooltip="Remove this fellow entry"
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   )}
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={addFellow}>
+              <Button type="button" variant="outline" size="sm" onClick={addFellow} tooltip="Add another fellow to this report">
                 <Plus className="h-4 w-4 mr-1" /> Add Fellow
               </Button>
             </div>
@@ -451,6 +452,7 @@ export default function NewReportPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => removeSession(si)}
+                    tooltip="Remove this mentoring session block"
                   >
                     <Trash2 className="h-4 w-4 text-red-500 mr-1" /> Remove
                   </Button>
@@ -539,7 +541,7 @@ export default function NewReportPage() {
                       )}
                     </div>
                   ))}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "challenges")}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "challenges")} tooltip="Add another challenge note">
                     <Plus className="h-3 w-3 mr-1" /> Add challenge
                   </Button>
                 </div>
@@ -557,13 +559,13 @@ export default function NewReportPage() {
                         className="flex-1 min-h-[60px]"
                       />
                       {session.solutions.length > 1 && (
-                        <button type="button" onClick={() => removeBullet(si, "solutions", sui)} className="text-red-400 hover:text-red-600 mt-2">
+                        <button type="button" onClick={() => removeBullet(si, "solutions", sui)} data-tooltip="Remove solution bullet" className="text-red-400 hover:text-red-600 mt-2">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
                     </div>
                   ))}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "solutions")}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "solutions")} tooltip="Add another solution note">
                     <Plus className="h-3 w-3 mr-1" /> Add solution
                   </Button>
                 </div>
@@ -581,13 +583,13 @@ export default function NewReportPage() {
                         className="flex-1 min-h-[60px]"
                       />
                       {session.actionPlan.length > 1 && (
-                        <button type="button" onClick={() => removeBullet(si, "actionPlan", ai)} className="text-red-400 hover:text-red-600 mt-2">
+                        <button type="button" onClick={() => removeBullet(si, "actionPlan", ai)} data-tooltip="Remove action item" className="text-red-400 hover:text-red-600 mt-2">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
                     </div>
                   ))}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "actionPlan")}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "actionPlan")} tooltip="Add another action plan item">
                     <Plus className="h-3 w-3 mr-1" /> Add action item
                   </Button>
                 </div>
@@ -596,7 +598,7 @@ export default function NewReportPage() {
           </Card>
         ))}
 
-        <Button type="button" variant="outline" onClick={addSession} className="w-full">
+        <Button type="button" variant="outline" onClick={addSession} tooltip="Add an additional mentee session to this report" className="w-full">
           <Plus className="h-4 w-4 mr-2" /> Add Another Session
         </Button>
 
@@ -803,7 +805,7 @@ export default function NewReportPage() {
 
         {/* ── Submit ──────────────────── */}
         <div className="flex flex-col sm:flex-row justify-end gap-3 pb-8">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button type="button" variant="outline" onClick={() => router.back()} tooltip="Discard changes and return to reports">
             Cancel
           </Button>
           <Button
@@ -811,10 +813,11 @@ export default function NewReportPage() {
             variant="outline"
             disabled={loading || savingDraft}
             onClick={() => save(ReportStatus.DRAFT)}
+            tooltip="Save current progress as a draft without submitting"
           >
             {savingDraft ? "Saving…" : "Save as Draft"}
           </Button>
-          <Button type="submit" disabled={loading || savingDraft}>
+          <Button type="submit" disabled={loading || savingDraft} tooltip="Submit weekly report for review">
             {loading ? "Submitting…" : "Submit Report"}
           </Button>
         </div>

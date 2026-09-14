@@ -74,10 +74,10 @@ function DocumentTypeModal({
                         />
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+                        <Button type="button" variant="outline" onClick={onClose} disabled={loading} tooltip="Cancel and close modal">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} tooltip={mode === "create" ? "Create new document type" : "Save changes to document type"}>
                             {loading ? "Saving…" : "Save"}
                         </Button>
                     </div>
@@ -150,7 +150,7 @@ export default function DocumentTypesPage() {
                             setModalMode("create");
                             setSelectedType(null);
                             setModalOpen(true);
-                        }}>
+                        }} tooltip="Create a new document type">
                             <Plus className="h-4 w-4 mr-1" /> Add Type
                         </Button>
                     </CardContent>
@@ -191,7 +191,7 @@ export default function DocumentTypesPage() {
                                                     setSelectedType(t);
                                                     setModalOpen(true);
                                                 }}
-                                                title="Edit"
+                                                tooltip={`Edit document type: ${t.title}`}
                                             >
                                                 <Edit className="h-4 w-4 text-gray-600" />
                                             </Button>
@@ -199,7 +199,7 @@ export default function DocumentTypesPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleDelete(t._id, t.title)}
-                                                title="Delete"
+                                                tooltip={`Delete document type: ${t.title}`}
                                             >
                                                 <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
@@ -216,10 +216,10 @@ export default function DocumentTypesPage() {
                     <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>Page {page} of {totalPages}</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} tooltip="Go to previous page">
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} tooltip="Go to next page">
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>

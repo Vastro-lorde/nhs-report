@@ -153,7 +153,13 @@ export default function AdminMeetPage() {
                 {stats.meetingLink && (
                   <p className="text-sm text-gray-700 break-all">
                     Current link:{" "}
-                    <a href={toExternalUrl(stats.meetingLink)} target="_blank" rel="noopener noreferrer" className="text-orange-700 hover:underline">
+                    <a
+                      href={toExternalUrl(stats.meetingLink)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-orange-700 hover:underline"
+                      data-tooltip="Open Google Meet room in new tab"
+                    >
                       {stats.meetingLink}
                     </a>
                   </p>
@@ -165,7 +171,11 @@ export default function AdminMeetPage() {
                   </p>
                 ) : (
                   <div>
-                    <Button onClick={generate} disabled={generating}>
+                    <Button
+                      onClick={generate}
+                      disabled={generating}
+                      tooltip="Generate or update the mentor's persistent Google Meet link"
+                    >
                       {generating ? "Generating…" : "Generate & update meeting link"}
                     </Button>
                   </div>
@@ -220,7 +230,13 @@ export default function AdminMeetPage() {
                               <td className="px-3 py-2">{m.participantCount}</td>
                               <td className="px-3 py-2">
                                 {m.recordingUri ? (
-                                  <a href={m.recordingUri} target="_blank" rel="noopener noreferrer" className="text-orange-700 hover:underline">
+                                  <a
+                                    href={m.recordingUri}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-orange-700 hover:underline"
+                                    data-tooltip="Open session recording"
+                                  >
                                     View
                                   </a>
                                 ) : (
@@ -229,7 +245,13 @@ export default function AdminMeetPage() {
                               </td>
                               <td className="px-3 py-2">
                                 {m.transcriptUri ? (
-                                  <a href={m.transcriptUri} target="_blank" rel="noopener noreferrer" className="text-orange-700 hover:underline">
+                                  <a
+                                    href={m.transcriptUri}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-orange-700 hover:underline"
+                                    data-tooltip="Open session transcript"
+                                  >
                                     View
                                   </a>
                                 ) : (

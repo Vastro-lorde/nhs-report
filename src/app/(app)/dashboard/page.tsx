@@ -104,6 +104,7 @@ function AdminDashboard({ data }: { data: DashboardData }) {
             size="sm"
             variant="outline"
             className="flex items-center gap-2"
+            tooltip="Export executive dashboard overview as a PDF document"
           >
             <Download className="w-4 h-4" />
             {exporting ? "Exporting..." : "Export as PDF"}
@@ -759,6 +760,7 @@ function MentorDashboard() {
                 <button
                   type="button"
                   onClick={() => setRankingView("month")}
+                  data-tooltip="View fellow session ranking for this current month"
                   className={`px-3 py-1.5 text-xs font-medium transition ${
                     rankingView === "month"
                       ? "bg-orange-700 text-white"
@@ -770,6 +772,7 @@ function MentorDashboard() {
                 <button
                   type="button"
                   onClick={() => setRankingView("overall")}
+                  data-tooltip="View all-time cumulative fellow session ranking"
                   className={`px-3 py-1.5 text-xs font-medium transition border-l border-gray-200 ${
                     rankingView === "overall"
                       ? "bg-orange-700 text-white"
@@ -859,8 +862,8 @@ function FellowDashboard() {
                 Choose from your mentor&apos;s available time slots.
               </p>
             </div>
-            <Link href="/book">
-              <Button>Book a Session</Button>
+            <Link href="/book" data-tooltip="Schedule a new mentoring session with your mentor">
+              <Button tooltip="Schedule a new mentoring session with your mentor">Book a Session</Button>
             </Link>
           </CardContent>
         </Card>

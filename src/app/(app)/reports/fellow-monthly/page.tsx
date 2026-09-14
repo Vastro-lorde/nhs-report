@@ -90,6 +90,7 @@ function DraftsModal({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
             aria-label="Close drafts"
+            data-tooltip="Close drafts modal"
           >
             <X className="h-5 w-5" />
           </button>
@@ -120,8 +121,8 @@ function DraftsModal({
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Link href={`/reports/fellow-monthly/${d._id}/edit`}>
-                      <Button size="sm" onClick={onClose}>
+                    <Link href={`/reports/fellow-monthly/${d._id}/edit`} data-tooltip="Continue editing this draft report">
+                      <Button size="sm" onClick={onClose} tooltip="Continue editing this draft report">
                         Continue
                       </Button>
                     </Link>
@@ -130,6 +131,7 @@ function DraftsModal({
                       variant="outline"
                       disabled={deletingId === d._id}
                       onClick={() => handleDelete(d._id)}
+                      tooltip="Discard this draft report"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -141,7 +143,7 @@ function DraftsModal({
         </div>
 
         <div className="border-t px-6 py-4 flex justify-end">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} tooltip="Close drafts modal">
             Close
           </Button>
         </div>
@@ -286,7 +288,7 @@ export default function MentorMonthlyReportsPage() {
             </div>
             {canCreate && (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setShowDrafts(true)}>
+                <Button size="sm" variant="outline" onClick={() => setShowDrafts(true)} tooltip="View saved report drafts">
                   <FilePen className="h-4 w-4 mr-1" />
                   Drafts
                   {draftCount > 0 && (
@@ -295,8 +297,8 @@ export default function MentorMonthlyReportsPage() {
                     </span>
                   )}
                 </Button>
-                <Link href="/reports/fellow-monthly/new">
-                  <Button size="sm">
+                <Link href="/reports/fellow-monthly/new" data-tooltip="Create a new fellow monthly report">
+                  <Button size="sm" tooltip="Create a new fellow monthly report">
                     <Plus className="h-4 w-4 mr-1" /> New Fellow Monthly Report
                   </Button>
                 </Link>
@@ -331,7 +333,7 @@ export default function MentorMonthlyReportsPage() {
                       <FileText className="h-8 w-8 text-gray-300" />
                       <p>No fellow monthly reports found.</p>
                       {canCreate && (
-                        <Link href="/reports/fellow-monthly/new">
+                        <Link href="/reports/fellow-monthly/new" data-tooltip="Create your first fellow monthly report">
                           <span className="text-orange-600 hover:underline">
                             Create your first fellow monthly report
                           </span>
@@ -372,8 +374,8 @@ export default function MentorMonthlyReportsPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">
-                          <Link href={`/reports/fellow-monthly/${r._id}`}>
-                            <Button variant="ghost" size="icon" aria-label="View">
+                          <Link href={`/reports/fellow-monthly/${r._id}`} data-tooltip="View fellow monthly report details">
+                            <Button variant="ghost" size="icon" aria-label="View" tooltip="View fellow monthly report details">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -383,6 +385,7 @@ export default function MentorMonthlyReportsPage() {
                               size="icon"
                               aria-label="Delete"
                               onClick={() => handleDelete(r._id)}
+                              tooltip="Delete this fellow monthly report"
                             >
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
@@ -419,6 +422,7 @@ export default function MentorMonthlyReportsPage() {
                   size="sm"
                   disabled={pagination.page <= 1}
                   onClick={() => setPage((p) => p - 1)}
+                  tooltip="Go to previous page"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -427,6 +431,7 @@ export default function MentorMonthlyReportsPage() {
                   size="sm"
                   disabled={pagination.page >= pagination.totalPages}
                   onClick={() => setPage((p) => p + 1)}
+                  tooltip="Go to next page"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

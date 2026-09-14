@@ -7,3 +7,4 @@ export { Badge } from "./Badge";
 export { ScoreCard } from "./ScoreCard";
 export { LocationSelector } from "./LocationSelector";
 export { SearchableSelect } from "./SearchableSelect";
+export { Tooltip, TooltipProvider, useTooltip, type TooltipProps, type TooltipSide, type TooltipAlign } from "./Tooltip";

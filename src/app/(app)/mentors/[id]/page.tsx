@@ -164,7 +164,7 @@ export default function MentorDetailsPage({
             <Header title="Mentor Details" subtitle="View details and manage access" />
 
             <div className="p-6 space-y-4 max-w-4xl mx-auto">
-                <Button variant="ghost" onClick={() => router.push("/mentors")} className="mb-4">
+                <Button variant="ghost" onClick={() => router.push("/mentors")} tooltip="Return to mentors management" className="mb-4">
                     <ArrowLeft className="h-4 w-4 mr-2" /> Back to Mentors
                 </Button>
 
@@ -222,6 +222,7 @@ export default function MentorDetailsPage({
                                             onClick={() => router.push(`/mentors/${id}/reports`)}
                                             variant="secondary"
                                             className="w-full justify-start"
+                                            tooltip="Inspect all weekly, monthly, and fellow monthly reports submitted by this mentor"
                                         >
                                             <FileText className="h-4 w-4 mr-2" /> View Reports
                                         </Button>
@@ -232,7 +233,12 @@ export default function MentorDetailsPage({
                                 )}
                                 {(user?.role === "admin" || user?.role === "coordinator" || user?.role === "zonal_desk_officer") && (
                                     <div>
-                                        <Button onClick={openEditModal} variant="secondary" className="w-full justify-start">
+                                        <Button
+                                            onClick={openEditModal}
+                                            variant="secondary"
+                                            className="w-full justify-start"
+                                            tooltip="Modify mentor details, phone, and state/LGA coverage"
+                                        >
                                             <Pencil className="h-4 w-4 mr-2" /> Edit Profile
                                         </Button>
                                         <p className="text-xs text-gray-500 mt-2">
@@ -242,7 +248,12 @@ export default function MentorDetailsPage({
                                 )}
                                 {user?.role === "admin" && (
                                     <div>
-                                        <Button onClick={() => setResetModalOpen(true)} variant="secondary" className="w-full justify-start">
+                                        <Button
+                                            onClick={() => setResetModalOpen(true)}
+                                            variant="secondary"
+                                            className="w-full justify-start"
+                                            tooltip="Reset mentor account password"
+                                        >
                                             <Key className="h-4 w-4 mr-2" /> Reset Password
                                         </Button>
                                         <p className="text-xs text-gray-500 mt-2">
@@ -259,6 +270,7 @@ export default function MentorDetailsPage({
                                             }}
                                             variant="secondary"
                                             className="w-full justify-start"
+                                            tooltip="Change account login email address and generate temporary credentials"
                                         >
                                             <AtSign className="h-4 w-4 mr-2" /> Change Email
                                         </Button>
@@ -278,6 +290,7 @@ export default function MentorDetailsPage({
                                             }}
                                             variant={mentor?.active ? "destructive" : "default"}
                                             className="w-full justify-start"
+                                            tooltip={mentor?.active ? "Deactivate mentor account" : "Reactivate mentor account"}
                                         >
                                             {mentor?.active ? "Deactivate Mentor" : "Activate Mentor"}
                                         </Button>
@@ -321,10 +334,10 @@ export default function MentorDetailsPage({
                                     setNewPassword("");
                                     setResetError("");
                                     setResetSuccess("");
-                                }} disabled={resetting}>
+                                }} disabled={resetting} tooltip="Cancel password reset">
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={resetting || newPassword.length < 6}>
+                                <Button type="submit" disabled={resetting || newPassword.length < 6} tooltip="Set new password for mentor">
                                     {resetting ? "Resetting…" : "Reset Password"}
                                 </Button>
                             </div>
@@ -366,10 +379,11 @@ export default function MentorDetailsPage({
                                         setChangeEmailSuccess("");
                                     }}
                                     disabled={changingEmail}
+                                    tooltip="Cancel email update"
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={changingEmail}>
+                                <Button type="submit" disabled={changingEmail} tooltip="Save new email address">
                                     {changingEmail ? "Updating…" : "Change Email"}
                                 </Button>
                             </div>
@@ -417,10 +431,10 @@ export default function MentorDetailsPage({
                                     setEditOpen(false);
                                     setEditError("");
                                     setEditSuccess("");
-                                }} disabled={saving}>
+                                }} disabled={saving} tooltip="Cancel profile changes">
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={saving || !editForm.name.trim()}>
+                                <Button type="submit" disabled={saving || !editForm.name.trim()} tooltip="Save updated mentor details">
                                     {saving ? "Saving…" : "Save Changes"}
                                 </Button>
                             </div>

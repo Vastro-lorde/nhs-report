@@ -195,7 +195,11 @@ export default function BulkUploadMentorsPage() {
                 {/* Upload Controls */}
                 <Card>
                     <CardContent className="pt-4 flex flex-wrap items-center gap-4">
-                        <Button variant="outline" onClick={handleDownloadTemplate}>
+                        <Button
+                            variant="outline"
+                            onClick={handleDownloadTemplate}
+                            tooltip="Download sample CSV template with expected columns"
+                        >
                             <Download className="h-4 w-4 mr-1" /> Download CSV Template
                         </Button>
 
@@ -208,7 +212,11 @@ export default function BulkUploadMentorsPage() {
                             ref={fileInputRef}
                             onChange={handleFileUpload}
                         />
-                        <Button onClick={() => fileInputRef.current?.click()} variant="secondary">
+                        <Button
+                            onClick={() => fileInputRef.current?.click()}
+                            variant="secondary"
+                            tooltip="Select and parse CSV file from your device"
+                        >
                             <Upload className="h-4 w-4 mr-1" /> Select CSV File
                         </Button>
 
@@ -224,10 +232,19 @@ export default function BulkUploadMentorsPage() {
                                         />
                                     </div>
                                 )}
-                                <Button onClick={handleUploadToBackend} disabled={loading || (user?.role === "admin" && !selectedCoordinatorId)}>
+                                <Button
+                                    onClick={handleUploadToBackend}
+                                    disabled={loading || (user?.role === "admin" && !selectedCoordinatorId)}
+                                    tooltip={`Upload ${mentors.length} mentor account(s) to system`}
+                                >
                                     {loading ? "Processing..." : `Upload to Server (${mentors.length})`}
                                 </Button>
-                                <Button variant="outline" onClick={() => setMentors([])} disabled={loading}>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setMentors([])}
+                                    disabled={loading}
+                                    tooltip="Clear all staged mentor rows"
+                                >
                                     Clear All
                                 </Button>
                             </>
@@ -292,7 +309,7 @@ export default function BulkUploadMentorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleDeleteMentor(idx)}
-                                                title="Delete Row"
+                                                tooltip="Remove this mentor row from upload list"
                                             >
                                                 <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
@@ -316,6 +333,7 @@ export default function BulkUploadMentorsPage() {
                                 variant="outline"
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
+                                tooltip="Previous page"
                             >
                                 Previous
                             </Button>
@@ -324,6 +342,7 @@ export default function BulkUploadMentorsPage() {
                                 variant="outline"
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
+                                tooltip="Next page"
                             >
                                 Next
                             </Button>

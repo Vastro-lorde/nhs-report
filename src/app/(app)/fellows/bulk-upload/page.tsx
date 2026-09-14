@@ -199,7 +199,11 @@ export default function BulkUploadFellowsPage() {
 
                 <Card>
                     <CardContent className="pt-4 flex flex-wrap items-center gap-4">
-                        <Button variant="outline" onClick={handleDownloadTemplate}>
+                        <Button
+                            variant="outline"
+                            onClick={handleDownloadTemplate}
+                            tooltip="Download sample CSV template with expected column headers"
+                        >
                             <Download className="h-4 w-4 mr-1" /> Download CSV Template
                         </Button>
 
@@ -212,16 +216,29 @@ export default function BulkUploadFellowsPage() {
                             ref={fileInputRef}
                             onChange={handleFileUpload}
                         />
-                        <Button onClick={() => fileInputRef.current?.click()} variant="secondary">
+                        <Button
+                            onClick={() => fileInputRef.current?.click()}
+                            variant="secondary"
+                            tooltip="Select and parse a CSV file from your device"
+                        >
                             <Upload className="h-4 w-4 mr-1" /> Select CSV File
                         </Button>
 
                         {fellows.length > 0 && (
                             <>
-                                <Button onClick={handleUploadToBackend} disabled={loading}>
+                                <Button
+                                    onClick={handleUploadToBackend}
+                                    disabled={loading}
+                                    tooltip={`Upload ${fellows.length} fellow records to the database`}
+                                >
                                     {loading ? "Processing..." : `Upload to Server (${fellows.length})`}
                                 </Button>
-                                <Button variant="outline" onClick={() => setFellows([])} disabled={loading}>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setFellows([])}
+                                    disabled={loading}
+                                    tooltip="Clear all staged fellow records"
+                                >
                                     Clear All
                                 </Button>
                             </>
@@ -293,7 +310,7 @@ export default function BulkUploadFellowsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleDeleteFellow(idx)}
-                                                title="Delete Row"
+                                                tooltip="Remove this row from upload list"
                                             >
                                                 <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
@@ -316,6 +333,7 @@ export default function BulkUploadFellowsPage() {
                                 variant="outline"
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
+                                tooltip="Previous page"
                             >
                                 Previous
                             </Button>
@@ -324,6 +342,7 @@ export default function BulkUploadFellowsPage() {
                                 variant="outline"
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
+                                tooltip="Next page"
                             >
                                 Next
                             </Button>

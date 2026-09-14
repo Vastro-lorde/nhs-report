@@ -394,6 +394,7 @@ export default function EditMentorMonthlyReportPage() {
                   disabled={challenges.length === 1}
                   aria-label="Remove"
                   className="shrink-0 mt-0.5"
+                  tooltip="Remove this challenge"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </Button>
@@ -405,6 +406,7 @@ export default function EditMentorMonthlyReportPage() {
               size="sm"
               onClick={() => addItem(challenges, setChallenges)}
               className="mt-1 text-orange-600"
+              tooltip="Add another challenge"
             >
               <Plus className="h-4 w-4 mr-1" /> Add Challenge
             </Button>
@@ -433,6 +435,7 @@ export default function EditMentorMonthlyReportPage() {
                   disabled={recommendations.length === 1}
                   aria-label="Remove"
                   className="shrink-0 mt-0.5"
+                  tooltip="Remove this recommendation"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </Button>
@@ -444,6 +447,7 @@ export default function EditMentorMonthlyReportPage() {
               size="sm"
               onClick={() => addItem(recommendations, setRecommendations)}
               className="mt-1 text-orange-600"
+              tooltip="Add another recommendation"
             >
               <Plus className="h-4 w-4 mr-1" /> Add Recommendation
             </Button>
@@ -475,6 +479,7 @@ export default function EditMentorMonthlyReportPage() {
                   type="button"
                   onClick={() => setProgressRating("")}
                   className="text-xs text-gray-400 hover:text-gray-600 underline"
+                  data-tooltip="Clear progress rating selection"
                 >
                   Clear
                 </button>
@@ -505,10 +510,15 @@ export default function EditMentorMonthlyReportPage() {
             variant="outline"
             onClick={() => router.push(`/reports/fellow-monthly/${id}`)}
             disabled={submitting}
+            tooltip="Discard unsaved changes and return to report"
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting || savingDraft}>
+          <Button
+            type="submit"
+            disabled={submitting || savingDraft}
+            tooltip={isDraft ? "Save draft and continue editing later" : "Save changes to this report"}
+          >
             {submitting || savingDraft ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -525,6 +535,7 @@ export default function EditMentorMonthlyReportPage() {
               type="button"
               disabled={submitting || savingDraft}
               onClick={() => save("submitted")}
+              tooltip="Finalize and submit monthly report"
             >
               {submitting ? (
                 <>

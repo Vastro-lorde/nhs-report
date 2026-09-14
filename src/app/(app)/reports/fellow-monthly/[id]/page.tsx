@@ -163,11 +163,11 @@ export default function MentorMonthlyReportDetailPage() {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         {/* Toolbar */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/reports/fellow-monthly")}>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/reports/fellow-monthly")} tooltip="Return to fellow monthly reports list">
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to list
           </Button>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={downloading}>
+            <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={downloading} tooltip="Download this report as a PDF">
               {downloading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-1" />
               ) : (
@@ -176,14 +176,14 @@ export default function MentorMonthlyReportDetailPage() {
               {downloading ? "Generating…" : "Download PDF"}
             </Button>
           {canEdit && (
-            <Link href={`/reports/fellow-monthly/${report._id}/edit`}>
-              <Button variant="outline" size="sm">
+            <Link href={`/reports/fellow-monthly/${report._id}/edit`} data-tooltip="Edit this fellow monthly report">
+              <Button variant="outline" size="sm" tooltip="Edit this fellow monthly report">
                 <Pencil className="h-4 w-4 mr-1" /> Edit
               </Button>
             </Link>
           )}
-          <Link href={`/reports/fellow-monthly/${report._id}/history`}>
-            <Button variant="outline" size="sm">
+          <Link href={`/reports/fellow-monthly/${report._id}/history`} data-tooltip="View revision history for this report">
+            <Button variant="outline" size="sm" tooltip="View revision history for this report">
               <History className="h-4 w-4 mr-1" /> Report History
             </Button>
           </Link>
@@ -194,6 +194,7 @@ export default function MentorMonthlyReportDetailPage() {
               onClick={handleDelete}
               disabled={deleting}
               className="text-red-600 border-red-300 hover:bg-red-50"
+              tooltip="Permanently delete this report"
             >
               {deleting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-1" />

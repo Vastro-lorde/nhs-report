@@ -77,6 +77,8 @@ export function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         className="relative p-2 text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100"
         aria-label="Notifications"
+        data-tooltip={unread > 0 ? `${unread} unread notification${unread === 1 ? "" : "s"}` : "Notifications"}
+        data-tooltip-side="bottom"
       >
         <Bell className="h-5 w-5" />
         {unread > 0 && (
@@ -95,6 +97,8 @@ export function NotificationBell() {
                 type="button"
                 onClick={markAllRead}
                 className="text-xs text-orange-700 hover:underline"
+                data-tooltip="Mark all notifications as read"
+                data-tooltip-side="left"
               >
                 Mark all read
               </button>
@@ -126,7 +130,13 @@ export function NotificationBell() {
                     </div>
                   );
                   return n.link ? (
-                    <Link key={n._id} href={n.link} onClick={() => onItemClick(n)}>
+                    <Link
+                      key={n._id}
+                      href={n.link}
+                      onClick={() => onItemClick(n)}
+                      data-tooltip="Open notification target"
+                      data-tooltip-side="left"
+                    >
                       {content}
                     </Link>
                   ) : (

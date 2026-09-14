@@ -1,4 +1,4 @@
-﻿/* ──────────────────────────────────────────
+/* ──────────────────────────────────────────
    Admin: Logs Page  (Activity / Exception / Integration)
    ────────────────────────────────────────── */
 "use client";
@@ -64,10 +64,10 @@ function Pagination({
     <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
       <span>Page {page} of {totalPages} ({total} entries)</span>
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={onPrev}>
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={onPrev} tooltip="Go to previous page">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={onNext}>
+        <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={onNext} tooltip="Go to next page">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -169,9 +169,9 @@ function ActivityLogsTab() {
               options={[{ label: "All Types", value: "" }, ...TARGET_TYPES.map((t) => ({ label: t, value: t }))]}
               className="w-full sm:w-44" />
             <DateRange from={from} to={to} onChange={handleDateChange} />
-            <Button variant="outline" size="sm" onClick={reset}><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
+            <Button variant="outline" size="sm" onClick={reset} tooltip="Reset search filters to default"><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
             <div className="flex-1" />
-            <Button variant="destructive" size="sm" onClick={clearLogs} disabled={isClearing}>
+            <Button variant="destructive" size="sm" onClick={clearLogs} disabled={isClearing} tooltip="Permanently clear all activity logs">
               <Trash2 className="h-4 w-4 mr-1" />{isClearing ? "Clearing…" : "Clear All"}
             </Button>
           </div>
@@ -283,9 +283,9 @@ function ExceptionLogsTab() {
             <Input label="Message" placeholder="Search error message…" value={message}
               onChange={(e) => { setMessage(e.target.value); setPage(1); }} className="w-full sm:w-56" />
             <DateRange from={from} to={to} onChange={handleDateChange} />
-            <Button variant="outline" size="sm" onClick={reset}><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
+            <Button variant="outline" size="sm" onClick={reset} tooltip="Reset search filters to default"><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
             <div className="flex-1" />
-            <Button variant="destructive" size="sm" onClick={clearLogs} disabled={isClearing}>
+            <Button variant="destructive" size="sm" onClick={clearLogs} disabled={isClearing} tooltip="Permanently clear all exception logs">
               <Trash2 className="h-4 w-4 mr-1" />{isClearing ? "Clearing…" : "Clear All"}
             </Button>
           </div>
@@ -317,6 +317,7 @@ function ExceptionLogsTab() {
                     <button
                       className="text-xs text-blue-600 underline"
                       onClick={() => { setSelectedLog(log); setCopied(false); }}
+                      data-tooltip="View full exception stack trace"
                     >
                       Show
                     </button>
@@ -337,7 +338,7 @@ function ExceptionLogsTab() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h3 className="text-lg font-semibold text-gray-900">Exception Details</h3>
-              <button onClick={() => setSelectedLog(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSelectedLog(null)} className="text-gray-400 hover:text-gray-600" data-tooltip="Close exception details modal">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -374,7 +375,7 @@ function ExceptionLogsTab() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-gray-500 text-xs">Stack Trace</p>
-                    <button onClick={copyStack} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors">
+                    <button onClick={copyStack} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors" data-tooltip="Copy stack trace to clipboard">
                       {copied ? <><Check className="h-3.5 w-3.5 text-green-600" /><span className="text-green-600">Copied!</span></>
                         : <><Copy className="h-3.5 w-3.5" /><span>Copy</span></>}
                     </button>
@@ -397,7 +398,7 @@ function ExceptionLogsTab() {
 
             {/* Footer */}
             <div className="px-6 py-3 border-t flex justify-end">
-              <Button variant="outline" size="sm" onClick={() => setSelectedLog(null)}>Close</Button>
+              <Button variant="outline" size="sm" onClick={() => setSelectedLog(null)} tooltip="Close exception details modal">Close</Button>
             </div>
           </div>
         </div>
@@ -474,9 +475,9 @@ function IntegrationLogsTab() {
                 { label: "Failure", value: "failure" },
               ]} className="w-full sm:w-36" />
             <DateRange from={from} to={to} onChange={handleDateChange} />
-            <Button variant="outline" size="sm" onClick={reset}><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
+            <Button variant="outline" size="sm" onClick={reset} tooltip="Reset search filters to default"><RefreshCw className="h-4 w-4 mr-1" />Reset</Button>
             <div className="flex-1" />
-            <Button variant="destructive" size="sm" onClick={clearLogs} disabled={isClearing}>
+            <Button variant="destructive" size="sm" onClick={clearLogs} disabled={isClearing} tooltip="Permanently clear all integration logs">
               <Trash2 className="h-4 w-4 mr-1" />{isClearing ? "Clearing…" : "Clear All"}
             </Button>
           </div>
@@ -516,6 +517,7 @@ function IntegrationLogsTab() {
                     <button
                       className="text-xs text-blue-600 underline"
                       onClick={() => setExpanded(expanded === log._id ? null : log._id)}
+                      data-tooltip={expanded === log._id ? "Collapse payload/error" : "Expand payload/error details"}
                     >
                       {expanded === log._id ? "Hide" : "Show"}
                     </button>
@@ -564,6 +566,7 @@ export default function LogsPage() {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
+              data-tooltip={`Switch to ${label}`}
               className={[
                 "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-md transition-colors",
                 activeTab === id

@@ -336,7 +336,7 @@ export default function EditReportPage() {
               <p className="text-sm text-gray-600">
                 Editing is not available for this weekly report.
               </p>
-              <Button type="button" variant="outline" onClick={() => router.push(`/reports/${id}`)}>
+              <Button type="button" variant="outline" onClick={() => router.push(`/reports/${id}`)} tooltip="Return to report details view">
                 Back to report
               </Button>
             </CardContent>
@@ -443,13 +443,13 @@ export default function EditReportPage() {
                     />
                   </div>
                   {fellows.length > 1 && (
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeFellow(i)}>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeFellow(i)} tooltip="Remove this fellow from supervision list">
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   )}
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={addFellow}>
+              <Button type="button" variant="outline" size="sm" onClick={addFellow} tooltip="Add another fellow under supervision">
                 <Plus className="h-4 w-4 mr-1" /> Add Fellow
               </Button>
             </div>
@@ -463,7 +463,7 @@ export default function EditReportPage() {
               <div className="flex items-center justify-between">
                 <CardTitle>Session {si + 1}: {session.menteeName || "New Session"}</CardTitle>
                 {sessions.length > 1 && (
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeSession(si)}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeSession(si)} tooltip="Remove this mentorship session">
                     <Trash2 className="h-4 w-4 text-red-500 mr-1" /> Remove
                   </Button>
                 )}
@@ -547,13 +547,13 @@ export default function EditReportPage() {
                         className="flex-1 min-h-[60px]"
                       />
                       {session.challenges.length > 1 && (
-                        <button type="button" onClick={() => removeBullet(si, "challenges", ci)} className="text-red-400 hover:text-red-600 mt-2">
+                        <button type="button" onClick={() => removeBullet(si, "challenges", ci)} className="text-red-400 hover:text-red-600 mt-2" data-tooltip="Remove this challenge">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
                     </div>
                   ))}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "challenges")}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "challenges")} tooltip="Add another challenge bullet point">
                     <Plus className="h-3 w-3 mr-1" /> Add challenge
                   </Button>
                 </div>
@@ -571,13 +571,13 @@ export default function EditReportPage() {
                         className="flex-1 min-h-[60px]"
                       />
                       {session.solutions.length > 1 && (
-                        <button type="button" onClick={() => removeBullet(si, "solutions", sui)} className="text-red-400 hover:text-red-600 mt-2">
+                        <button type="button" onClick={() => removeBullet(si, "solutions", sui)} className="text-red-400 hover:text-red-600 mt-2" data-tooltip="Remove this solution">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
                     </div>
                   ))}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "solutions")}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "solutions")} tooltip="Add another solution bullet point">
                     <Plus className="h-3 w-3 mr-1" /> Add solution
                   </Button>
                 </div>
@@ -595,13 +595,13 @@ export default function EditReportPage() {
                         className="flex-1 min-h-[60px]"
                       />
                       {session.actionPlan.length > 1 && (
-                        <button type="button" onClick={() => removeBullet(si, "actionPlan", ai)} className="text-red-400 hover:text-red-600 mt-2">
+                        <button type="button" onClick={() => removeBullet(si, "actionPlan", ai)} className="text-red-400 hover:text-red-600 mt-2" data-tooltip="Remove this action item">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
                     </div>
                   ))}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "actionPlan")}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => addBullet(si, "actionPlan")} tooltip="Add another action plan item">
                     <Plus className="h-3 w-3 mr-1" /> Add action item
                   </Button>
                 </div>
@@ -610,7 +610,7 @@ export default function EditReportPage() {
           </Card>
         ))}
 
-        <Button type="button" variant="outline" onClick={addSession} className="w-full">
+        <Button type="button" variant="outline" onClick={addSession} className="w-full" tooltip="Add another mentorship session to this report">
           <Plus className="h-4 w-4 mr-2" /> Add Another Session
         </Button>
 
@@ -750,6 +750,7 @@ export default function EditReportPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline truncate max-w-md"
+                      data-tooltip="Open attached evidence file in a new tab"
                     >
                       {ev.url.split("/").pop()}
                     </a>
@@ -759,6 +760,7 @@ export default function EditReportPage() {
                         setEvidence((prev) => prev.filter((_, idx) => idx !== i));
                       }}
                       className="text-red-400 hover:text-red-600"
+                      data-tooltip="Remove this attachment"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -794,6 +796,7 @@ export default function EditReportPage() {
                     const input = (e.target as HTMLElement).closest("label")?.querySelector("input");
                     input?.click();
                   }}
+                  tooltip="Upload evidence or supporting documents (JPEG, PNG, WebP, PDF)"
                 >
                   <Upload className="h-4 w-4 mr-1" />
                   {uploadingIdx !== null ? "Uploading…" : "Upload File"}
@@ -808,10 +811,14 @@ export default function EditReportPage() {
 
         {/* ── Submit ──────────────────── */}
         <div className="flex flex-col sm:flex-row justify-end gap-3 pb-8">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button type="button" variant="outline" onClick={() => router.back()} tooltip="Discard unsaved changes and go back">
             Cancel
           </Button>
-          <Button type="submit" disabled={loading || savingDraft}>
+          <Button
+            type="submit"
+            disabled={loading || savingDraft}
+            tooltip={isDraft ? "Save draft and continue editing later" : "Save changes to this report"}
+          >
             {isDraft
               ? savingDraft
                 ? "Saving…"
@@ -825,6 +832,7 @@ export default function EditReportPage() {
               type="button"
               disabled={loading || savingDraft}
               onClick={() => save(ReportStatus.SUBMITTED)}
+              tooltip="Finalize and submit report for review"
             >
               {loading ? "Submitting…" : "Submit Report"}
             </Button>

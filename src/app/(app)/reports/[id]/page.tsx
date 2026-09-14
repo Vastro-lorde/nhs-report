@@ -109,27 +109,27 @@ export default function ReportDetailPage() {
       <div className="p-6 max-w-4xl space-y-6">
         {/* Actions bar */}
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.back()} tooltip="Return to previous page">
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
-          <PDFDownloadButton report={report} size="sm">
+          <PDFDownloadButton report={report} size="sm" tooltip="Download formatted report as PDF">
             <FileDown className="h-4 w-4 mr-1" /> Download PDF
           </PDFDownloadButton>
           {/* Edit — only when the server says this viewer can edit */}
           {report.canEdit && (
               <Link href={`/reports/${report._id}/edit`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" tooltip="Edit this weekly report submission">
                   <Pencil className="h-4 w-4 mr-1" /> Edit
                 </Button>
               </Link>
             )}
           <Link href={`/reports/${report._id}/history`}>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" tooltip="Inspect version audit history for this report">
               <History className="h-4 w-4 mr-1" /> Report History
             </Button>
           </Link>
           {canDelete && (
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Button variant="destructive" size="sm" onClick={handleDelete} tooltip="Permanently delete this weekly report">
               <Trash2 className="h-4 w-4 mr-1" /> Delete
             </Button>
           )}
@@ -468,6 +468,7 @@ export default function ReportDetailPage() {
                     size="sm"
                     disabled={commentLoading || !commentBody.trim()}
                     onClick={handleAddComment}
+                    tooltip="Post comment (Ctrl+Enter)"
                   >
                     <Send className="h-4 w-4" />
                   </Button>

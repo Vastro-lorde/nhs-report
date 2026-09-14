@@ -60,7 +60,7 @@ export default function WeeklyReportHistoryPage() {
       <Header title="Report History" subtitle="Weekly Report" />
 
       <div className="p-6 max-w-4xl mx-auto space-y-6">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/reports/${id}`)}>
+        <Button variant="ghost" size="sm" onClick={() => router.push(`/reports/${id}`)} tooltip="Return to report details view">
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to report
         </Button>
 
@@ -104,6 +104,7 @@ export default function WeeklyReportHistoryPage() {
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : entry._id)}
                           className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                          data-tooltip={isExpanded ? "Collapse snapshot details" : "Expand snapshot details"}
                         >
                           {isExpanded ? (
                             <ChevronUp className="h-3 w-3" />

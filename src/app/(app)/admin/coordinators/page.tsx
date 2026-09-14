@@ -140,10 +140,10 @@ function CoordinatorModal({
                         </div>
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel and close modal">
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} tooltip={coordinator ? "Save changes to coordinator" : "Create new coordinator account"}>
                             {loading ? "Saving…" : (coordinator ? "Save Changes" : "Create Coordinator")}
                         </Button>
                     </div>
@@ -233,10 +233,10 @@ function ChangeEmailModal({
                             />
                         </div>
                         <div className="flex justify-end gap-3 px-6 pb-6">
-                            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+                            <Button type="button" variant="outline" onClick={onClose} disabled={loading} tooltip="Cancel email update">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading}>
+                            <Button type="submit" disabled={loading} tooltip="Update login email and send temporary password">
                                 {loading ? "Updating…" : "Change Email"}
                             </Button>
                         </div>
@@ -310,10 +310,10 @@ function ResetPasswordModal({
                             />
                         </div>
                         <div className="flex justify-end gap-3 px-6 pb-6">
-                            <Button type="button" variant="outline" onClick={onClose}>
+                            <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel password reset">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading}>
+                            <Button type="submit" disabled={loading} tooltip="Confirm password reset for this coordinator">
                                 {loading ? "Resetting…" : "Reset Password"}
                             </Button>
                         </div>
@@ -470,12 +470,12 @@ export default function CoordinatorsPage() {
                             />
                             <div className="flex-1"></div>
                             {selectedIds.length > 0 && (
-                                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
+                                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk} tooltip={`Permanently delete ${selectedIds.length} selected coordinator(s)`}>
                                     <Trash2 className="h-4 w-4 mr-1" />
                                     {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
                                 </Button>
                             )}
-                            <Button size="sm" onClick={openCreate}>
+                            <Button size="sm" onClick={openCreate} tooltip="Create a new coordinator account">
                                 <Plus className="h-4 w-4 mr-1" /> Add Coordinator
                             </Button>
                         </div>
@@ -543,7 +543,7 @@ export default function CoordinatorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => openEdit(c)}
-                                                title="Edit Details"
+                                                tooltip="Edit coordinator details and assigned zones"
                                             >
                                                 <Pencil className="h-4 w-4 text-blue-600" />
                                             </Button>
@@ -551,7 +551,7 @@ export default function CoordinatorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => openReset(c._id)}
-                                                title="Reset Password"
+                                                tooltip="Reset coordinator password"
                                             >
                                                 <KeyRound className="h-4 w-4 text-gray-600" />
                                             </Button>
@@ -559,7 +559,7 @@ export default function CoordinatorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => openChangeEmail(c)}
-                                                title="Change Email"
+                                                tooltip="Change coordinator login email"
                                             >
                                                 <AtSign className="h-4 w-4 text-gray-600" />
                                             </Button>
@@ -567,7 +567,7 @@ export default function CoordinatorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => toggleAiAccess(c)}
-                                                title={c.aiAccessEnabled ? "Disable AI Access" : "Enable AI Access"}
+                                                tooltip={c.aiAccessEnabled ? "Disable AI access" : "Enable AI access"}
                                             >
                                                 <Sparkles className={`h-4 w-4 ${c.aiAccessEnabled ? "text-yellow-500" : "text-gray-400"}`} />
                                             </Button>
@@ -575,7 +575,7 @@ export default function CoordinatorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => toggleActive(c)}
-                                                title={c.active ? "Suspend" : "Activate"}
+                                                tooltip={c.active ? "Suspend coordinator account" : "Activate coordinator account"}
                                             >
                                                 {c.active ? (
                                                     <UserX className="h-4 w-4 text-red-500" />
@@ -587,7 +587,7 @@ export default function CoordinatorsPage() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handlePermanentDelete(c)}
-                                                title="Permanently delete"
+                                                tooltip="Permanently delete coordinator"
                                             >
                                                 <Trash2 className="h-4 w-4 text-red-600" />
                                             </Button>
@@ -604,10 +604,10 @@ export default function CoordinatorsPage() {
                     <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>Page {page} of {totalPages}</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} tooltip="Go to previous page">
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} tooltip="Go to next page">
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>

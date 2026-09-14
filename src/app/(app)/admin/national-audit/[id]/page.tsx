@@ -110,18 +110,18 @@ export default function NationalAuditDetailPage() {
     return (
         <>
             <div className="flex items-center justify-between gap-4 px-6 pt-6 -mb-2">
-                <Link href="/admin/national-audit">
-                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900">
+                <Link href="/admin/national-audit" data-tooltip="Return to national audits list">
+                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900" tooltip="Return to national audits list">
                         <ChevronLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                 </Link>
                 <div className="flex gap-2">
-                    <Button onClick={handleDownloadPDF} disabled={pdfGenerating}>
+                    <Button onClick={handleDownloadPDF} disabled={pdfGenerating} tooltip="Export national audit report as PDF">
                         <Download className="h-4 w-4 mr-2" />
                         {pdfGenerating ? "Generating PDF…" : "Download PDF"}
                     </Button>
                     {isAdmin && (
-                        <Button variant="destructive" onClick={handleDelete}>
+                        <Button variant="destructive" onClick={handleDelete} tooltip="Permanently delete national audit report">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                         </Button>

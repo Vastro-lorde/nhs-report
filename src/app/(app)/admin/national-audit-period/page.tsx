@@ -288,6 +288,7 @@ export default function PeriodicNationalAuditPage() {
                         setRangeMode("preset");
                         setGenerated(null);
                       }}
+                      tooltip="Switch to predefined quarter or half-year presets"
                     >
                       Presets
                     </Button>
@@ -299,6 +300,7 @@ export default function PeriodicNationalAuditPage() {
                         setRangeMode("custom");
                         setGenerated(null);
                       }}
+                      tooltip="Switch to custom month range selection"
                     >
                       Custom Range
                     </Button>
@@ -316,6 +318,7 @@ export default function PeriodicNationalAuditPage() {
                             setSelectedPreset(preset.key);
                             setGenerated(null);
                           }}
+                          tooltip={`Select ${preset.label} range for ${year}`}
                         >
                           {preset.label}
                         </Button>
@@ -368,7 +371,7 @@ export default function PeriodicNationalAuditPage() {
                 <p className="text-sm text-gray-600">
                   Selected: <span className="font-medium text-gray-900">{monthShortLabel(activeRange.startMonth)} to {monthShortLabel(activeRange.endMonth)}</span>
                 </p>
-                <Button onClick={handleGenerate} disabled={!canGenerate || generating}>
+                <Button onClick={handleGenerate} disabled={!canGenerate || generating} tooltip="Analyze and generate periodic national audit report">
                   {generating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -400,7 +403,7 @@ export default function PeriodicNationalAuditPage() {
                   </p>
                 </div>
                 {isAdmin && (
-                  <Button onClick={handleSave} disabled={saving}>
+                  <Button onClick={handleSave} disabled={saving} tooltip="Save this generated periodic national audit">
                     {saving ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -475,8 +478,8 @@ export default function PeriodicNationalAuditPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Link href={`/admin/national-audit-period/${audit._id}`}>
-                          <Button variant="ghost" size="icon" aria-label="View Audit">
+                        <Link href={`/admin/national-audit-period/${audit._id}`} data-tooltip="View periodic national audit details">
+                          <Button variant="ghost" size="icon" aria-label="View Audit" tooltip="View periodic national audit details">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -486,6 +489,7 @@ export default function PeriodicNationalAuditPage() {
                             size="icon"
                             aria-label="Delete Audit"
                             onClick={() => handleDelete(audit._id)}
+                            tooltip="Permanently delete periodic national audit"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>

@@ -140,11 +140,11 @@ function AdminModal({
                         />
                     </div>
                     <div className="flex justify-end gap-3 px-6 pb-6">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button type="button" variant="outline" onClick={onClose} tooltip="Close modal without saving">
                             Close
                         </Button>
                         {!isDisabled && (
-                            <Button type="submit" disabled={loading}>
+                            <Button type="submit" disabled={loading} tooltip={admin ? "Save changes to administrator" : "Create new administrator account"}>
                                 {loading ? "Saving…" : (admin ? "Save Changes" : "Create Administrator")}
                             </Button>
                         )}
@@ -218,10 +218,10 @@ function ResetPasswordModal({
                             />
                         </div>
                         <div className="flex justify-end gap-3 px-6 pb-6">
-                            <Button type="button" variant="outline" onClick={onClose}>
+                            <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel password reset">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading}>
+                            <Button type="submit" disabled={loading} tooltip="Confirm password reset for this administrator">
                                 {loading ? "Resetting…" : "Reset Password"}
                             </Button>
                         </div>
@@ -382,12 +382,12 @@ export default function AdminsPage() {
                             />
                             <div className="flex-1"></div>
                             {selectedIds.length > 0 && (
-                                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
+                                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk} tooltip={`Permanently delete ${selectedIds.length} selected administrator(s)`}>
                                     <Trash2 className="h-4 w-4 mr-1" />
                                     {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
                                 </Button>
                             )}
-                            <Button size="sm" onClick={openCreate}>
+                            <Button size="sm" onClick={openCreate} tooltip="Create a new administrator account">
                                 <Plus className="h-4 w-4 mr-1" /> Add Administrator
                             </Button>
                         </div>
@@ -471,7 +471,7 @@ export default function AdminsPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => openEdit(a)}
-                                                    title={cannotModify ? "View Details" : "Edit Details"}
+                                                    tooltip={cannotModify ? "View administrator details" : "Edit administrator details"}
                                                 >
                                                     <Pencil className="h-4 w-4 text-blue-600" />
                                                 </Button>
@@ -479,7 +479,7 @@ export default function AdminsPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => openReset(a)}
-                                                    title="Reset Password"
+                                                    tooltip="Reset administrator password"
                                                     disabled={cannotModify}
                                                 >
                                                     <KeyRound className="h-4 w-4 text-gray-600 hover:text-gray-900" />
@@ -488,7 +488,7 @@ export default function AdminsPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => toggleAiAccess(a)}
-                                                    title={a.aiAccessEnabled ? "Disable AI Access" : "Enable AI Access"}
+                                                    tooltip={a.aiAccessEnabled ? "Disable AI access" : "Enable AI access"}
                                                     disabled={!isRootAdmin}
                                                 >
                                                     <Sparkles className={`h-4 w-4 ${a.aiAccessEnabled ? "text-yellow-500" : "text-gray-400"}`} />
@@ -497,7 +497,7 @@ export default function AdminsPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => toggleActive(a)}
-                                                    title={a.active ? "Suspend" : "Activate"}
+                                                    tooltip={a.active ? "Suspend administrator account" : "Activate administrator account"}
                                                     disabled={isSelf || cannotModify}
                                                 >
                                                     {a.active ? (
@@ -520,10 +520,10 @@ export default function AdminsPage() {
                     <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>Page {page} of {totalPages}</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} tooltip="Go to previous page">
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} tooltip="Go to next page">
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>

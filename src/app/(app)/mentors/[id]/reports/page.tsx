@@ -170,7 +170,7 @@ export default function MentorReportsPage({
             />
 
             <div className="p-6 space-y-4">
-                <Button variant="ghost" onClick={() => router.push(`/mentors/${id}`)} className="mb-2">
+                <Button variant="ghost" onClick={() => router.push(`/mentors/${id}`)} tooltip="Return to mentor details" className="mb-2">
                     <ArrowLeft className="h-4 w-4 mr-2" /> Back to Mentor Details
                 </Button>
 
@@ -185,6 +185,7 @@ export default function MentorReportsPage({
                             <button
                                 key={t.key}
                                 onClick={() => setActiveTab(t.key)}
+                                data-tooltip={`Switch to ${t.label}`}
                                 className={`whitespace-nowrap border-b-2 px-1 py-2 text-sm font-medium transition-colors ${activeTab === t.key
                                         ? "border-orange-600 text-orange-700"
                                         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
@@ -228,7 +229,7 @@ export default function MentorReportsPage({
                                                     <td className="px-4 py-3">{format(new Date(r.createdAt), "MMM d, yyyy")}</td>
                                                     <td className="px-4 py-3 text-right">
                                                         <Link href={`/reports/${r._id}`}>
-                                                            <Button variant="ghost" size="icon" aria-label="View Report">
+                                                            <Button variant="ghost" size="icon" aria-label="View Report" tooltip="View complete weekly report">
                                                                 <Eye className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
@@ -276,7 +277,7 @@ export default function MentorReportsPage({
                                                     <td className="px-4 py-3 text-gray-600 truncate max-w-75 hidden sm:table-cell">{r.summaryText}</td>
                                                     <td className="px-4 py-3 text-right">
                                                         <Link href={`/reports/monthly/${r._id}`}>
-                                                            <Button variant="ghost" size="icon" aria-label="View Report">
+                                                            <Button variant="ghost" size="icon" aria-label="View Report" tooltip="View complete monthly report">
                                                                 <Eye className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
@@ -341,7 +342,7 @@ export default function MentorReportsPage({
                                                         </td>
                                                         <td className="px-4 py-3 text-right">
                                                             <Link href={`/reports/fellow-monthly/${r._id}`}>
-                                                                <Button variant="ghost" size="icon" aria-label="View">
+                                                                <Button variant="ghost" size="icon" aria-label="View" tooltip="View fellow monthly report">
                                                                     <Eye className="h-4 w-4" />
                                                                 </Button>
                                                             </Link>
@@ -388,10 +389,10 @@ function Pagination({
                 Page {page} of {totalPages} ({total} report{total === 1 ? "" : "s"})
             </span>
             <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={onPrev}>
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={onPrev} tooltip="Previous page">
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={onNext}>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={onNext} tooltip="Next page">
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>

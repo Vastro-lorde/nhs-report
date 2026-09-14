@@ -98,8 +98,8 @@ export default function NewMonthlyReportPage() {
     return (
         <>
             <div className="flex items-center gap-4 px-6 pt-6 -mb-2">
-                <Link href="/reports/monthly">
-                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900">
+                <Link href="/reports/monthly" data-tooltip="Return to monthly reports list">
+                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900" tooltip="Return to monthly reports list">
                         <ChevronLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                 </Link>
@@ -147,6 +147,7 @@ export default function NewMonthlyReportPage() {
                                         disabled={aiLoading || !month}
                                         onClick={handleGenerateAI}
                                         className="shrink-0"
+                                        tooltip="Use AI to analyze reports and generate a structured zonal audit"
                                     >
                                         {aiLoading ? (
                                             <>
@@ -170,12 +171,13 @@ export default function NewMonthlyReportPage() {
                                             </span>
                                             <div className="flex items-center gap-2">
                                                 {savedAuditId && (
-                                                    <Link href={`/reports/zonal-audits/${savedAuditId}`}>
+                                                    <Link href={`/reports/zonal-audits/${savedAuditId}`} data-tooltip="View saved zonal audit details">
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-xs text-blue-700"
+                                                            tooltip="View saved zonal audit details"
                                                         >
                                                             <Eye className="h-3.5 w-3.5 mr-1" />
                                                             View
@@ -189,6 +191,7 @@ export default function NewMonthlyReportPage() {
                                                     className="text-xs text-green-700"
                                                     disabled={saving}
                                                     onClick={handleSaveZonalAudit}
+                                                    tooltip="Save this AI-generated zonal audit report"
                                                 >
                                                     <Save className="h-3.5 w-3.5 mr-1" />
                                                     {saving ? "Saving…" : "Save"}
@@ -199,6 +202,7 @@ export default function NewMonthlyReportPage() {
                                                     size="sm"
                                                     className="text-red-500 text-xs"
                                                     onClick={() => setZonalAuditData(null)}
+                                                    tooltip="Discard current AI audit preview"
                                                 >
                                                     Discard
                                                 </Button>
@@ -212,9 +216,9 @@ export default function NewMonthlyReportPage() {
                                     <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm font-medium">
                                         Zonal audit saved successfully.{" "}
                                         {savedAuditId ? (
-                                            <Link href={`/reports/zonal-audits/${savedAuditId}`} className="underline font-semibold">View saved audit</Link>
+                                            <Link href={`/reports/zonal-audits/${savedAuditId}`} className="underline font-semibold" data-tooltip="Open saved zonal audit">View saved audit</Link>
                                         ) : (
-                                            <Link href="/reports/zonal-audits" className="underline font-semibold">View all audits</Link>
+                                            <Link href="/reports/zonal-audits" className="underline font-semibold" data-tooltip="View all zonal audits">View all audits</Link>
                                         )}
                                     </div>
                                 )}
@@ -228,7 +232,7 @@ export default function NewMonthlyReportPage() {
                                     <p className="text-xs text-gray-500 mb-2">
                                         {isMentor
                                             ? "Write a high-level overview of your mentoring activities, successes, and challenges for the month."
-                                            : "Write a high-level overview of the mentoring activities, successes, and challenges observed across your zone for the month."}
+                                             : "Write a high-level overview of the mentoring activities, successes, and challenges observed across your zone for the month."}
                                     </p>
                                     <textarea
                                         className="w-full h-48 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
@@ -252,7 +256,7 @@ export default function NewMonthlyReportPage() {
 
                 {!isCoordinator && (
                     <div className="flex justify-end pt-4">
-                        <Button type="submit" size="lg" disabled={loading}>
+                        <Button type="submit" size="lg" disabled={loading} tooltip={`Snapshot data and generate ${reportTypeLabel}`}>
                             {loading ? "Aggregating Data..." : `Generate ${reportTypeLabel}`}
                         </Button>
                     </div>

@@ -82,8 +82,8 @@ function ReassignMentorModal({
             />
           </div>
           <div className="flex justify-end gap-3 px-6 pb-6">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
-            <Button type="submit" disabled={loading}>{loading ? "Reassigning…" : "Reassign"}</Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} tooltip="Cancel reassignment">Cancel</Button>
+            <Button type="submit" disabled={loading} tooltip="Confirm reassignment to selected coordinator">{loading ? "Reassigning…" : "Reassign"}</Button>
           </div>
         </form>
       </div>
@@ -211,10 +211,10 @@ function CreateMentorModal({
             </div>
           </div>
           <div className="flex justify-end gap-3 px-6 pb-6">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} tooltip="Cancel mentor registration">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} tooltip="Create and onboard new mentor account">
               {loading ? "Creating…" : "Create Mentor"}
             </Button>
           </div>
@@ -426,7 +426,11 @@ export default function MentorsPage() {
                 ]}
                 className="w-full sm:w-48"
               />
-              <Button variant="outline" size="sm" onClick={() => {
+              <Button
+                variant="outline"
+                size="sm"
+                tooltip="Export current mentors roster to CSV spreadsheet"
+                onClick={() => {
                 const data = mentors.map(m => ({
                   Name: m.name,
                   Email: m.email,
@@ -442,7 +446,7 @@ export default function MentorsPage() {
               {session?.user?.role && (session.user.role === UserRole.COORDINATOR || session.user.role === UserRole.ADMIN) && (
                 <>
                   <Link href="/mentors/bulk-upload">
-                    <Button size="sm" variant="secondary">
+                    <Button size="sm" variant="secondary" tooltip="Bulk import multiple mentors using a CSV file">
                       <Upload className="h-4 w-4 mr-1" /> Bulk Upload Mentors
                     </Button>
                   </Link>
@@ -451,6 +455,7 @@ export default function MentorsPage() {
                     variant="secondary"
                     onClick={handleSendReminders}
                     disabled={isSendingReminders}
+                    tooltip="Send email reminders to all mentors about upcoming report deadlines"
                   >
                     <Bell className="h-4 w-4 mr-1" />
                     {isSendingReminders ? "Sending…" : "Notify Mentors"}
@@ -458,13 +463,19 @@ export default function MentorsPage() {
                 </>
               )}
               {canWrite && selectedIds.length > 0 && (
-                <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={isDeletingBulk}>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  disabled={isDeletingBulk}
+                  tooltip={`Permanently delete ${selectedIds.length} selected mentor(s)`}
+                >
                   <Trash2 className="h-4 w-4 mr-1" />
                   {isDeletingBulk ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
                 </Button>
               )}
               {canWrite && (
-              <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Button size="sm" onClick={() => setShowCreate(true)} tooltip="Add a new mentor account">
                 <Plus className="h-4 w-4 mr-1" /> Add Mentor
               </Button>
               )}
@@ -543,7 +554,7 @@ export default function MentorsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="View Details"
+                          tooltip="View mentor profile, assigned fellows, and reports"
                         >
                           View
                         </Button>
@@ -552,9 +563,8 @@ export default function MentorsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-
                         onClick={() => toggleActive(m)}
-                        title={m.active ? "Deactivate" : "Activate"}
+                        tooltip={m.active ? "Deactivate mentor account" : "Activate mentor account"}
                       >
                         {m.active ? (
                           <UserX className="h-4 w-4 text-red-500" />
@@ -569,7 +579,7 @@ export default function MentorsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => { setReassignMentor(m); setShowReassign(true); }}
-                            title="Reassign to another coordinator"
+                            tooltip="Reassign to another zonal coordinator"
                           >
                             <ArrowRightLeft className="h-4 w-4 text-blue-500" />
                           </Button>
@@ -577,7 +587,7 @@ export default function MentorsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handlePermanentDelete(m)}
-                            title="Permanently delete"
+                            tooltip="Permanently delete mentor and associated records"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
@@ -596,10 +606,22 @@ export default function MentorsPage() {
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span>Page {page} of {totalPages}</span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                tooltip="Previous page"
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                tooltip="Next page"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

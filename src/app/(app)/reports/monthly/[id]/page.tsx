@@ -120,18 +120,18 @@ export default function MonthlyReportDetailPage() {
     return (
         <>
             <div className="flex items-center justify-between gap-4 px-6 pt-6 -mb-2">
-                <Link href="/reports/monthly">
-                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900">
+                <Link href="/reports/monthly" data-tooltip="Return to monthly reports list">
+                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900" tooltip="Return to monthly reports list">
                         <ChevronLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                 </Link>
                 <div className="flex gap-2">
-                    <Button onClick={handleExportPDF} disabled={exporting}>
+                    <Button onClick={handleExportPDF} disabled={exporting} tooltip="Export monthly report as PDF document">
                         <FileDown className="h-4 w-4 mr-2" />
                         {exporting ? "Generating PDF..." : "Export as PDF"}
                     </Button>
                     {canDelete && (
-                        <Button variant="destructive" onClick={handleDelete}>
+                        <Button variant="destructive" onClick={handleDelete} tooltip="Permanently delete this monthly report">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                         </Button>
@@ -197,8 +197,8 @@ export default function MonthlyReportDetailPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <Link href={`/reports/${wr._id}`} target="_blank" data-html2canvas-ignore="true">
-                                            <Button variant="outline" size="sm">
+                                        <Link href={`/reports/${wr._id}`} target="_blank" data-html2canvas-ignore="true" data-tooltip="Open full weekly report in a new tab">
+                                            <Button variant="outline" size="sm" tooltip="Open full weekly report in a new tab">
                                                 <Eye className="h-4 w-4 mr-1" /> View Full
                                             </Button>
                                         </Link>

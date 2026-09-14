@@ -132,12 +132,16 @@ export default function ReportsListPage() {
                 />
               {isMentor && (
                 <Link href="/reports/new">
-                  <Button size="sm">
+                  <Button size="sm" tooltip="Create and submit a new weekly mentor report">
                     <Plus className="h-4 w-4 mr-1" /> New Report
                   </Button>
                 </Link>
               )}
-              <Button variant="outline" size="sm" onClick={() => {
+              <Button
+                variant="outline"
+                size="sm"
+                tooltip="Export filtered reports list to a CSV spreadsheet"
+                onClick={() => {
                 const data = reports.map(r => ({
                   Week: weekRangeLabelFromWeekKey(r.weekKey),
                   Mentor: r.mentor?.name ?? r.mentorName ?? "",
@@ -210,11 +214,12 @@ export default function ReportsListPage() {
                           variant="ghost"
                           size="icon"
                           aria-label={report.status === "draft" ? "Continue Draft" : "View Report"}
+                          tooltip={report.status === "draft" ? "Continue editing draft report" : "View complete report submission"}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <PDFDownloadButton report={report} size="icon" variant="ghost" aria-label="Download PDF">
+                      <PDFDownloadButton report={report} size="icon" variant="ghost" aria-label="Download PDF" tooltip="Download formatted report as PDF">
                         <FileDown className="h-4 w-4" />
                       </PDFDownloadButton>
                       {(canDelete || (isMentor && report.status === "draft")) && (
@@ -223,6 +228,7 @@ export default function ReportsListPage() {
                           size="icon"
                           aria-label="Delete Report"
                           onClick={() => handleDelete(report._id)}
+                          tooltip="Permanently delete this weekly report"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
@@ -247,6 +253,7 @@ export default function ReportsListPage() {
                 size="sm"
                 disabled={pagination.page <= 1}
                 onClick={() => setPage((p) => p - 1)}
+                tooltip="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -255,6 +262,7 @@ export default function ReportsListPage() {
                 size="sm"
                 disabled={pagination.page >= pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
+                tooltip="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

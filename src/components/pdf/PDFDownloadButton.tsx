@@ -18,9 +18,10 @@ interface PDFDownloadButtonProps extends VariantProps<typeof buttonVariants>, Re
   report: Report;
   className?: string;
   children?: React.ReactNode;
+  tooltip?: React.ReactNode;
 }
 
-export function PDFDownloadButton({ report, className, children, variant = "outline", size = "sm", ...rest }: PDFDownloadButtonProps) {
+export function PDFDownloadButton({ report, className, children, variant = "outline", size = "sm", tooltip = "Download formatted report as PDF", ...rest }: PDFDownloadButtonProps) {
   const [generating, setGenerating] = useState(false);
 
   const handleDownload = async () => {
@@ -50,6 +51,7 @@ export function PDFDownloadButton({ report, className, children, variant = "outl
       onClick={handleDownload}
       disabled={generating}
       className={className}
+      tooltip={tooltip}
       {...rest}
     >
       {children ?? (

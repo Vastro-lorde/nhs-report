@@ -285,7 +285,11 @@ export default function SchedulePage() {
               Connect your Google account so an admin can generate a persistent Meet link for you.
               You start recording and transcription manually inside each meeting.
             </p>
-            <Button onClick={connectGoogle} disabled={connectingGoogle}>
+            <Button
+              onClick={connectGoogle}
+              disabled={connectingGoogle}
+              tooltip="Connect your Google account to enable Google Meet integration"
+            >
               {connectingGoogle ? "Redirecting…" : "Connect Google Meet"}
             </Button>
           </CardContent>
@@ -300,7 +304,12 @@ export default function SchedulePage() {
               <p className="text-sm text-gray-800">
                 Connected as <span className="font-medium">{googleEmail}</span>
               </p>
-              <Button variant="secondary" onClick={connectGoogle} disabled={connectingGoogle}>
+              <Button
+                variant="secondary"
+                onClick={connectGoogle}
+                disabled={connectingGoogle}
+                tooltip="Reconnect your Google account to refresh access"
+              >
                 {connectingGoogle ? "Redirecting…" : "Reconnect"}
               </Button>
             </div>
@@ -326,7 +335,11 @@ export default function SchedulePage() {
                 onChange={(e) => setMeetingLink(e.target.value)}
                 className="flex-1"
               />
-              <Button onClick={saveMeetingLink} disabled={savingLink}>
+              <Button
+                onClick={saveMeetingLink}
+                disabled={savingLink}
+                tooltip="Save default meeting link for your sessions"
+              >
                 {savingLink ? "Saving…" : "Save link"}
               </Button>
             </div>

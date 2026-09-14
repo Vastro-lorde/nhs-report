@@ -26,6 +26,8 @@ export function Header({ title, subtitle, children }: HeaderProps) {
           onClick={toggleSidebar}
           className="md:hidden p-2 -ml-2 text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100"
           aria-label="Toggle Sidebar"
+          data-tooltip="Toggle navigation menu"
+          data-tooltip-side="bottom"
         >
           <Menu className="h-6 w-6" />
         </button>

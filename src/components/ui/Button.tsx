@@ -1,9 +1,7 @@
-/* ──────────────────────────────────────────
-   UI Component: Button (shadcn-style with CVA)
-   ────────────────────────────────────────── */
-import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Tooltip, type TooltipSide } from "./Tooltip";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -33,19 +31,35 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  tooltip?: ReactNode;
+  tooltipSide?: TooltipSide;
+}
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
-    return (
+  ({ className, variant, size, tooltip, tooltipSide = "top", title, ...props }, ref) => {
+    const effectiveTooltip = tooltip ?? title;
+    const buttonElement = (
       <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        title={tooltip ? undefined : title}
         {...props}
       />
     );
+
+    if (effectiveTooltip) {
+      return (
+        <Tooltip content={effectiveTooltip} side={tooltipSide}>
+          {buttonElement}
+        </Tooltip>
+      );
+    }
+
+    return buttonElement;
   }
 );
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
+

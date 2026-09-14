@@ -63,8 +63,8 @@ export default function MonthlyReportsPage() {
                             {total} report{total === 1 ? "" : "s"} found.
                         </div>
                         {canCreate && (
-                            <Link href="/reports/monthly/new">
-                                <Button size="sm">
+                            <Link href="/reports/monthly/new" data-tooltip="Create a new monthly summary report">
+                                <Button size="sm" tooltip="Create a new monthly summary report">
                                     <Plus className="h-4 w-4 mr-1" /> New Monthly Report
                                 </Button>
                             </Link>
@@ -96,7 +96,7 @@ export default function MonthlyReportsPage() {
                                             <FileText className="h-8 w-8 text-gray-300" />
                                             <p>No monthly reports generated yet.</p>
                                             {canCreate && (
-                                                <Link href="/reports/monthly/new">
+                                                <Link href="/reports/monthly/new" data-tooltip="Create your first monthly report">
                                                     <span className="text-orange-600 hover:underline">Create your first monthly report</span>
                                                 </Link>
                                             )}
@@ -122,8 +122,8 @@ export default function MonthlyReportsPage() {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex justify-end gap-1">
-                                                    <Link href={`/reports/monthly/${r._id}`}>
-                                                        <Button variant="ghost" size="icon" aria-label="View Report">
+                                                    <Link href={`/reports/monthly/${r._id}`} data-tooltip="View monthly report details">
+                                                        <Button variant="ghost" size="icon" aria-label="View Report" tooltip="View monthly report details">
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
@@ -133,6 +133,7 @@ export default function MonthlyReportsPage() {
                                                             size="icon"
                                                             aria-label="Delete Report"
                                                             onClick={() => handleDelete(r._id)}
+                                                            tooltip="Delete this monthly report"
                                                         >
                                                             <Trash2 className="h-4 w-4 text-red-600" />
                                                         </Button>

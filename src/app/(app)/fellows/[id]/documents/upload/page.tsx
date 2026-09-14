@@ -102,6 +102,8 @@ function DocumentActionModal({
                             type="button"
                             onClick={onClose}
                             disabled={loading}
+                            data-tooltip="Close dialog"
+                            data-tooltip-side="left"
                             className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             <X className="h-5 w-5" />
@@ -146,6 +148,7 @@ function DocumentActionModal({
                                 href={doc.url}
                                 target="_blank"
                                 rel="noreferrer"
+                                data-tooltip="Open file in new browser tab"
                                 className="text-xs font-medium text-orange-700 hover:underline shrink-0 flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-md shadow-2xs"
                             >
                                 <ExternalLink className="h-3 w-3" /> View
@@ -161,6 +164,7 @@ function DocumentActionModal({
                         variant="outline"
                         onClick={onClose}
                         disabled={loading}
+                        tooltip="Cancel and close dialog"
                     >
                         Cancel
                     </Button>
@@ -171,6 +175,7 @@ function DocumentActionModal({
                             variant="destructive"
                             onClick={onConfirm}
                             disabled={loading}
+                            tooltip="Move this document to the trash"
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >
                             {loading ? (
@@ -193,6 +198,7 @@ function DocumentActionModal({
                             variant="destructive"
                             onClick={onConfirm}
                             disabled={loading}
+                            tooltip="Permanently remove file from database and cloud storage"
                             className="bg-red-700 hover:bg-red-800 text-white font-semibold"
                         >
                             {loading ? (
@@ -214,6 +220,7 @@ function DocumentActionModal({
                             type="button"
                             onClick={onConfirm}
                             disabled={loading}
+                            tooltip="Restore document to active status"
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                         >
                             {loading ? (
@@ -437,7 +444,7 @@ export default function FellowDocumentUploadPage({
             />
 
             <div className="p-6 max-w-6xl mx-auto space-y-6">
-                <Button variant="ghost" onClick={() => router.back()} className="-ml-4 mb-2 hover:bg-gray-100">
+                <Button variant="ghost" onClick={() => router.back()} tooltip="Return to fellows management" className="-ml-4 mb-2 hover:bg-gray-100">
                     <ArrowLeft className="h-4 w-4 mr-2" /> Back to Fellows
                 </Button>
 
@@ -480,7 +487,7 @@ export default function FellowDocumentUploadPage({
                                             onChange={handleFileChange}
                                             disabled={uploading}
                                         />
-                                        <Button variant="secondary" disabled={uploading}>
+                                        <Button variant="secondary" disabled={uploading} tooltip="Browse local files (PDF, PNG, JPEG, WEBP)">
                                             <Plus className="h-4 w-4 mr-2" /> Select Files
                                         </Button>
                                     </div>
@@ -508,6 +515,7 @@ export default function FellowDocumentUploadPage({
                                                             size="icon"
                                                             onClick={() => removeFile(index)}
                                                             disabled={uploading}
+                                                            tooltip="Remove this file from upload queue"
                                                             className="text-gray-400 hover:text-red-600 h-7 w-7"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -529,6 +537,7 @@ export default function FellowDocumentUploadPage({
                                             className="w-full mt-2"
                                             onClick={handleUploadSubmit}
                                             disabled={uploading || filesToUpload.length === 0}
+                                            tooltip={`Upload and save ${filesToUpload.length} file(s)`}
                                         >
                                             {uploading ? (
                                                 <>
@@ -568,6 +577,7 @@ export default function FellowDocumentUploadPage({
                                             <button
                                                 type="button"
                                                 onClick={() => setFilterTab("all")}
+                                                data-tooltip="View all active and deleted documents"
                                                 className={`px-3 py-1 rounded-md transition-colors ${
                                                     filterTab === "all"
                                                         ? "bg-white text-gray-900 shadow-2xs font-semibold"
@@ -579,6 +589,7 @@ export default function FellowDocumentUploadPage({
                                             <button
                                                 type="button"
                                                 onClick={() => setFilterTab("active")}
+                                                data-tooltip="Filter by active documents only"
                                                 className={`px-3 py-1 rounded-md transition-colors ${
                                                     filterTab === "active"
                                                         ? "bg-white text-gray-900 shadow-2xs font-semibold"
@@ -590,6 +601,7 @@ export default function FellowDocumentUploadPage({
                                             <button
                                                 type="button"
                                                 onClick={() => setFilterTab("deleted")}
+                                                data-tooltip="Filter by deleted documents in trash"
                                                 className={`px-3 py-1 rounded-md transition-colors ${
                                                     filterTab === "deleted"
                                                         ? "bg-red-100 text-red-800 shadow-2xs font-semibold"
@@ -676,6 +688,7 @@ export default function FellowDocumentUploadPage({
                                                             href={doc.url}
                                                             target="_blank"
                                                             rel="noreferrer"
+                                                            data-tooltip="View document in new browser tab"
                                                             className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 hover:text-orange-800 hover:underline px-2.5 py-1.5 rounded-md hover:bg-orange-50 transition-colors"
                                                         >
                                                             <ExternalLink className="h-3.5 w-3.5" /> View
@@ -688,7 +701,7 @@ export default function FellowDocumentUploadPage({
                                                                 size="sm"
                                                                 onClick={() => triggerSoftDelete(doc)}
                                                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-8 px-2.5"
-                                                                title="Delete document"
+                                                                tooltip="Move document to trash"
                                                             >
                                                                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                                                             </Button>
@@ -704,7 +717,7 @@ export default function FellowDocumentUploadPage({
                                                                             size="sm"
                                                                             onClick={() => triggerRestore(doc)}
                                                                             className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-xs h-8 px-2.5"
-                                                                            title="Restore document"
+                                                                            tooltip="Restore document to active status"
                                                                         >
                                                                             <RotateCcw className="h-3.5 w-3.5 mr-1" /> Restore
                                                                         </Button>
@@ -713,7 +726,7 @@ export default function FellowDocumentUploadPage({
                                                                             size="sm"
                                                                             onClick={() => triggerPermanentDelete(doc)}
                                                                             className="text-xs h-8 px-2.5"
-                                                                            title="Permanently delete from database"
+                                                                            tooltip="Permanently delete document from storage"
                                                                         >
                                                                             <Trash2 className="h-3.5 w-3.5 mr-1" /> Permanent Delete
                                                                         </Button>
@@ -725,7 +738,7 @@ export default function FellowDocumentUploadPage({
                                                                             size="sm"
                                                                             onClick={() => triggerSoftDelete(doc)}
                                                                             className="text-amber-700 hover:text-amber-800 hover:bg-amber-50 text-xs h-8 px-2.5"
-                                                                            title="Move document to trash"
+                                                                            tooltip="Move document to trash"
                                                                         >
                                                                             <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                                                                         </Button>
@@ -734,7 +747,7 @@ export default function FellowDocumentUploadPage({
                                                                             size="sm"
                                                                             onClick={() => triggerPermanentDelete(doc)}
                                                                             className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-8 px-2"
-                                                                            title="Permanently delete immediately"
+                                                                            tooltip="Permanently purge document immediately"
                                                                         >
                                                                             <span className="text-[11px] font-medium text-red-500 hover:underline">Permanent</span>
                                                                         </Button>

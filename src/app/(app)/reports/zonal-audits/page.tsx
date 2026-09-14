@@ -106,8 +106,8 @@ export default function ZonalAuditsPage() {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex justify-end gap-1">
-                                                    <Link href={`/reports/zonal-audits/${a._id}`}>
-                                                        <Button variant="ghost" size="icon" aria-label="View Audit">
+                                                    <Link href={`/reports/zonal-audits/${a._id}`} data-tooltip="View zonal audit details">
+                                                        <Button variant="ghost" size="icon" aria-label="View Audit" tooltip="View zonal audit details">
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
@@ -117,6 +117,7 @@ export default function ZonalAuditsPage() {
                                                             size="icon"
                                                             aria-label="Delete Audit"
                                                             onClick={() => handleDelete(a._id)}
+                                                            tooltip="Permanently delete this zonal audit"
                                                         >
                                                             <Trash2 className="h-4 w-4 text-red-600" />
                                                         </Button>

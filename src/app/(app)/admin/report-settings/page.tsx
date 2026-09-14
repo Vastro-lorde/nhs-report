@@ -37,7 +37,10 @@ function ToggleRow({
         <p className="text-sm font-medium text-gray-800">{label}</p>
         <p className="text-xs text-gray-500 mt-0.5">{description}</p>
       </div>
-      <label className={["relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer", disabled ? "opacity-50 pointer-events-none" : ""].join(" ")}>
+      <label
+        className={["relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer", disabled ? "opacity-50 pointer-events-none" : ""].join(" ")}
+        data-tooltip={checked ? `Disable: ${label}` : `Enable: ${label}`}
+      >
         <input
           type="checkbox"
           className="sr-only"

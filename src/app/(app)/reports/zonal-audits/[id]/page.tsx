@@ -145,37 +145,37 @@ export default function ZonalAuditDetailPage() {
     return (
         <>
             <div className="flex items-center justify-between gap-4 px-6 pt-6 -mb-2">
-                <Link href="/reports/zonal-audits">
-                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900">
+                <Link href="/reports/zonal-audits" data-tooltip="Return to zonal audits list">
+                    <Button variant="ghost" size="sm" className="-ml-3 text-gray-500 hover:text-gray-900" tooltip="Return to zonal audits list">
                         <ChevronLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                 </Link>
                 <div className="flex gap-2">
                     {isEditing ? (
                         <>
-                            <Button onClick={handleSave} disabled={saving}>
+                            <Button onClick={handleSave} disabled={saving} tooltip="Save modifications to this zonal audit">
                                 <Save className="h-4 w-4 mr-2" />
                                 {saving ? "Saving…" : "Save Changes"}
                             </Button>
-                            <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
+                            <Button variant="outline" onClick={handleCancelEdit} disabled={saving} tooltip="Cancel editing and revert changes">
                                 <X className="h-4 w-4 mr-2" />
                                 Cancel
                             </Button>
                         </>
                     ) : (
                         <>
-                            <Button onClick={handleDownloadPDF} disabled={pdfGenerating}>
+                            <Button onClick={handleDownloadPDF} disabled={pdfGenerating} tooltip="Export zonal audit as a formatted PDF">
                                 <Download className="h-4 w-4 mr-2" />
                                 {pdfGenerating ? "Generating PDF…" : "Download PDF"}
                             </Button>
                             {canEdit && (
-                                <Button variant="outline" onClick={handleStartEdit}>
+                                <Button variant="outline" onClick={handleStartEdit} tooltip="Edit the contents of this zonal audit">
                                     <Pencil className="h-4 w-4 mr-2" />
                                     Edit
                                 </Button>
                             )}
                             {canDelete && (
-                                <Button variant="destructive" onClick={handleDelete}>
+                                <Button variant="destructive" onClick={handleDelete} tooltip="Permanently delete this zonal audit">
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Delete
                                 </Button>

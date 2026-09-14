@@ -95,7 +95,7 @@ export default function NationalAuditPage() {
                                     className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 />
                             </div>
-                            <Button onClick={handleGenerate} disabled={!month || generating}>
+                            <Button onClick={handleGenerate} disabled={!month || generating} tooltip="Analyze and generate AI-powered national audit">
                                 {generating ? (
                                     <>
                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -164,8 +164,8 @@ export default function NationalAuditPage() {
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex justify-end gap-1">
-                                                    <Link href={`/admin/national-audit/${a._id}`}>
-                                                        <Button variant="ghost" size="icon" aria-label="View Audit">
+                                                    <Link href={`/admin/national-audit/${a._id}`} data-tooltip="View national audit report">
+                                                        <Button variant="ghost" size="icon" aria-label="View Audit" tooltip="View national audit report">
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
@@ -175,6 +175,7 @@ export default function NationalAuditPage() {
                                                             size="icon"
                                                             aria-label="Delete Audit"
                                                             onClick={() => handleDelete(a._id)}
+                                                            tooltip="Permanently delete national audit"
                                                         >
                                                             <Trash2 className="h-4 w-4 text-red-600" />
                                                         </Button>
