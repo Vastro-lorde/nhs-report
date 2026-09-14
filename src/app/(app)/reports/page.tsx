@@ -217,7 +217,7 @@ export default function ReportsListPage() {
                       <PDFDownloadButton report={report} size="icon" variant="ghost" aria-label="Download PDF">
                         <FileDown className="h-4 w-4" />
                       </PDFDownloadButton>
-                      {canDelete && (
+                      {(canDelete || (isMentor && report.status === "draft")) && (
                         <Button
                           variant="ghost"
                           size="icon"

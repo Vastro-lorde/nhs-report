@@ -43,7 +43,8 @@ export default function ReportDetailPage() {
   const canDelete =
     session?.user &&
     (session.user.role === UserRole.ADMIN ||
-      session.user.role === UserRole.COORDINATOR);
+      session.user.role === UserRole.COORDINATOR ||
+      (session.user.role === UserRole.MENTOR && report?.status === "draft"));
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this weekly report? This action cannot be undone.")) return;

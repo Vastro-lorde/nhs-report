@@ -84,10 +84,11 @@ export async function GET(_request: NextRequest, { params }: Params) {
     userRole === UserRole.MENTOR || userRole === UserRole.COORDINATOR
       ? await AppSettings.findOne({}).lean()
       : null;
+  const isDraft = (report as any).status === ReportStatus.DRAFT;
   const isCurrentReportWeek = (report as any).weekKey === currentWeekKey();
   const canEdit =
     userRole === UserRole.ADMIN ||
-    (userRole === UserRole.MENTOR && isCurrentReportWeek && !settings?.blockWeeklyReportEdits?.mentor) ||
+    (userRole === UserRole.MENTOR && (isDraft || isCurrentReportWeek) && !settings?.blockWeeklyReportEdits?.mentor) ||
     (userRole === UserRole.COORDINATOR && !settings?.blockWeeklyReportEdits?.coordinator);
 
   const mentorUser = mentorDoc?.authId;
@@ -146,7 +147,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (!mentorDoc || report.mentor.toString() !== mentorDoc._id.toString()) {
       return jsonError("Forbidden", 403);
     }
-    if (report.weekKey !== currentWeekKey()) {
+    const isDraft = report.status === ReportStatus.DRAFT;
+    if (!isDraft && report.weekKey !== currentWeekKey()) {
       return jsonError("Mentors can only edit weekly reports for the current week.", 403);
     }
   } else if (userRole === UserRole.COORDINATOR) {
@@ -275,22 +277,32 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   return jsonOk(report);
 }
 
-// DELETE /api/reports/:id — admin or coordinator (own mentors) can delete weekly report
+// DELETE /api/reports/:id — admin, coordinator (own mentors), or mentor (own unsubmitted draft) can delete weekly report
 export async function DELETE(_request: NextRequest, { params }: Params) {
   const { session, error } = await requireAuth();
   if (error) return error;
 
   const userRole = session!.user.role as UserRole;
-
-  if (userRole !== UserRole.ADMIN && userRole !== UserRole.COORDINATOR) {
-    return jsonError("Forbidden", 403);
-  }
-
   const { id } = await params;
   await connectDB();
 
   const report = await WeeklyReport.findById(id);
   if (!report) return jsonError("Report not found", 404);
+
+  const isMentorOwnDraft =
+    userRole === UserRole.MENTOR &&
+    report.status === ReportStatus.DRAFT;
+
+  if (userRole !== UserRole.ADMIN && userRole !== UserRole.COORDINATOR && !isMentorOwnDraft) {
+    return jsonError("Forbidden", 403);
+  }
+
+  if (isMentorOwnDraft) {
+    const mentorDoc = await Mentor.findOne({ authId: session!.user.id });
+    if (!mentorDoc || report.mentor.toString() !== mentorDoc._id.toString()) {
+      return jsonError("Forbidden", 403);
+    }
+  }
 
   // Coordinators can only delete reports from mentors assigned to them
   if (userRole === UserRole.COORDINATOR) {
