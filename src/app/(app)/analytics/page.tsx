@@ -205,6 +205,7 @@ export default function AnalyticsPage() {
           size="sm"
           variant="outline"
           className="flex items-center gap-2"
+          tooltip="Capture and download analytics dashboard as PDF"
         >
           <Download className="w-4 h-4" />
           {exporting ? "Exporting..." : "Export as PDF"}
@@ -230,14 +231,47 @@ export default function AnalyticsPage() {
                 onChange={(e) => setDateTo(e.target.value)}
                 className="w-full sm:w-44"
               />
-              <Button size="sm" onClick={handleDateChange} disabled={loading}>
+              <Button
+                size="sm"
+                onClick={handleDateChange}
+                disabled={loading}
+                tooltip="Apply date range filter to charts"
+              >
                 {loading ? "Loading…" : "Apply"}
               </Button>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={resetToCurrentWeek}>This Week</Button>
-                <Button size="sm" variant="outline" onClick={() => setPresetRange(28)}>Last 4 Weeks</Button>
-                <Button size="sm" variant="outline" onClick={() => setPresetRange(90)}>Last 3 Months</Button>
-                <Button size="sm" variant="outline" onClick={() => setPresetRange(365)}>Last Year</Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={resetToCurrentWeek}
+                  tooltip="Filter charts to the current week"
+                >
+                  This Week
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPresetRange(28)}
+                  tooltip="Filter charts to the last 4 weeks"
+                >
+                  Last 4 Weeks
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPresetRange(90)}
+                  tooltip="Filter charts to the last 3 months"
+                >
+                  Last 3 Months
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPresetRange(365)}
+                  tooltip="Filter charts to the last year"
+                >
+                  Last Year
+                </Button>
               </div>
               <Select
                 label="Chart Type"
@@ -306,10 +340,15 @@ export default function AnalyticsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>State Performance Summary</CardTitle>
-                <Button variant="outline" size="sm" onClick={() => {
-                  const exportData = byState.map(s => ({ State: s.name, Reports: s.value }));
-                  exportToCSV(exportData, "state-performance");
-                }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const exportData = byState.map(s => ({ State: s.name, Reports: s.value }));
+                    exportToCSV(exportData, "state-performance");
+                  }}
+                  tooltip="Export state performance breakdown to CSV"
+                >
                   <Download className="h-4 w-4 mr-1" /> Export CSV
                 </Button>
               </div>

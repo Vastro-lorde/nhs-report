@@ -40,6 +40,7 @@ export function LegalAcceptance({
             type="button"
             onClick={() => setModal("terms")}
             className="font-medium text-orange-700 hover:underline"
+            data-tooltip="Read the Terms of Service"
           >
             Terms of Service
           </button>{" "}
@@ -48,6 +49,7 @@ export function LegalAcceptance({
             type="button"
             onClick={() => setModal("privacy")}
             className="font-medium text-orange-700 hover:underline"
+            data-tooltip="Read the Privacy Policy"
           >
             Privacy Policy
           </button>

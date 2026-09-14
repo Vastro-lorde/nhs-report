@@ -36,12 +36,20 @@ export default function GlobalError({
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
-                    <Button onClick={() => reset()} variant="outline" className="w-full sm:w-auto">
+                    <Button
+                        onClick={() => reset()}
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        tooltip="Retry loading this page"
+                    >
                         <RefreshCcw className="mr-2 h-4 w-4" />
                         Try Again
                     </Button>
-                    <Link href="/dashboard" className="w-full sm:w-auto">
-                        <Button className="w-full bg-orange-700 hover:bg-orange-800 text-white">
+                    <Link href="/dashboard" className="w-full sm:w-auto" data-tooltip="Return to your main dashboard">
+                        <Button
+                            className="w-full bg-orange-700 hover:bg-orange-800 text-white"
+                            tooltip="Return to your main dashboard"
+                        >
                             <Home className="mr-2 h-4 w-4" />
                             Go to Dashboard
                         </Button>

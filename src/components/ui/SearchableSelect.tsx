@@ -94,6 +94,7 @@ export function SearchableSelect({
                     {value && !isOpen && (
                         <X
                             className="h-4 w-4 cursor-pointer hover:text-gray-600"
+                            data-tooltip="Clear selection"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onChange("");

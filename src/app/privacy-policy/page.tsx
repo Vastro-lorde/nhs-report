@@ -30,7 +30,11 @@ export default function PrivacyPolicyPage() {
         </div>
 
         <p className="mt-6 text-center text-sm">
-          <Link href="/login" className="text-orange-700 hover:underline">
+          <Link
+            href="/login"
+            className="text-orange-700 hover:underline"
+            data-tooltip="Return to the sign in page"
+          >
             Back to sign in
           </Link>
         </p>

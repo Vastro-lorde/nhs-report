@@ -145,7 +145,12 @@ export default function ForgotPasswordPage() {
                 autoFocus
                 autoComplete="username"
               />
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+                tooltip="Send one-time password code to your email"
+              >
                 {loading ? "Sending…" : "Send reset code"}
               </Button>
             </form>
@@ -186,7 +191,12 @@ export default function ForgotPasswordPage() {
                 required
                 autoComplete="new-password"
               />
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+                tooltip="Update your password with the provided code"
+              >
                 {loading ? "Resetting…" : "Reset password"}
               </Button>
               <button
@@ -200,6 +210,7 @@ export default function ForgotPasswordPage() {
                   setInfo("");
                 }}
                 className="block w-full text-center text-sm text-gray-500 hover:underline"
+                data-tooltip="Go back and enter a different email"
               >
                 Use a different email
               </button>
@@ -210,6 +221,7 @@ export default function ForgotPasswordPage() {
             <Link
               href="/login"
               className="text-sm text-green-700 hover:underline"
+              data-tooltip="Return to the sign in page"
             >
               Back to sign in
             </Link>

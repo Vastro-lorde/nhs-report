@@ -106,6 +106,7 @@ function LoginForm() {
             <Link
               href="/forgot-password"
               className="text-sm text-green-700 hover:underline"
+              data-tooltip="Reset your password via email"
             >
               Forgot password?
             </Link>
@@ -113,7 +114,12 @@ function LoginForm() {
 
           <LegalAcceptance checked={accepted} onChange={setAccepted} />
 
-          <Button type="submit" className="w-full" disabled={loading || !accepted}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || !accepted}
+            tooltip={!accepted ? "Please accept the Terms and Privacy Policy to continue" : "Sign in to your account"}
+          >
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>

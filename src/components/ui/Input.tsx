@@ -46,6 +46,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
               disabled={props.disabled}
+              data-tooltip={showPassword ? "Hide password" : "Show password"}
               className={cn(
                 "absolute right-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500",
                 "hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-600",

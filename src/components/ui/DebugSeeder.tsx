@@ -18,6 +18,7 @@ export function DebugSeeder({ onFill, label = "Fill Fake Data" }: DebugSeederPro
                 type="button"
                 onClick={onFill}
                 className="flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-purple-700 transition-colors"
+                data-tooltip="Populate form with mock data for testing"
             >
                 <Bug className="h-4 w-4" />
                 {label}

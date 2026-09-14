@@ -143,6 +143,7 @@ export default function SessionsPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-orange-700 hover:underline"
+                          data-tooltip="Join Google Meet session in new tab"
                         >
                           Join
                         </a>
@@ -153,6 +154,7 @@ export default function SessionsPage() {
                           size="sm"
                           onClick={() => cancel(b._id)}
                           disabled={cancellingId === b._id}
+                          tooltip="Cancel this scheduled mentorship session"
                         >
                           {cancellingId === b._id ? "Cancelling…" : "Cancel"}
                         </Button>

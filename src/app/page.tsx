@@ -63,6 +63,7 @@ export default function Home() {
           <Link
             href="/login"
             className="inline-flex items-center rounded-md bg-orange-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-800"
+            data-tooltip="Sign in to the mentorship portal"
           >
             Sign in
           </Link>
@@ -86,6 +87,7 @@ export default function Home() {
             <Link
               href="/login"
               className="inline-flex items-center rounded-md bg-orange-700 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-orange-800"
+              data-tooltip="Sign in to access your portal dashboard"
             >
               Sign in to your account
             </Link>
@@ -122,18 +124,24 @@ export default function Home() {
             &copy; {new Date().getFullYear()} CWC Research. All rights reserved.
           </p>
           <nav className="flex items-center gap-4">
-            <Link href="/terms" className="hover:text-orange-700 hover:underline">
+            <Link
+              href="/terms"
+              className="hover:text-orange-700 hover:underline"
+              data-tooltip="Read Terms of Service"
+            >
               Terms of Service
             </Link>
             <Link
               href="/privacy-policy"
               className="hover:text-orange-700 hover:underline"
+              data-tooltip="Read Privacy Policy"
             >
               Privacy Policy
             </Link>
             <a
               href="mailto:admin@cwcr.ng"
               className="hover:text-orange-700 hover:underline"
+              data-tooltip="Send an email to admin@cwcr.ng"
             >
               Contact
             </a>

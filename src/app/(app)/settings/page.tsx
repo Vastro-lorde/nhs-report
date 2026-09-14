@@ -348,7 +348,11 @@ export default function SettingsPage() {
               <p className="text-sm text-gray-500">
                 This link is prefilled on your session time-slots. You can also generate a Google
                 Meet link from your{" "}
-                <a href="/schedule" className="text-orange-700 hover:underline">
+                <a
+                  href="/schedule"
+                  className="text-orange-700 hover:underline"
+                  data-tooltip="Navigate to Schedule management page"
+                >
                   Schedule
                 </a>{" "}
                 page.
@@ -360,7 +364,11 @@ export default function SettingsPage() {
                   onChange={(e) => setMeetingLink(e.target.value)}
                   className="flex-1"
                 />
-                <Button onClick={handleMeetingLinkSave} disabled={savingMeetingLink}>
+                <Button
+                  onClick={handleMeetingLinkSave}
+                  disabled={savingMeetingLink}
+                  tooltip="Save default meeting link"
+                >
                   {savingMeetingLink ? "Saving…" : "Save link"}
                 </Button>
               </div>
@@ -394,7 +402,7 @@ export default function SettingsPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
-              <Button type="submit" disabled={saving}>
+              <Button type="submit" disabled={saving} tooltip="Save updated profile changes">
                 {saving ? "Saving…" : "Save Changes"}
               </Button>
             </form>
@@ -429,7 +437,7 @@ export default function SettingsPage() {
                 autoComplete="new-password"
                 suppressHydrationWarning
               />
-              <Button type="submit" disabled={saving}>
+              <Button type="submit" disabled={saving} tooltip="Update account password">
                 {saving ? "Changing…" : "Change Password"}
               </Button>
             </form>

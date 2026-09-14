@@ -22,8 +22,11 @@ export default function NotFound() {
         </div>
 
         <div className="pt-4 flex justify-center">
-          <Link href="/dashboard" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto bg-orange-700 hover:bg-orange-800 text-white">
+          <Link href="/dashboard" className="w-full sm:w-auto" data-tooltip="Return to your main dashboard">
+            <Button
+              className="w-full sm:w-auto bg-orange-700 hover:bg-orange-800 text-white"
+              tooltip="Return to your main dashboard"
+            >
               <Home className="mr-2 h-4 w-4" />
               Return to Dashboard
             </Button>

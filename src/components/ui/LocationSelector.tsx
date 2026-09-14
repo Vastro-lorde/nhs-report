@@ -147,6 +147,8 @@ export function LocationSelector({
                                     type="button"
                                     onClick={() => handleRemoveState(state)}
                                     className="hover:text-red-500 rounded-full focus:outline-none"
+                                    data-tooltip={`Remove ${state}`}
+                                    aria-label={`Remove ${state}`}
                                 >
                                     <X className="w-3 h-3" />
                                 </button>
@@ -164,6 +166,7 @@ export function LocationSelector({
                                 type="button"
                                 className="px-3 py-1 text-xs bg-orange-50 text-orange-700 rounded-full border border-orange-200 hover:bg-orange-100 transition-colors"
                                 onClick={() => handleAddState(state)}
+                                data-tooltip={`Add ${state}`}
                             >
                                 + {state}
                             </button>
@@ -199,6 +202,8 @@ export function LocationSelector({
                                         type="button"
                                         onClick={() => handleRemoveLga(lga)}
                                         className="hover:text-red-500 rounded-full focus:outline-none"
+                                        data-tooltip={`Remove ${lga}`}
+                                        aria-label={`Remove ${lga}`}
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
@@ -216,6 +221,7 @@ export function LocationSelector({
                                     type="button"
                                     className="px-3 py-1 text-xs bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors"
                                     onClick={() => handleAddLga(lga)}
+                                    data-tooltip={`Add ${lga} (${states.join(" / ")})`}
                                 >
                                     + {lga}
                                     <span className="ml-1 text-blue-500">({states.join(" / ")})</span>

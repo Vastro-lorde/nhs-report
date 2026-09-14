@@ -393,6 +393,7 @@ export default function SchedulePage() {
                         onClick={() => removeRow(i)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-md"
                         aria-label="Remove"
+                        data-tooltip="Remove this availability window"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -426,10 +427,18 @@ export default function SchedulePage() {
               })}
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={addRow}>
+              <Button
+                variant="secondary"
+                onClick={addRow}
+                tooltip="Add another weekly recurring availability window"
+              >
                 <Plus className="h-4 w-4 mr-1" /> Add window
               </Button>
-              <Button onClick={saveTemplates} disabled={savingTemplates}>
+              <Button
+                onClick={saveTemplates}
+                disabled={savingTemplates}
+                tooltip="Save weekly recurring windows and generate bookable slots"
+              >
                 {savingTemplates ? "Saving…" : "Save availability"}
               </Button>
             </div>
@@ -457,7 +466,11 @@ export default function SchedulePage() {
                 value={oneOffLink}
                 onChange={(e) => setOneOffLink(e.target.value)}
               />
-              <Button onClick={addOneOff} disabled={addingSlot || !oneOffStart}>
+              <Button
+                onClick={addOneOff}
+                disabled={addingSlot || !oneOffStart}
+                tooltip="Add a single one-off slot at the specified date and time"
+              >
                 {addingSlot ? "Adding…" : "Add slot"}
               </Button>
             </div>
@@ -468,7 +481,11 @@ export default function SchedulePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Upcoming Slots</CardTitle>
-            <Button onClick={publish} disabled={publishing}>
+            <Button
+              onClick={publish}
+              disabled={publishing}
+              tooltip="Send email notifications to assigned fellows about open slots"
+            >
               {publishing ? "Notifying…" : "Notify fellows"}
             </Button>
           </CardHeader>
@@ -500,6 +517,7 @@ export default function SchedulePage() {
                               onClick={() => deleteSlot(s._id)}
                               className="text-red-500 hover:text-red-700"
                               aria-label="Delete slot"
+                              data-tooltip="Delete this open time slot"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>

@@ -377,14 +377,16 @@ export default function EditMentorMonthlyReportPage() {
           <CardHeader>
             <CardTitle>Section 4 – Key Challenges</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {challenges.map((c, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <span className="mt-2.5 text-gray-400 text-xs w-5 shrink-0">{i + 1}.</span>
-                <Input
+              <div key={i} className="flex gap-2 items-start w-full">
+                <span className="mt-2.5 text-gray-400 text-xs w-5 shrink-0 font-medium">{i + 1}.</span>
+                <Textarea
+                  rows={3}
                   value={c}
                   onChange={e => updateList(challenges, setChallenges, i, e.target.value)}
                   placeholder="Describe a challenge encountered…"
+                  className="w-full"
                 />
                 <Button
                   type="button"
@@ -393,7 +395,7 @@ export default function EditMentorMonthlyReportPage() {
                   onClick={() => removeItem(challenges, setChallenges, i)}
                   disabled={challenges.length === 1}
                   aria-label="Remove"
-                  className="shrink-0 mt-0.5"
+                  className="shrink-0 mt-1"
                   tooltip="Remove this challenge"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
@@ -418,14 +420,16 @@ export default function EditMentorMonthlyReportPage() {
           <CardHeader>
             <CardTitle>Section 5 – Mentor&apos;s Recommendations</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {recommendations.map((r, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <span className="mt-2.5 text-gray-400 text-xs w-5 shrink-0">{i + 1}.</span>
-                <Input
+              <div key={i} className="flex gap-2 items-start w-full">
+                <span className="mt-2.5 text-gray-400 text-xs w-5 shrink-0 font-medium">{i + 1}.</span>
+                <Textarea
+                  rows={3}
                   value={r}
                   onChange={e => updateList(recommendations, setRecommendations, i, e.target.value)}
                   placeholder="Enter a recommendation…"
+                  className="w-full"
                 />
                 <Button
                   type="button"
@@ -434,7 +438,7 @@ export default function EditMentorMonthlyReportPage() {
                   onClick={() => removeItem(recommendations, setRecommendations, i)}
                   disabled={recommendations.length === 1}
                   aria-label="Remove"
-                  className="shrink-0 mt-0.5"
+                  className="shrink-0 mt-1"
                   tooltip="Remove this recommendation"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />

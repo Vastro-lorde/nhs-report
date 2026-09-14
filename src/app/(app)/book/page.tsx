@@ -129,6 +129,7 @@ export default function BookPage() {
                         setError("");
                       }}
                       className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-800 hover:bg-orange-100"
+                      data-tooltip={`Book session from ${fmtTime(s.startAt)} to ${fmtTime(s.endAt)}`}
                     >
                       {fmtTime(s.startAt)} – {fmtTime(s.endAt)}
                     </button>
@@ -158,6 +159,7 @@ export default function BookPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-orange-700 hover:underline"
+                  data-tooltip="Open Google Meet room in new tab"
                 >
                   {selected.meetingLink}
                 </a>
@@ -179,10 +181,15 @@ export default function BookPage() {
                   setNote("");
                 }}
                 disabled={booking}
+                tooltip="Dismiss dialog without booking"
               >
                 Cancel
               </Button>
-              <Button onClick={confirmBooking} disabled={booking}>
+              <Button
+                onClick={confirmBooking}
+                disabled={booking}
+                tooltip="Confirm and book this mentorship session"
+              >
                 {booking ? "Booking…" : "Confirm booking"}
               </Button>
             </div>

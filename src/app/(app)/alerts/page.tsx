@@ -170,6 +170,7 @@ export default function AlertsPage() {
                         onClick={() =>
                           setExpandedId(expandedId === alert._id ? null : alert._id)
                         }
+                        tooltip={expandedId === alert._id ? "Close update panel" : "Update alert status and notes"}
                       >
                         <MessageSquare className="h-4 w-4 mr-1" />
                         Update
@@ -204,6 +205,7 @@ export default function AlertsPage() {
                           size="sm"
                           onClick={() => updateAlert(alert._id, AlertStatus.IN_REVIEW)}
                           disabled={updating}
+                          tooltip="Mark alert as currently in review"
                         >
                           Mark In Review
                         </Button>
@@ -212,6 +214,7 @@ export default function AlertsPage() {
                           variant="destructive"
                           onClick={() => updateAlert(alert._id, AlertStatus.RESOLVED)}
                           disabled={updating}
+                          tooltip="Mark this urgent alert as resolved"
                         >
                           Resolve
                         </Button>

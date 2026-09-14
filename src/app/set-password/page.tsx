@@ -133,7 +133,11 @@ function SetPasswordInner() {
                 This invitation link is invalid or has expired. Please ask your
                 mentor to send a new invitation.
               </p>
-              <Link href="/login" className="text-sm text-green-700 hover:underline">
+              <Link
+                href="/login"
+                className="text-sm text-green-700 hover:underline"
+                data-tooltip="Return to the sign in page"
+              >
                 Back to sign in
               </Link>
             </div>
@@ -167,6 +171,7 @@ function SetPasswordInner() {
                 type="submit"
                 className="w-full"
                 disabled={loading || !accepted}
+                tooltip={!accepted ? "Please accept the Terms and Privacy Policy to activate" : "Set your password and activate your account"}
               >
                 {loading ? "Saving…" : "Set password & activate"}
               </Button>

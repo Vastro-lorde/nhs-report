@@ -39,6 +39,7 @@ export function LegalModal({
             onClick={onClose}
             aria-label="Close"
             className="text-gray-400 transition-colors hover:text-gray-600"
+            data-tooltip="Close this window"
           >
             ✕
           </button>
@@ -47,7 +48,7 @@ export function LegalModal({
         <div className="overflow-y-auto px-6 py-5">{children}</div>
 
         <div className="flex justify-end border-t border-gray-200 px-6 py-4">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} tooltip="Close this window">
             Close
           </Button>
         </div>
