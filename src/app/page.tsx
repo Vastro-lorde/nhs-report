@@ -6,6 +6,7 @@
    ────────────────────────────────────────── */
 import Link from "next/link";
 import type { Metadata } from "next";
+import { auth } from "@/lib/auth";
 import { APP_PUBLIC_NAME, APP_LOGO_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -43,7 +44,9 @@ const FEATURES = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -60,13 +63,35 @@ export default function Home() {
               {APP_PUBLIC_NAME}
             </span>
           </div>
-          <Link
-            href="/login"
-            className="inline-flex items-center rounded-md bg-orange-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-800"
-            data-tooltip="Sign in to the mentorship portal"
-          >
-            Sign in
-          </Link>
+          {session ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2.5 rounded-full border border-gray-200 bg-white pl-1.5 pr-4 py-1 text-sm font-medium text-gray-800 shadow-sm transition-all hover:bg-gray-50 hover:border-orange-300 hover:shadow"
+              data-tooltip="Go to your portal dashboard"
+            >
+              {session.user.profileImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={session.user.profileImage}
+                  alt={session.user.name || "Profile"}
+                  className="h-7 w-7 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">
+                  {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                </div>
+              )}
+              <span>Dashboard</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center rounded-md bg-orange-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-800"
+              data-tooltip="Sign in to the mentorship portal"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </header>
 
@@ -84,13 +109,35 @@ export default function Home() {
             zonal reporting, and programme analytics.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
-            <Link
-              href="/login"
-              className="inline-flex items-center rounded-md bg-orange-700 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-orange-800"
-              data-tooltip="Sign in to access your portal dashboard"
-            >
-              Sign in to your account
-            </Link>
+            {session ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-3 rounded-xl bg-orange-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-orange-800 hover:shadow"
+                data-tooltip="Go to your portal dashboard"
+              >
+                {session.user.profileImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={session.user.profileImage}
+                    alt={session.user.name || "Profile"}
+                    className="h-7 w-7 rounded-full object-cover border border-white/40"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-800 text-xs font-semibold text-white">
+                    {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                  </div>
+                )}
+                <span>Go to Dashboard</span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex items-center rounded-md bg-orange-700 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-orange-800"
+                data-tooltip="Sign in to access your portal dashboard"
+              >
+                Sign in to your account
+              </Link>
+            )}
           </div>
         </section>
 
