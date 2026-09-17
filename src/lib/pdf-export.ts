@@ -119,6 +119,11 @@ async function mountInExportFrame(element: HTMLElement, layoutWidth: number, bac
     const clone = element.cloneNode(true) as HTMLElement;
     clone.querySelectorAll("[data-export-ignore],[data-html2canvas-ignore]").forEach((n) => n.remove());
     fixResponsiveCharts(clone);
+    // html-to-image copies *computed* styles, so an `mx-auto` centred element would carry a
+    // resolved pixel margin into the capture and be shifted/clipped. Pin it to the frame's origin.
+    clone.style.margin = "0";
+    clone.style.position = "static";
+    clone.style.transform = "none";
     frameDoc.body.appendChild(clone);
 
     await Promise.all(stylesheetLoads);
