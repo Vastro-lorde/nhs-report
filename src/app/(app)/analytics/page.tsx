@@ -120,6 +120,11 @@ export default function AnalyticsPage() {
     }
   };
 
+  // Hooks must run on every render, so this sits above the early returns below.
+  const rollups = useMemo(() => {
+    return [...(data?.rollups ?? [])].sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+  }, [data?.rollups]);
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
@@ -129,9 +134,6 @@ export default function AnalyticsPage() {
 
   if (!data) return null;
 
-  const rollups = useMemo(() => {
-    return [...(data.rollups ?? [])].sort((a, b) => a.weekKey.localeCompare(b.weekKey));
-  }, [data.rollups]);
   const rawByState = data.submissionsByState ?? [];
 
   // Aggregate the submissionsByState into per-state totals
