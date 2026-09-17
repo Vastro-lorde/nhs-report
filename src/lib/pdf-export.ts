@@ -42,30 +42,129 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     });
 }
 
-/**
- * Recharts sizes its SVG in pixels from the on-screen container. Once cloned
- * into the wider export frame those pixel sizes are stale, so let the SVG scale
- * to its (now wider) container while keeping its aspect ratio.
- */
-function fixResponsiveCharts(root: HTMLElement) {
-    root.querySelectorAll<HTMLElement>(".recharts-responsive-container").forEach((container) => {
-        const wrapper = container.querySelector<HTMLElement>(".recharts-wrapper");
-        const svg = container.querySelector<SVGSVGElement>("svg.recharts-surface");
-        if (!wrapper || !svg) return;
+const CHART_CONTAINER = ".recharts-responsive-container";
+/** A re-rendered chart is considered settled once its DOM has been untouched for this long. */
+const CHART_QUIET_MS = 300;
+/** Never settle sooner than this: Recharts animations start after a delay (default 400ms). */
+const CHART_SETTLE_MIN_MS = 700;
+/** Hard cap on waiting for chart animations (Recharts pie labels appear after ~2s). */
+const CHART_SETTLE_MAX_MS = 4000;
+/** Recharts hides pie labels until its animation ends, with no DOM activity in between. */
+const PIE_LABEL = ".recharts-pie-labels text, .recharts-pie-label-text";
 
-        const width = parseFloat(svg.getAttribute("width") || "");
-        const height = parseFloat(svg.getAttribute("height") || "");
-        if (!svg.getAttribute("viewBox") && width && height) {
-            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Resolve once `root` has had no DOM mutations for `quietMs` (but never before
+ * `minMs` has elapsed), or after `maxMs` regardless.
+ */
+function waitForQuietDom(root: Element, { quietMs, minMs, maxMs }: { quietMs: number; minMs: number; maxMs: number }) {
+    return new Promise<void>((resolve) => {
+        const startedAt = Date.now();
+        let quietTimer: ReturnType<typeof setTimeout>;
+        const observer = new MutationObserver(() => {
+            clearTimeout(quietTimer);
+            quietTimer = setTimeout(onQuiet, quietMs);
+        });
+        const maxTimer = setTimeout(finish, maxMs);
+        function onQuiet() {
+            const remaining = minMs - (Date.now() - startedAt);
+            if (remaining > 0) quietTimer = setTimeout(onQuiet, remaining);
+            else finish();
         }
-        svg.setAttribute("width", "100%");
-        svg.setAttribute("height", "100%");
-        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-        wrapper.style.width = "100%";
+        function finish() {
+            observer.disconnect();
+            clearTimeout(quietTimer);
+            clearTimeout(maxTimer);
+            resolve();
+        }
+        observer.observe(root, { subtree: true, childList: true, attributes: true, characterData: true });
+        quietTimer = setTimeout(onQuiet, quietMs);
     });
 }
 
-/** Mount a copy of `element` in a hidden fixed-width iframe and return the clone + iframe. */
+function chartSurface(container: Element): SVGSVGElement | null {
+    // Only the chart's own top-level surface — legend icons are also `svg.recharts-surface`
+    // and, in Recharts 3, the legend wrapper precedes the chart SVG in DOM order.
+    return container.querySelector<SVGSVGElement>(".recharts-wrapper > svg.recharts-surface");
+}
+
+/**
+ * Recharts draws its SVG at the pixel size of its on-screen container, so a
+ * clone taken on a phone carries a narrow chart into the wide export layout.
+ * Scaling that SVG never looks right (its aspect ratio is wrong for the desktop
+ * card), so instead we temporarily set each live chart container to the width
+ * it will have in the export frame and let Recharts re-render it. Returns a
+ * function that restores the live page.
+ */
+async function syncLiveChartsToFrame(element: HTMLElement, frameClone: HTMLElement): Promise<() => void> {
+    const liveContainers = Array.from(element.querySelectorAll<HTMLElement>(CHART_CONTAINER));
+    const frameContainers = Array.from(frameClone.querySelectorAll<HTMLElement>(CHART_CONTAINER));
+    if (liveContainers.length === 0 || liveContainers.length !== frameContainers.length) return () => {};
+
+    const restores: Array<() => void> = [];
+    const pending: Array<{ container: HTMLElement; targetWidth: number; pieLabels: number }> = [];
+
+    liveContainers.forEach((container, i) => {
+        const targetWidth = Math.round(frameContainers[i].getBoundingClientRect().width);
+        const currentWidth = Math.round(container.getBoundingClientRect().width);
+        if (!targetWidth || Math.abs(targetWidth - currentWidth) <= 1) return;
+
+        const pieLabels = container.querySelectorAll(PIE_LABEL).length;
+        const prevWidth = container.style.width;
+        const prevMaxWidth = container.style.maxWidth;
+        container.style.width = `${targetWidth}px`;
+        container.style.maxWidth = "none";
+        restores.push(() => {
+            container.style.width = prevWidth;
+            container.style.maxWidth = prevMaxWidth;
+        });
+        pending.push({ container, targetWidth, pieLabels });
+    });
+
+    const restore = () => restores.forEach((fn) => fn());
+    if (pending.length === 0) return restore;
+
+    // Wait for Recharts' ResizeObserver to redraw each chart at the new width, for any pie labels
+    // it hid during the re-render to come back, and for animations (which mutate the SVG every frame) to stop.
+    const deadline = Date.now() + CHART_SETTLE_MAX_MS;
+    while (Date.now() < deadline) {
+        await nextFrame();
+        const done = pending.every(({ container, targetWidth, pieLabels }) => {
+            const svg = chartSurface(container);
+            const resized = svg && Math.abs(parseFloat(svg.getAttribute("width") || "0") - targetWidth) <= 2;
+            return resized && container.querySelectorAll(PIE_LABEL).length >= pieLabels;
+        });
+        if (done) break;
+        await sleep(50);
+    }
+    await waitForQuietDom(element, { quietMs: CHART_QUIET_MS, minMs: CHART_SETTLE_MIN_MS, maxMs: CHART_SETTLE_MAX_MS });
+    return restore;
+}
+
+function buildClone(element: HTMLElement): HTMLElement {
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll("[data-export-ignore],[data-html2canvas-ignore]").forEach((n) => n.remove());
+    // html-to-image copies *computed* styles, so an `mx-auto` centred element would carry a
+    // resolved pixel margin into the capture and be shifted/clipped. Pin it to the frame's origin.
+    clone.style.margin = "0";
+    clone.style.position = "static";
+    clone.style.transform = "none";
+    return clone;
+}
+
+async function settleFrame(iframe: HTMLIFrameElement, clone: HTMLElement) {
+    await nextFrame();
+    await nextFrame();
+    // Size the frame to the content so nothing is clipped or scrolled.
+    iframe.style.height = `${clone.scrollHeight + 40}px`;
+    await nextFrame();
+}
+
+/**
+ * Mount a copy of `element` in a hidden fixed-width iframe and return the clone,
+ * the iframe, and a function that undoes any temporary changes to the live page.
+ */
 async function mountInExportFrame(element: HTMLElement, layoutWidth: number, backgroundColor: string) {
     const iframe = document.createElement("iframe");
     iframe.setAttribute("aria-hidden", "true");
@@ -116,26 +215,29 @@ async function mountInExportFrame(element: HTMLElement, layoutWidth: number, bac
     baseStyle.textContent = `html,body{margin:0;padding:0;background:${backgroundColor};}`;
     frameDoc.head.appendChild(baseStyle);
 
-    const clone = element.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll("[data-export-ignore],[data-html2canvas-ignore]").forEach((n) => n.remove());
-    fixResponsiveCharts(clone);
-    // html-to-image copies *computed* styles, so an `mx-auto` centred element would carry a
-    // resolved pixel margin into the capture and be shifted/clipped. Pin it to the frame's origin.
-    clone.style.margin = "0";
-    clone.style.position = "static";
-    clone.style.transform = "none";
+    // Pass 1: lay the content out at the export width to learn each chart's target size.
+    let clone = buildClone(element);
     frameDoc.body.appendChild(clone);
-
     await Promise.all(stylesheetLoads);
     await frameDoc.fonts?.ready;
-    await nextFrame();
-    await nextFrame();
+    await settleFrame(iframe, clone);
 
-    // Size the frame to the content so nothing is clipped or scrolled.
-    iframe.style.height = `${clone.scrollHeight + 40}px`;
-    await nextFrame();
+    // Pass 2: if any chart needs re-rendering at that size, do it on the live page and re-clone.
+    const restoreLivePage = await syncLiveChartsToFrame(element, clone);
+    try {
+        if (element.querySelector(CHART_CONTAINER)) {
+            clone.remove();
+            clone = buildClone(element);
+            frameDoc.body.appendChild(clone);
+            await settleFrame(iframe, clone);
+        }
+    } catch (err) {
+        restoreLivePage();
+        iframe.remove();
+        throw err;
+    }
 
-    return { iframe, clone };
+    return { iframe, clone, restoreLivePage };
 }
 
 /**
@@ -147,7 +249,7 @@ export async function exportElementToPdf(element: HTMLElement, options: ExportPd
     const backgroundColor = options.backgroundColor ?? "#ffffff";
     const showFooter = options.footer ?? true;
 
-    const { iframe, clone } = await mountInExportFrame(element, layoutWidth, backgroundColor);
+    const { iframe, clone, restoreLivePage } = await mountInExportFrame(element, layoutWidth, backgroundColor);
     let imgData: string;
     try {
         const { width, height } = clone.getBoundingClientRect();
@@ -155,6 +257,7 @@ export async function exportElementToPdf(element: HTMLElement, options: ExportPd
         imgData = await toPng(clone, { pixelRatio, backgroundColor });
     } finally {
         iframe.remove();
+        restoreLivePage();
     }
 
     const img = await loadImage(imgData);
