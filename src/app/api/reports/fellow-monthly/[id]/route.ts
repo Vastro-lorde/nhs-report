@@ -138,6 +138,8 @@ export async function PATCH(
 
         const snapshot = JSON.stringify(report.toObject());
         const body = await request.json();
+        // The season is fixed at creation — it records which form the report was written on.
+        delete body.season;
 
         // Moving a report to another month must respect the same window and
         // one-report-per-fellow-per-month rule as creation.

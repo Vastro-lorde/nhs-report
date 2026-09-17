@@ -5,6 +5,7 @@
 
 import type { ReportHistoryReportType, ReportHistoryAction, ReportStatus } from "@/lib/constants";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
+import type { ReportSeason } from "@/lib/report-season";
 import type {
   INationalAuditReport,
   INationalAuditPeriodReport,
@@ -227,6 +228,9 @@ export const api = {
       request<{ message: string }>(`/api/reports/${id}`, { method: "DELETE" }),
     checkCurrentWeek: () =>
       request<{ hasReport: boolean; draftId: string | null }>("/api/reports/check-current-week"),
+    /** Season currently selected by the admin — decides which form variant to show. */
+    season: () =>
+      request<{ reportSeason: ReportSeason }>("/api/reports/season", { cache: "no-store" }),
     history: (id: string) =>
       request<ReportHistoryEntry[]>(`/api/reports/${id}/history`),
 
@@ -787,6 +791,8 @@ export interface Report {
   weekEnding: string;
   weekNumber: number;
   weekKey: string;
+  /** Season the report was created in; absent on reports predating seasons (treat as regular). */
+  season?: ReportSeason;
   coverNote?: string;
   fellows: { name: string; lga: string; qualification?: string }[];
   sessions: (MentorshipSessionInput & { _id?: string })[];
@@ -997,6 +1003,8 @@ export interface MentorMonthlyReport {
   mentor: { _id: string; states?: string[]; authId?: { name: string; email: string } };
   fellow: { _id: string; name: string; lga: string; qualification?: string };
   month: string;
+  /** Season the report was created in; absent on reports predating seasons (treat as regular). */
+  season?: ReportSeason;
   fellowName: string;
   fellowLGA: string;
   fellowQualification?: string;
@@ -1089,6 +1097,8 @@ export interface ReportSettings {
   blockWeeklyReportEdits: EditLockConfig;
   blockMonthlyReportEdits: EditLockConfig;
   blockZonalAuditEdits: boolean;
+  /** Season stamped onto reports created from now on ("regular" | "capstone"). */
+  reportSeason: ReportSeason;
 }
 
 export interface ActivityLog {

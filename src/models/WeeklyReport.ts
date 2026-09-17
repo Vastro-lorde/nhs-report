@@ -3,6 +3,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { ReportStatus, OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
+import { REPORT_SEASONS, DEFAULT_REPORT_SEASON, type ReportSeason } from "@/lib/report-season";
 
 // ─── Report comment sub-document ────────────
 export interface IReportComment {
@@ -33,6 +34,8 @@ export interface IWeeklyReport extends Document {
   weekEnding: Date;
   weekNumber: number;
   weekKey: string; // e.g. "2026-W08"
+  /** Season in force when the report was created; reports predating seasons are regular. */
+  season: ReportSeason;
 
   /* ── Cover note fields ──────────────── */
   coverNote?: string; // optional intro paragraph
@@ -107,6 +110,7 @@ const WeeklyReportSchema = new Schema<IWeeklyReport>(
     weekEnding: { type: Date, required: true },
     weekNumber: { type: Number },
     weekKey: { type: String, required: true, index: true },
+    season: { type: String, enum: [...REPORT_SEASONS], default: DEFAULT_REPORT_SEASON },
 
     coverNote: { type: String, trim: true },
     fellows: { type: [FellowSchema], default: [] },

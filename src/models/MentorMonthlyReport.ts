@@ -3,6 +3,7 @@
    Per-fellow monthly report submitted by a mentor.
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
+import { REPORT_SEASONS, DEFAULT_REPORT_SEASON, type ReportSeason } from "@/lib/report-season";
 
 export type ProgressRating = "Excellent" | "Good" | "Fair" | "Needs Improvement" | "";
 
@@ -10,6 +11,8 @@ export interface IMentorMonthlyReport extends Document {
     mentor: Types.ObjectId;
     fellow: Types.ObjectId;
     month: string; // e.g. "2026-03"
+    /** Season in force when the report was created; reports predating seasons are regular. */
+    season: ReportSeason;
 
     // Denormalised fellow details (snapshot at time of report)
     fellowName: string;
@@ -48,6 +51,7 @@ const MentorMonthlyReportSchema = new Schema<IMentorMonthlyReport>(
         mentor: { type: Schema.Types.ObjectId, ref: "Mentor", required: true, index: true },
         fellow: { type: Schema.Types.ObjectId, ref: "Fellow", required: true, index: true },
         month: { type: String, required: true },
+        season: { type: String, enum: [...REPORT_SEASONS], default: DEFAULT_REPORT_SEASON },
 
         fellowName: { type: String, required: true, trim: true },
         fellowLGA: { type: String, trim: true, default: "" },

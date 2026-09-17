@@ -7,11 +7,13 @@ import { AppSettings } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
+import { DEFAULT_REPORT_SEASON, isReportSeason, type ReportSeason } from "@/lib/report-season";
 
 const DEFAULT_SETTINGS = {
   blockWeeklyReportEdits: { mentor: false, coordinator: false },
   blockMonthlyReportEdits: { mentor: false, coordinator: false },
   blockZonalAuditEdits: false,
+  reportSeason: DEFAULT_REPORT_SEASON,
 };
 
 // GET /api/admin/report-settings
@@ -21,8 +23,10 @@ export async function GET() {
 
   await connectDB();
 
+  // Settings saved before a field existed won't carry it (lean skips schema
+  // defaults), so fill the gaps from the defaults.
   const settings = await AppSettings.findOne({}).lean();
-  return jsonOk(settings ?? DEFAULT_SETTINGS);
+  return jsonOk({ ...DEFAULT_SETTINGS, ...(settings ?? {}) });
 }
 
 // PATCH /api/admin/report-settings
@@ -34,12 +38,13 @@ export async function PATCH(request: NextRequest) {
     blockWeeklyReportEdits?: { mentor?: boolean; coordinator?: boolean };
     blockMonthlyReportEdits?: { mentor?: boolean; coordinator?: boolean };
     blockZonalAuditEdits?: boolean;
+    reportSeason?: ReportSeason;
   }>(request);
   if (!body) return jsonError("Invalid body");
 
   await connectDB();
 
-  const update: Record<string, boolean> = {};
+  const update: Record<string, boolean | ReportSeason> = {};
   if (body.blockWeeklyReportEdits?.mentor !== undefined) {
     update["blockWeeklyReportEdits.mentor"] = body.blockWeeklyReportEdits.mentor;
   }
@@ -55,6 +60,10 @@ export async function PATCH(request: NextRequest) {
   if (body.blockZonalAuditEdits !== undefined) {
     update["blockZonalAuditEdits"] = body.blockZonalAuditEdits;
   }
+  if (body.reportSeason !== undefined) {
+    if (!isReportSeason(body.reportSeason)) return jsonError("Invalid report season");
+    update["reportSeason"] = body.reportSeason;
+  }
 
   if (Object.keys(update).length === 0) return jsonError("No valid fields provided");
 
@@ -64,5 +73,5 @@ export async function PATCH(request: NextRequest) {
     { upsert: true, new: true },
   ).lean();
 
-  return jsonOk(settings);
+  return jsonOk({ ...DEFAULT_SETTINGS, ...(settings ?? {}) });
 }

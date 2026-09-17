@@ -26,6 +26,7 @@ import {
 } from "recharts";
 import { useSession } from "next-auth/react";
 import { weekRangeFilenameCodeFromWeekKey, weekRangeLabelFromWeekKey, formatDate } from "@/lib/date-helpers";
+import { sessionTopicLabel } from "@/lib/report-season";
 
 function AdminDashboard({ data }: { data: DashboardData }) {
   const { data: session } = useSession();
@@ -537,7 +538,7 @@ function MentorSessionsTool({ currentWeekKey, rollups }: { currentWeekKey: strin
                       <div className="space-y-4">
                         <div>
                           <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                            Topic Discussed
+                            {sessionTopicLabel(report.season)}
                           </h5>
                           <p className="text-sm text-gray-700 whitespace-pre-wrap">{s.topicDiscussed}</p>
                         </div>

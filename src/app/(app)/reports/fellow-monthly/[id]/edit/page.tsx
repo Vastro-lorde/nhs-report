@@ -19,6 +19,12 @@ import {
   monthLockReason,
 } from "@/lib/date-helpers";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  DEFAULT_REPORT_SEASON,
+  normalizeReportSeason,
+  showsLearningField,
+  type ReportSeason,
+} from "@/lib/report-season";
 
 const PROGRESS_RATINGS = ["Excellent", "Good", "Fair", "Needs Improvement"] as const;
 
@@ -43,6 +49,10 @@ export default function EditMentorMonthlyReportPage() {
   const [fellowName, setFellowName] = useState("");
   const [fellowLGA, setFellowLGA] = useState("");
   const [fellowQualification, setFellowQualification] = useState("");
+  // Season the report was created in — fixed for its lifetime, so the form
+  // keeps the fields it was originally written on.
+  const [season, setSeason] = useState<ReportSeason>(DEFAULT_REPORT_SEASON);
+  const includeLearning = showsLearningField(season);
 
   // ─── Editable fields ─────────────────────
   const [sessionsHeld, setSessionsHeld] = useState(0);
@@ -81,6 +91,7 @@ export default function EditMentorMonthlyReportPage() {
         setMonth(report.month);
         setOriginalMonth(report.month);
         setIsDraft(report.status === "draft");
+        setSeason(normalizeReportSeason(report.season));
         setFellowName(report.fellowName);
         setFellowLGA(report.fellowLGA);
         setFellowQualification(report.fellowQualification ?? "");
@@ -171,7 +182,8 @@ export default function EditMentorMonthlyReportPage() {
         sessionsHeld,
         sessionsAttended,
         sessionsAbsent,
-        summaryLearning,
+        // The field is not shown in capstone season, so never send stale text.
+        summaryLearning: includeLearning ? summaryLearning : "",
         summaryPhcVisits,
         summaryActivities,
         summaryGrowth,
@@ -314,17 +326,19 @@ export default function EditMentorMonthlyReportPage() {
             <CardTitle>Section 3 – Monthly Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Learning / Courses Completed
-              </label>
-              <Textarea
-                rows={3}
-                value={summaryLearning}
-                onChange={e => setSummaryLearning(e.target.value)}
-                placeholder="Describe any learning activities or courses completed this month…"
-              />
-            </div>
+            {includeLearning && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Learning / Courses Completed
+                </label>
+                <Textarea
+                  rows={3}
+                  value={summaryLearning}
+                  onChange={e => setSummaryLearning(e.target.value)}
+                  placeholder="Describe any learning activities or courses completed this month…"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 PHC Visits / Community Engagements

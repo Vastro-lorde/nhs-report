@@ -15,6 +15,7 @@ import { ArrowLeft, FileDown, Pencil, Send, MessageSquare, Trash2, History, Chec
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
+import { sessionTopicLabel } from "@/lib/report-season";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
@@ -270,7 +271,7 @@ export default function ReportDetailPage() {
 
                   <div className="space-y-3 text-sm">
                     <div>
-                      <h4 className="font-medium text-gray-700">Topic Discussed</h4>
+                      <h4 className="font-medium text-gray-700">{sessionTopicLabel(report.season)}</h4>
                       <p className="mt-1 whitespace-pre-wrap">{s.topicDiscussed}</p>
                     </div>
 

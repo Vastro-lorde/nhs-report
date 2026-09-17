@@ -18,6 +18,7 @@ import { jsonOk, jsonError, jsonCreated, parseBody, parsePagination } from "@/li
 import { isoWeekKey, parseInputDate, canonicalWeekEnding } from "@/lib/date-helpers";
 import { rebuildRollupForWeek } from "@/services/rollup.service";
 import { logActivity } from "@/lib/activity-logger";
+import { getCurrentReportSeason } from "@/lib/report-season-server";
 
 // GET /api/reports — list reports
 export async function GET(request: NextRequest) {
@@ -258,11 +259,15 @@ export async function POST(request: NextRequest) {
     ? new Set(sessionsArr.map((s) => s.menteeName.toLowerCase().trim())).size
     : body.menteesCheckedIn || 0;
 
+  // Stamp the season in force right now; it never changes after creation.
+  const season = await getCurrentReportSeason();
+
   const report = await WeeklyReport.create({
     mentor: mentorId,
     weekEnding,
     weekNumber: body.weekNumber,
     weekKey,
+    season,
     coverNote: body.coverNote,
     fellows: body.fellows ?? [],
     sessions: sessionsArr.map((s) => ({

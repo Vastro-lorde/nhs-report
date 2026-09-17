@@ -15,6 +15,7 @@ import {
 import type { Report, MentorshipSessionInput as Session } from "@/lib/api-client";
 import { APP_NAME, TEAM_LEAD_NAME } from "@/lib/constants";
 import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
+import { sessionTopicLabel } from "@/lib/report-season";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
 
 /* ── Register a clean font (Helvetica built-in) ─── */
@@ -216,9 +217,11 @@ export function MonthlyReportPDF({ reports, monthLabel, zonalAuditData }: Monthl
     const allFellows = hasReports ? reports.flatMap(r => r.fellows || []) : [];
     const uniqueFellows = removeDuplicates(allFellows, (f) => f.name.toLowerCase().trim());
 
-    const allSessions: { session: Session, weekKey: string }[] = hasReports
+    // Each session keeps its own report's season so a month that straddles the
+    // regular → capstone switch labels every session correctly.
+    const allSessions: { session: Session, weekKey: string, season?: Report["season"] }[] = hasReports
         ? reports.flatMap(r =>
-              (r.sessions || []).map(s => ({ session: s, weekKey: r.weekKey }))
+              (r.sessions || []).map(s => ({ session: s, weekKey: r.weekKey, season: r.season }))
           ).sort((a, b) => new Date(a.session.sessionDate).getTime() - new Date(b.session.sessionDate).getTime())
         : [];
 
@@ -289,7 +292,7 @@ export function MonthlyReportPDF({ reports, monthLabel, zonalAuditData }: Monthl
             )}
 
             {/* ── Individual Session Pages ──── */}
-            {hasReports && allSessions.map(({ session, weekKey }, idx) => (
+            {hasReports && allSessions.map(({ session, weekKey, season }, idx) => (
                 <Page key={idx} size="A4" style={s.page}>
                     <Text style={s.sessionHeader}>Mentorship Session Report</Text>
                     <Text style={s.sessionWeek}>
@@ -305,7 +308,7 @@ export function MonthlyReportPDF({ reports, monthLabel, zonalAuditData }: Monthl
 
                     <View style={s.hr} />
 
-                    <Text style={s.sectionTitle}>Topic Discussed</Text>
+                    <Text style={s.sectionTitle}>{sessionTopicLabel(season)}</Text>
                     <Text style={s.bodyText}>{session.topicDiscussed}</Text>
 
                     {session.challenges && session.challenges.length > 0 && (

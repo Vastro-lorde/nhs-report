@@ -27,6 +27,12 @@ import {
   monthLockReason,
 } from "@/lib/date-helpers";
 import { AlertTriangle, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import {
+  DEFAULT_REPORT_SEASON,
+  normalizeReportSeason,
+  showsLearningField,
+  type ReportSeason,
+} from "@/lib/report-season";
 
 const PROGRESS_RATINGS = ["Excellent", "Good", "Fair", "Needs Improvement"] as const;
 
@@ -37,6 +43,11 @@ export default function NewMentorMonthlyReportPage() {
   const [fellows, setFellows] = useState<Fellow[]>([]);
   const [loadingFellows, setLoadingFellows] = useState(true);
   const [prefilling, setPrefilling] = useState(false);
+
+  // Season set by the admin — capstone drops "Learning / Courses Completed".
+  // The server stamps the same season onto the report when it is created.
+  const [season, setSeason] = useState<ReportSeason>(DEFAULT_REPORT_SEASON);
+  const includeLearning = showsLearningField(season);
 
   // ─── Reporting window ─────────────────────
   // A month can only be reported on once it has run past the 27th, so the form
@@ -100,7 +111,7 @@ export default function NewMentorMonthlyReportPage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
 
-  // ─── Load mentor's fellows on mount ──────
+  // ─── Load mentor's fellows + current season on mount ──────
   useEffect(() => {
     async function load() {
       try {
@@ -112,7 +123,16 @@ export default function NewMentorMonthlyReportPage() {
         setLoadingFellows(false);
       }
     }
+    async function loadSeason() {
+      try {
+        const { reportSeason } = await api.reports.season();
+        setSeason(normalizeReportSeason(reportSeason));
+      } catch {
+        // fall back to the regular form
+      }
+    }
     load();
+    loadSeason();
   }, []);
 
   // ─── Check the month lock + existing report ──
@@ -258,7 +278,8 @@ export default function NewMentorMonthlyReportPage() {
         sessionsHeld,
         sessionsAttended,
         sessionsAbsent,
-        summaryLearning,
+        // The field is not shown in capstone season, so never send stale text.
+        summaryLearning: includeLearning ? summaryLearning : "",
         summaryPhcVisits,
         summaryActivities,
         summaryGrowth,
@@ -452,17 +473,19 @@ export default function NewMentorMonthlyReportPage() {
             <CardTitle>Section 3 – Monthly Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Learning / Courses Completed
-              </label>
-              <Textarea
-                rows={3}
-                value={summaryLearning}
-                onChange={e => setSummaryLearning(e.target.value)}
-                placeholder="Describe any learning activities or courses completed this month…"
-              />
-            </div>
+            {includeLearning && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Learning / Courses Completed
+                </label>
+                <Textarea
+                  rows={3}
+                  value={summaryLearning}
+                  onChange={e => setSummaryLearning(e.target.value)}
+                  placeholder="Describe any learning activities or courses completed this month…"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 PHC Visits / Community Engagements

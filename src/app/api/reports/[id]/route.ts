@@ -133,6 +133,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const body = await parseBody<Record<string, unknown>>(request);
   if (!body) return jsonError("Invalid body");
+  // The season is fixed at creation — it records which form the report was written on.
+  delete body.season;
 
   await connectDB();
 

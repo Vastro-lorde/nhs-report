@@ -10,6 +10,7 @@ import { ReportHistory } from "@/models/ReportHistory";
 import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
 import { monthLockReason, monthLabel } from "@/lib/date-helpers";
+import { getCurrentReportSeason } from "@/lib/report-season-server";
 
 export async function GET(request: Request) {
     try {
@@ -151,8 +152,12 @@ export async function POST(request: Request) {
             );
         }
 
+        // Stamp the season in force right now; it never changes after creation.
+        const season = await getCurrentReportSeason();
+
         const report = await MentorMonthlyReport.create({
             ...body,
+            season,
             status: isDraft ? "draft" : "submitted",
             mentor: mentorDoc._id,
             fellowName: fellowDoc.name,

@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
 import { safeFormatISO } from "@/lib/date-helpers";
+import { showsLearningField } from "@/lib/report-season";
 import { ArrowLeft, Trash2, Loader2, Download, Pencil, History } from "lucide-react";
 import Link from "next/link";
 
@@ -232,7 +233,9 @@ export default function MentorMonthlyReportDetailPage() {
         {/* Section 3 – Monthly Summary */}
         <Section title="Section 3 – Monthly Summary">
           <div className="space-y-4">
-            <Field label="Learning / Courses Completed" value={report.summaryLearning} />
+            {showsLearningField(report.season) && (
+              <Field label="Learning / Courses Completed" value={report.summaryLearning} />
+            )}
             <Field label="PHC Visits / Community Engagements" value={report.summaryPhcVisits} />
             <Field label="Activities & Outcomes" value={report.summaryActivities} />
             <Field label="Fellow's Growth & Development" value={report.summaryGrowth} />

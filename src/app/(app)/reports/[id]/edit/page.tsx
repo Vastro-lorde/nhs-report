@@ -18,6 +18,13 @@ import { api, type Report, type MentorshipSessionInput } from "@/lib/api-client"
 import { OUTREACH_TYPES, CHALLENGE_TYPES, ReportStatus } from "@/lib/constants";
 import { mentorLgaSelectOptions } from "@/lib/lga-options";
 import { parseInputDate, weekRangeLabelFromDate } from "@/lib/date-helpers";
+import {
+  DEFAULT_REPORT_SEASON,
+  normalizeReportSeason,
+  sessionTopicLabel,
+  sessionTopicPlaceholder,
+  type ReportSeason,
+} from "@/lib/report-season";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
 
 const EMPTY_SESSION: MentorshipSessionInput = {
@@ -43,6 +50,9 @@ export default function EditReportPage() {
   const [isDraft, setIsDraft] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
+  // Season the report was created in — fixed for its lifetime, so the form
+  // keeps the labels it was originally written on.
+  const [season, setSeason] = useState<ReportSeason>(DEFAULT_REPORT_SEASON);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
   // Assigned Fellows (for dropdowns)
@@ -101,6 +111,7 @@ export default function EditReportPage() {
           setMentorStates(profileJson.roleDetails.states as string[]);
         }
         setIsDraft(report.status === ReportStatus.DRAFT);
+        setSeason(normalizeReportSeason(report.season));
 
         if (report.canEdit === false) {
           setCanEdit(false);
@@ -525,10 +536,10 @@ export default function EditReportPage() {
                   />
                 </div>
 
-                {/* Topic Discussed */}
+                {/* Topic Discussed / Capstone Project Progress Discussed (by season) */}
                 <Textarea
-                  label="Topic Discussed *"
-                  placeholder="Describe the main topics discussed in this session…"
+                  label={`${sessionTopicLabel(season)} *`}
+                  placeholder={sessionTopicPlaceholder(season)}
                   value={session.topicDiscussed}
                   onChange={(e) => updateSession(si, "topicDiscussed", e.target.value)}
                   required

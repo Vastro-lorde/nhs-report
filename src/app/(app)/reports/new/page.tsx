@@ -18,6 +18,13 @@ import { api, type CreateReportInput, type MentorshipSessionInput } from "@/lib/
 import { OUTREACH_TYPES, CHALLENGE_TYPES, ReportStatus } from "@/lib/constants";
 import { mentorLgaSelectOptions } from "@/lib/lga-options";
 import { parseInputDate, weekRangeLabelFromDate } from "@/lib/date-helpers";
+import {
+  DEFAULT_REPORT_SEASON,
+  normalizeReportSeason,
+  sessionTopicLabel,
+  sessionTopicPlaceholder,
+  type ReportSeason,
+} from "@/lib/report-season";
 import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { DebugSeeder } from "@/components/ui/DebugSeeder";
 import { faker } from "@faker-js/faker";
@@ -52,15 +59,24 @@ export default function NewReportPage() {
   // A mentor can cover LGAs in several states; the LGA names alone are ambiguous.
   const [mentorStates, setMentorStates] = useState<string[]>([]);
 
+  // Season set by the admin — picks the session topic label. The server stamps
+  // the same season onto the report when it is created.
+  const [season, setSeason] = useState<ReportSeason>(DEFAULT_REPORT_SEASON);
+
   // Fetch fellows + mentor profile on mount
   useEffect(() => {
     async function fetchData() {
       try {
-        const [fellowsRes, profileRes, reportsRes] = await Promise.all([
+        const [fellowsRes, profileRes, reportsRes, seasonRes] = await Promise.all([
           fetch("/api/fellows?limit=500"),
           fetch("/api/profile"),
           fetch("/api/reports?limit=1"),
+          fetch("/api/reports/season", { cache: "no-store" }),
         ]);
+        if (seasonRes.ok) {
+          const seasonJson = await seasonRes.json();
+          setSeason(normalizeReportSeason(seasonJson.reportSeason));
+        }
         const fellowsJson = await fellowsRes.json();
         if (fellowsJson.data) {
           const fetched = fellowsJson.data.map((f: any) => ({
@@ -513,10 +529,10 @@ export default function NewReportPage() {
                   />
                 </div>
 
-                {/* Topic Discussed */}
+                {/* Topic Discussed / Capstone Project Progress Discussed (by season) */}
                 <Textarea
-                  label="Topic Discussed *"
-                  placeholder="Describe the main topics discussed in this session…"
+                  label={`${sessionTopicLabel(season)} *`}
+                  placeholder={sessionTopicPlaceholder(season)}
                   value={session.topicDiscussed}
                   onChange={(e) => updateSession(si, "topicDiscussed", e.target.value)}
                   required

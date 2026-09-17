@@ -8,6 +8,7 @@ import React from "react";
 import { format, parseISO } from "date-fns";
 import { APP_NAME } from "@/lib/constants";
 import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
+import { sessionTopicLabel } from "@/lib/report-season";
 
 import {
   Document,
@@ -273,7 +274,7 @@ export function WeeklyReportPDF({ report }: ReportPDFProps) {
 
           <View style={s.hr} />
 
-          <Text style={s.sectionTitle}>Topic Discussed</Text>
+          <Text style={s.sectionTitle}>{sessionTopicLabel(report.season)}</Text>
           <Text style={s.bodyText}>{session.topicDiscussed}</Text>
 
           {session.challenges?.length > 0 && (
