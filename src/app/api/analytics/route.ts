@@ -63,22 +63,6 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    // ── Date range filtering ──
-    const url = new URL(request.url);
-    const fromParam = url.searchParams.get("from");
-    const toParam = url.searchParams.get("to");
-
-    const dateFilter: Record<string, unknown> = {};
-    if (fromParam || toParam) {
-      dateFilter.createdAt = {};
-      if (fromParam) (dateFilter.createdAt as Record<string, unknown>).$gte = new Date(fromParam);
-      if (toParam) {
-        const toDate = new Date(toParam);
-        toDate.setHours(23, 59, 59, 999);
-        (dateFilter.createdAt as Record<string, unknown>).$lte = toDate;
-      }
-    }
-
     // ── Zone scoping ──
     let scopedMentorDocIds: mongoose.Types.ObjectId[] | undefined;
 
@@ -101,8 +85,8 @@ export async function GET(request: NextRequest) {
     }
 
     // ── Build filters ──
-    const fellowFilter: Record<string, unknown> = { ...dateFilter };
-    const mentorFilter: Record<string, unknown> = { ...dateFilter };
+    const fellowFilter: Record<string, unknown> = {};
+    const mentorFilter: Record<string, unknown> = {};
 
     if (scopedMentorDocIds) {
       fellowFilter.mentor = { $in: scopedMentorDocIds };

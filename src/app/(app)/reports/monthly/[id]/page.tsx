@@ -13,8 +13,7 @@ import { api, type MonthlyReport, type Report, monthlyReportAuthorName } from "@
 import { ChevronLeft, FileDown, Eye, Calendar, User, Trash2 } from "lucide-react";
 import { safeFormatISO } from "@/lib/date-helpers";
 import Link from "next/link";
-import { toPng } from "html-to-image";
-import jsPDF from "jspdf";
+import { exportElementToPdf } from "@/lib/pdf-export";
 import { weekRangeLabelFromWeekKey } from "@/lib/date-helpers";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
@@ -54,38 +53,11 @@ export default function MonthlyReportDetailPage() {
         setExporting(true);
 
         try {
-            const element = contentRef.current;
-            const imgData = await toPng(element, { pixelRatio: 2 });
-
-            const img = new Image();
-            await new Promise<void>((resolve, reject) => {
-                img.onload = () => resolve();
-                img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
-                img.src = imgData;
-            });
-
-            const pdf = new jsPDF("p", "mm", "a4");
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfPageHeight = pdf.internal.pageSize.getHeight();
-            const imgHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
-
-            let heightLeft = imgHeight;
-            let yOffset = 0;
-
-            // First page
-            pdf.addImage(imgData, "PNG", 0, yOffset, pdfWidth, imgHeight);
-            heightLeft -= pdfPageHeight;
-
-            // Add subsequent pages if content overflows
-            while (heightLeft > 0) {
-                yOffset -= pdfPageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, "PNG", 0, yOffset, pdfWidth, imgHeight);
-                heightLeft -= pdfPageHeight;
-            }
-
             const typeLabel = report.type === "zonal" ? "Zonal" : "Mentor";
-            pdf.save(`${typeLabel}_Monthly_Report_${report.state}_${report.month}.pdf`);
+            await exportElementToPdf(contentRef.current, {
+                filename: `${typeLabel}_Monthly_Report_${report.state}_${report.month}.pdf`,
+                backgroundColor: "#f9fafb",
+            });
         } catch (err) {
             console.error("Failed to generate PDF", err);
             alert("Failed to export PDF.");
@@ -197,7 +169,7 @@ export default function MonthlyReportDetailPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <Link href={`/reports/${wr._id}`} target="_blank" data-html2canvas-ignore="true" data-tooltip="Open full weekly report in a new tab">
+                                        <Link href={`/reports/${wr._id}`} target="_blank" data-export-ignore="true" data-tooltip="Open full weekly report in a new tab">
                                             <Button variant="outline" size="sm" tooltip="Open full weekly report in a new tab">
                                                 <Eye className="h-4 w-4 mr-1" /> View Full
                                             </Button>

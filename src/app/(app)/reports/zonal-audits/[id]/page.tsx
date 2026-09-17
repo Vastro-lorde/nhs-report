@@ -17,8 +17,7 @@ import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 import ZonalAuditPreview from "@/components/reports/ZonalAuditPreview";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
-import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
+import { exportElementToPdf } from "@/lib/pdf-export";
 
 function getErrorMessage(error: unknown, fallback: string) {
     return error instanceof Error ? error.message : fallback;
@@ -59,35 +58,9 @@ export default function ZonalAuditDetailPage() {
         if (!audit || !auditRef.current) return;
         setPdfGenerating(true);
         try {
-            const element = auditRef.current;
-            const imgData = await toPng(element, { pixelRatio: 2 });
-
-            const img = new Image();
-            await new Promise<void>((resolve, reject) => {
-                img.onload = () => resolve();
-                img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
-                img.src = imgData;
+            await exportElementToPdf(auditRef.current, {
+                filename: `Zonal_Audit_${audit.zoneName?.replace(/\s+/g, "_")}_${audit.month}.pdf`,
             });
-
-            const doc = new jsPDF("p", "mm", "a4");
-            const pdfWidth = doc.internal.pageSize.getWidth();
-            const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
-            const pageHeight = doc.internal.pageSize.getHeight();
-
-            if (pdfHeight <= pageHeight) {
-                doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-            } else {
-                let position = 0;
-                let remaining = pdfHeight;
-                while (remaining > 0) {
-                    doc.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-                    remaining -= pageHeight;
-                    position -= pageHeight;
-                    if (remaining > 0) doc.addPage();
-                }
-            }
-
-            doc.save(`Zonal_Audit_${audit.zoneName?.replace(/\s+/g, "_")}_${audit.month}.pdf`);
         } catch (err) {
             console.error("PDF generation failed:", err);
         } finally {

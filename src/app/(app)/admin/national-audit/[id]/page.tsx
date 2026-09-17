@@ -16,8 +16,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@/lib/constants";
 import NationalAuditPreview from "@/components/reports/NationalAuditPreview";
-import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
+import { exportElementToPdf } from "@/lib/pdf-export";
 
 export default function NationalAuditDetailPage() {
     const { id } = useParams() as { id: string };
@@ -51,35 +50,9 @@ export default function NationalAuditDetailPage() {
         if (!audit || !auditRef.current) return;
         setPdfGenerating(true);
         try {
-            const element = auditRef.current;
-            const imgData = await toPng(element, { pixelRatio: 2 });
-
-            const img = new Image();
-            await new Promise<void>((resolve, reject) => {
-                img.onload = () => resolve();
-                img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
-                img.src = imgData;
+            await exportElementToPdf(auditRef.current, {
+                filename: `National_Audit_${audit.month}.pdf`,
             });
-
-            const doc = new jsPDF("p", "mm", "a4");
-            const pdfWidth = doc.internal.pageSize.getWidth();
-            const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
-            const pageHeight = doc.internal.pageSize.getHeight();
-
-            if (pdfHeight <= pageHeight) {
-                doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-            } else {
-                let position = 0;
-                let remaining = pdfHeight;
-                while (remaining > 0) {
-                    doc.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-                    remaining -= pageHeight;
-                    position -= pageHeight;
-                    if (remaining > 0) doc.addPage();
-                }
-            }
-
-            doc.save(`National_Audit_${audit.month}.pdf`);
         } catch (err) {
             console.error("PDF generation failed:", err);
         } finally {

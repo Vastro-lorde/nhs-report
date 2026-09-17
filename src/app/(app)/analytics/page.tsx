@@ -14,8 +14,7 @@ import { api, type DashboardData, type AnalyticsData } from "@/lib/api-client";
 import { exportToCSV } from "@/lib/export";
 import { weekRangeLabelFromWeekKey, weekRangeFilenameCodeFromWeekKey } from "@/lib/date-helpers";
 import { startOfISOWeek, endOfISOWeek } from "@/lib/date-helpers";
-import { jsPDF } from "jspdf";
-import { toPng } from "html-to-image";
+import { exportElementToPdf } from "@/lib/pdf-export";
 import {
   LineChart,
   Line,
@@ -45,8 +44,16 @@ function toDateString(d: Date): string {
 }
 
 export default function AnalyticsPage() {
-  // Default date range: current ISO week (Mon–Sun)
-  const defaultFrom = useMemo(() => toDateString(startOfISOWeek(new Date())), []);
+  // Current ISO week helpers
+  const currentWeekFrom = useMemo(() => toDateString(startOfISOWeek(new Date())), []);
+  const currentWeekTo = useMemo(() => toDateString(endOfISOWeek(new Date())), []);
+
+  // Default date range: last 3 months (90 days) to display historical trend charts
+  const defaultFrom = useMemo(() => {
+    const from = new Date();
+    from.setDate(from.getDate() - 90);
+    return toDateString(startOfISOWeek(from));
+  }, []);
   const defaultTo = useMemo(() => toDateString(endOfISOWeek(new Date())), []);
 
   const [dateFrom, setDateFrom] = useState(defaultFrom);
@@ -60,7 +67,7 @@ export default function AnalyticsPage() {
   const fetchData = useCallback((from: string, to: string) => {
     setLoading(true);
     const params = { from, to };
-    Promise.all([api.dashboard.get(params), api.analytics.get(params)])
+    Promise.all([api.dashboard.get(params), api.analytics.get()])
       .then(([dashData, anData]) => {
         setData(dashData);
         setAnalyticsData(anData);
@@ -89,9 +96,9 @@ export default function AnalyticsPage() {
   };
 
   const resetToCurrentWeek = () => {
-    setDateFrom(defaultFrom);
-    setDateTo(defaultTo);
-    fetchData(defaultFrom, defaultTo);
+    setDateFrom(currentWeekFrom);
+    setDateTo(currentWeekTo);
+    fetchData(currentWeekFrom, currentWeekTo);
   };
 
   const handleExportPDF = async () => {
@@ -100,35 +107,11 @@ export default function AnalyticsPage() {
       const element = document.getElementById("analytics-export-area");
       if (!element) return;
 
-      const imgData = await toPng(element, { pixelRatio: 2 });
-
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
-        img.src = imgData;
-      });
-
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
-
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      if (pdfHeight <= pageHeight) {
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      } else {
-        let position = 0;
-        let remaining = pdfHeight;
-        while (remaining > 0) {
-          pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-          remaining -= pageHeight;
-          position -= pageHeight;
-          if (remaining > 0) pdf.addPage();
-        }
-      }
-
       const weekCode = data?.currentWeekKey ? weekRangeFilenameCodeFromWeekKey(data.currentWeekKey) : "export";
-      pdf.save(`Analytics_Export_Week_${weekCode}.pdf`);
+      await exportElementToPdf(element, {
+        filename: `Analytics_Export_Week_${weekCode}.pdf`,
+        backgroundColor: "#f9fafb",
+      });
     } catch (error) {
       console.error("Failed to export analytics:", error);
       alert("Failed to export analytics as PDF.");
@@ -146,7 +129,9 @@ export default function AnalyticsPage() {
 
   if (!data) return null;
 
-  const rollups = data.rollups ?? [];
+  const rollups = useMemo(() => {
+    return [...(data.rollups ?? [])].sort((a, b) => a.weekKey.localeCompare(b.weekKey));
+  }, [data.rollups]);
   const rawByState = data.submissionsByState ?? [];
 
   // Aggregate the submissionsByState into per-state totals
@@ -293,44 +278,55 @@ export default function AnalyticsPage() {
             <CardTitle>Submission Rate & Sessions Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              {chartType === "line" ? (
-                <LineChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
-                  <YAxis yAxisId="left" width={30} fontSize={10} tickMargin={5} />
-                  <YAxis yAxisId="right" orientation="right" width={30} fontSize={10} tickMargin={5} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="submissionRate"
-                    stroke="#ea580c"
-                    name="Submit %"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="totalSessions"
-                    stroke="#2563eb"
-                    name="Sessions"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              ) : (
-                <BarChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
-                  <YAxis width={30} fontSize={10} tickMargin={5} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
-                  <Bar dataKey="reportsSubmitted" fill="#ea580c" name="Reports" />
-                  <Bar dataKey="totalSessions" fill="#2563eb" name="Sessions" />
-                </BarChart>
-              )}
-            </ResponsiveContainer>
+            {rollups.length ? (
+              <ResponsiveContainer width="100%" height={350}>
+                {chartType === "line" ? (
+                  <LineChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
+                    <YAxis yAxisId="left" width={38} fontSize={10} tickMargin={5} tickFormatter={(v: number) => `${Math.round(v * 100)}%`} domain={[0, 'auto']} />
+                    <YAxis yAxisId="right" orientation="right" width={30} fontSize={10} tickMargin={5} />
+                    <Tooltip formatter={(value: any, name: any) => {
+                      if (name === "Submit %") return [`${(Number(value) * 100).toFixed(1)}%`, name];
+                      return [value, name];
+                    }} />
+                    <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="submissionRate"
+                      stroke="#ea580c"
+                      name="Submit %"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="totalSessions"
+                      stroke="#2563eb"
+                      name="Sessions"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                ) : (
+                  <BarChart data={rollups} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
+                    <YAxis width={30} fontSize={10} tickMargin={5} />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: '12px', marginTop: '10px' }} />
+                    <Bar dataKey="reportsSubmitted" fill="#ea580c" name="Reports" />
+                    <Bar dataKey="totalSessions" fill="#2563eb" name="Sessions" />
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-400 text-center py-12">No submission data available for this period.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -491,15 +487,19 @@ export default function AnalyticsPage() {
             <CardTitle>Urgent Alerts Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={rollups} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
-                <YAxis width={30} fontSize={10} tickMargin={5} />
-                <Tooltip />
-                <Bar dataKey="urgentAlertsCount" fill="#dc2626" name="Urgent Alerts" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {rollups.length ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={rollups} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="weekKey" fontSize={10} tickMargin={8} tickFormatter={weekRangeLabelFromWeekKey} />
+                  <YAxis width={30} fontSize={10} tickMargin={5} />
+                  <Tooltip />
+                  <Bar dataKey="urgentAlertsCount" fill="#dc2626" name="Urgent Alerts" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-400 text-center py-12">No alert data available for this period.</p>
+            )}
           </CardContent>
         </Card>
 

@@ -8,8 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
+import { exportElementToPdf } from "@/lib/pdf-export";
 import { Header } from "@/components/layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -91,35 +90,9 @@ export default function PeriodicNationalAuditDetailPage() {
     if (!audit || !auditRef.current) return;
     setPdfGenerating(true);
     try {
-      const element = auditRef.current;
-      const imgData = await toPng(element, { pixelRatio: 2 });
-
-      const img = new Image();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Failed to load generated image for PDF export"));
-        img.src = imgData;
+      await exportElementToPdf(auditRef.current, {
+        filename: `National_Audit_${audit.startMonth}_to_${audit.endMonth}_${filenameCode(audit.periodLabel)}.pdf`,
       });
-
-      const doc = new jsPDF("p", "mm", "a4");
-      const pdfWidth = doc.internal.pageSize.getWidth();
-      const pdfHeight = (img.naturalHeight * pdfWidth) / img.naturalWidth;
-      const pageHeight = doc.internal.pageSize.getHeight();
-
-      if (pdfHeight <= pageHeight) {
-        doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      } else {
-        let position = 0;
-        let remaining = pdfHeight;
-        while (remaining > 0) {
-          doc.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
-          remaining -= pageHeight;
-          position -= pageHeight;
-          if (remaining > 0) doc.addPage();
-        }
-      }
-
-      doc.save(`National_Audit_${audit.startMonth}_to_${audit.endMonth}_${filenameCode(audit.periodLabel)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
     } finally {
