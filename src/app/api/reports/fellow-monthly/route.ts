@@ -4,12 +4,13 @@ import { connectDB } from "@/lib/db";
 import { MentorMonthlyReport } from "@/models/MentorMonthlyReport";
 import { Fellow } from "@/models/Fellow";
 import { Mentor } from "@/models/Mentor";
+import { User } from "@/models/User";
 import { Coordinator } from "@/models/Coordinator";
 import { DeskOfficer } from "@/models/DeskOfficer";
 import { ReportHistory } from "@/models/ReportHistory";
 import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
-import { monthLockReason, monthLabel } from "@/lib/date-helpers";
+import { monthLockReason, monthLabel, isValidMonthKey } from "@/lib/date-helpers";
 import { getCurrentReportSeason } from "@/lib/report-season-server";
 
 export async function GET(request: Request) {
@@ -26,6 +27,8 @@ export async function GET(request: Request) {
         const rawStateParam = searchParams.get("state");
         const stateParam = rawStateParam ? rawStateParam.toUpperCase().trim() : "";
         const qParam = (searchParams.get("q") || "").trim();
+        const mentorQParam = (searchParams.get("mentorQ") || "").trim();
+        const monthParam = (searchParams.get("month") || "").trim();
         const mentorIdParam = searchParams.get("mentorId");
         const statusParam = searchParams.get("status");
         // ?sort=mentor keeps each mentor's reports contiguous across pages so
@@ -45,10 +48,18 @@ export async function GET(request: Request) {
         }
         filter.status = wantsDrafts ? "draft" : { $ne: "draft" };
 
+        const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
         if (qParam) {
             // Case-insensitive search against denormalised fellow name
-            const escaped = qParam.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            filter.fellowName = { $regex: escaped, $options: "i" };
+            filter.fellowName = { $regex: escapeRegex(qParam), $options: "i" };
+        }
+
+        if (monthParam) {
+            if (!isValidMonthKey(monthParam)) {
+                return NextResponse.json({ error: "Invalid month. Use yyyy-MM." }, { status: 400 });
+            }
+            filter.month = monthParam;
         }
 
         if (mentorIdParam) {
@@ -96,6 +107,22 @@ export async function GET(request: Request) {
             filter.mentor = { $in: mentorIds };
         }
         // Without stateParam, Admin/ME Officer/Team Research Lead see all
+
+        // Mentor-name search: the name lives on the mentor's User record, so
+        // resolve it to mentor ids and intersect with the scope decided above.
+        // Mentors only ever see their own reports, so it is ignored for them.
+        if (mentorQParam && session.user.role !== UserRole.MENTOR) {
+            const userIds = await User.find({ name: { $regex: escapeRegex(mentorQParam), $options: "i" } }).distinct("_id");
+            const matched = (await Mentor.find({ authId: { $in: userIds } }).distinct("_id")).map(String);
+            const matchedSet = new Set(matched);
+            if (filter.mentor === undefined) {
+                filter.mentor = { $in: matched };
+            } else if (filter.mentor.$in) {
+                filter.mentor = { $in: (filter.mentor.$in as unknown[]).filter((id) => matchedSet.has(String(id))) };
+            } else if (!matchedSet.has(String(filter.mentor))) {
+                filter.mentor = { $in: [] };
+            }
+        }
 
         const [data, total] = await Promise.all([
             MentorMonthlyReport.find(filter)

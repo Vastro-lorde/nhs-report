@@ -255,12 +255,15 @@ export default function MentorMonthlyReportsPage() {
   const [stateFilter, setStateFilter] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [debouncedName, setDebouncedName] = useState("");
+  const [mentorFilter, setMentorFilter] = useState("");
+  const [debouncedMentor, setDebouncedMentor] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
   const [scopedStates, setScopedStates] = useState<string[]>([]);
   const [showDrafts, setShowDrafts] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // Debounce name input so we don't refetch on every keystroke
+  // Debounce search inputs so we don't refetch on every keystroke
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedName(nameFilter.trim());
@@ -268,6 +271,14 @@ export default function MentorMonthlyReportsPage() {
     }, 350);
     return () => clearTimeout(t);
   }, [nameFilter]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedMentor(mentorFilter.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [mentorFilter]);
 
   const fetchReports = useCallback(async () => {
     // The sort depends on the role, so wait until the session is known.
@@ -277,7 +288,11 @@ export default function MentorMonthlyReportsPage() {
       const params: Record<string, string> = { page: String(page), limit: String(pageSize) };
       if (stateFilter) params.state = stateFilter;
       if (debouncedName) params.q = debouncedName;
-      if (groupByMentor) params.sort = "mentor";
+      if (groupByMentor) {
+        params.sort = "mentor";
+        if (debouncedMentor) params.mentorQ = debouncedMentor;
+        if (monthFilter) params.month = monthFilter;
+      }
       const result = await api.reports.fellowMonthly.list(params);
       setReports(result.data);
       setPagination(result.pagination);
@@ -286,7 +301,7 @@ export default function MentorMonthlyReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, stateFilter, debouncedName, groupByMentor, sessionStatus]);
+  }, [page, pageSize, stateFilter, debouncedName, debouncedMentor, monthFilter, groupByMentor, sessionStatus]);
 
   // Fetch the states the current user is allowed to see
   useEffect(() => {
@@ -340,20 +355,21 @@ export default function MentorMonthlyReportsPage() {
   );
 
   // When a page loads, open the first group so the table isn't a wall of
-  // collapsed headers; a name search opens everything since the user is
-  // looking for specific rows.
+  // collapsed headers; a search opens everything since the user is looking
+  // for specific rows.
+  const searching = Boolean(debouncedName || debouncedMentor);
   useEffect(() => {
     if (!groups.length) {
       setExpanded(new Set());
       return;
     }
-    if (debouncedName) {
+    if (searching) {
       setExpanded(new Set(allGroupKeys));
       return;
     }
     const first = groups[0];
     setExpanded(new Set([first.key, first.months[0]?.key].filter(Boolean) as string[]));
-  }, [groups, allGroupKeys, debouncedName]);
+  }, [groups, allGroupKeys, searching]);
 
   const toggle = (key: string) =>
     setExpanded((prev) => {
@@ -464,6 +480,24 @@ export default function MentorMonthlyReportsPage() {
                 placeholder="Search fellow name…"
                 className="w-full sm:w-56"
               />
+              {groupByMentor && (
+                <>
+                  <Input
+                    type="search"
+                    value={mentorFilter}
+                    onChange={(e) => setMentorFilter(e.target.value)}
+                    placeholder="Search mentor name…"
+                    className="w-full sm:w-56"
+                  />
+                  <Input
+                    type="month"
+                    value={monthFilter}
+                    onChange={(e) => { setMonthFilter(e.target.value); setPage(1); }}
+                    aria-label="Filter by month"
+                    className="w-full sm:w-44"
+                  />
+                </>
+              )}
               {userRole !== UserRole.MENTOR && (
                 <Select
                   value={stateFilter}
