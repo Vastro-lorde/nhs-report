@@ -1027,6 +1027,12 @@ export interface MentorMonthlyReport {
 }
 
 export interface MentorMonthlyReportListResponse extends PaginatedResponse<MentorMonthlyReport> {
+  pagination: PaginatedResponse<MentorMonthlyReport>["pagination"] & {
+    /** What `limit`/`total` count: reports, or mentors when paging by mentor. */
+    unit?: "reports" | "mentors";
+  };
+  /** Total matching reports regardless of the pagination unit. */
+  totalReports?: number;
   /** Fellows per mentor id, present when the listing is sorted by mentor. */
   mentorFellowCounts?: Record<string, number>;
 }

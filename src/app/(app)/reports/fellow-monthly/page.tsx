@@ -254,6 +254,10 @@ export default function MentorMonthlyReportsPage() {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
+  // Coordinators and above page over mentors so a mentor is never split
+  // across pages; mentors themselves page over their own reports.
+  const [mentorsPerPage, setMentorsPerPage] = useState(10);
+  const [reportTotal, setReportTotal] = useState(0);
   const [stateFilter, setStateFilter] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [debouncedName, setDebouncedName] = useState("");
@@ -290,24 +294,28 @@ export default function MentorMonthlyReportsPage() {
     if (sessionStatus === "loading") return;
     setLoading(true);
     try {
-      const params: Record<string, string> = { page: String(page), limit: String(pageSize) };
+      const params: Record<string, string> = { page: String(page) };
       if (stateFilter) params.state = stateFilter;
       if (debouncedName) params.q = debouncedName;
       if (groupByMentor) {
         params.sort = "mentor";
+        params.mentorsPerPage = String(mentorsPerPage);
         if (debouncedMentor) params.mentorQ = debouncedMentor;
         if (monthFilter) params.month = monthFilter;
+      } else {
+        params.limit = String(pageSize);
       }
       const result = await api.reports.fellowMonthly.list(params);
       setReports(result.data);
       setPagination(result.pagination);
+      setReportTotal(result.totalReports ?? result.pagination.total);
       setFellowCounts(result.mentorFellowCounts ?? {});
     } catch {
       // ignore
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, stateFilter, debouncedName, debouncedMentor, monthFilter, groupByMentor, sessionStatus]);
+  }, [page, pageSize, mentorsPerPage, stateFilter, debouncedName, debouncedMentor, monthFilter, groupByMentor, sessionStatus]);
 
   // Fetch the states the current user is allowed to see
   useEffect(() => {
@@ -483,7 +491,10 @@ export default function MentorMonthlyReportsPage() {
           <CardContent className="pt-4 flex justify-between items-center flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="text-sm text-gray-600">
-                {pagination.total} report{pagination.total === 1 ? "" : "s"}
+                {reportTotal} report{reportTotal === 1 ? "" : "s"}
+                {groupByMentor && pagination.total > 0 && (
+                  <span className="text-gray-400"> · {pagination.total} mentor{pagination.total === 1 ? "" : "s"}</span>
+                )}
               </div>
               <Input
                 type="search"
@@ -637,18 +648,36 @@ export default function MentorMonthlyReportsPage() {
         {pagination.total > 0 && (
           <div className="flex items-center justify-between text-sm text-gray-500 flex-wrap gap-3">
             <span>
-              Page {pagination.page} of {pagination.totalPages} ({pagination.total} reports)
+              Page {pagination.page} of {pagination.totalPages} (
+              {groupByMentor
+                ? `${pagination.total} mentor${pagination.total === 1 ? "" : "s"} · ${reportTotal} report${reportTotal === 1 ? "" : "s"}`
+                : `${pagination.total} report${pagination.total === 1 ? "" : "s"}`}
+              )
             </span>
             <div className="flex items-center gap-3">
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white"
-              >
-                {[10, 15, 25, 50, 100].map((size) => (
-                  <option key={size} value={size}>{size} / page</option>
-                ))}
-              </select>
+              {groupByMentor ? (
+                <select
+                  value={mentorsPerPage}
+                  onChange={(e) => { setMentorsPerPage(Number(e.target.value)); setPage(1); }}
+                  aria-label="Mentors per page"
+                  className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white"
+                >
+                  {[5, 10, 20, 50].map((size) => (
+                    <option key={size} value={size}>{size} mentors / page</option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  aria-label="Reports per page"
+                  className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white"
+                >
+                  {[10, 15, 25, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size} / page</option>
+                  ))}
+                </select>
+              )}
               <div className="flex gap-2">
                 <Button
                   variant="outline"

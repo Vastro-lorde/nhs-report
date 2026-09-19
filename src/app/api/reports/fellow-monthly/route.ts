@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
+import mongoose, { type QueryFilter } from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import { MentorMonthlyReport } from "@/models/MentorMonthlyReport";
+import { MentorMonthlyReport, type IMentorMonthlyReport } from "@/models/MentorMonthlyReport";
 import { Fellow } from "@/models/Fellow";
 import { Mentor } from "@/models/Mentor";
 import { User } from "@/models/User";
@@ -13,6 +13,16 @@ import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/co
 import { logActivity } from "@/lib/activity-logger";
 import { monthLockReason, monthLabel, isValidMonthKey } from "@/lib/date-helpers";
 import { getCurrentReportSeason } from "@/lib/report-season-server";
+
+/** Fellows per mentor id, for the "reports / fellows" group headers. */
+async function fellowCountsFor(mentorIds: mongoose.Types.ObjectId[]): Promise<Record<string, number>> {
+    if (!mentorIds.length) return {};
+    const counts = await Fellow.aggregate<{ _id: unknown; count: number }>([
+        { $match: { mentor: { $in: mentorIds } } },
+        { $group: { _id: "$mentor", count: { $sum: 1 } } },
+    ]);
+    return Object.fromEntries(counts.map((c) => [String(c._id), c.count]));
+}
 
 export async function GET(request: Request) {
     try {
@@ -31,6 +41,9 @@ export async function GET(request: Request) {
         const mentorQParam = (searchParams.get("mentorQ") || "").trim();
         const monthParam = (searchParams.get("month") || "").trim();
         const mentorIdParam = searchParams.get("mentorId");
+        // ?mentorsPerPage=N pages over distinct mentors instead of reports, so a
+        // mentor's group is never split across pages. Only with ?sort=mentor.
+        const mentorsPerPage = parseInt(searchParams.get("mentorsPerPage") || "0", 10);
         const statusParam = searchParams.get("status");
         // ?sort=mentor keeps each mentor's reports contiguous across pages so
         // the listing can be grouped by mentor. Default order is newest month first.
@@ -125,14 +138,42 @@ export async function GET(request: Request) {
             }
         }
 
-        const [data, total] = await Promise.all([
-            MentorMonthlyReport.find(filter)
+        const populatedQuery = (queryFilter: QueryFilter<IMentorMonthlyReport>) =>
+            MentorMonthlyReport.find(queryFilter)
                 .populate({ path: "mentor", populate: { path: "authId", select: "name email" } })
                 .populate({ path: "fellow", select: "name lga qualification" })
-                .sort(sort)
-                .skip(skip)
-                .limit(limit)
-                .lean(),
+                .sort(sort);
+
+        if (sort.mentor && mentorsPerPage > 0) {
+            // ObjectId string order matches the `{ mentor: 1 }` sort, so the
+            // page slice lines up with the order reports come back in.
+            const mentorIdsWithReports = (await MentorMonthlyReport.distinct("mentor", filter)).map(String).sort();
+            const totalMentors = mentorIdsWithReports.length;
+            const pageMentorIds = mentorIdsWithReports
+                .slice((page - 1) * mentorsPerPage, page * mentorsPerPage)
+                .map((id) => new mongoose.Types.ObjectId(id));
+
+            const [data, totalReports] = await Promise.all([
+                populatedQuery({ ...filter, mentor: { $in: pageMentorIds } }).lean(),
+                MentorMonthlyReport.countDocuments(filter),
+            ]);
+
+            return NextResponse.json({
+                data,
+                pagination: {
+                    page,
+                    limit: mentorsPerPage,
+                    total: totalMentors,
+                    totalPages: Math.ceil(totalMentors / mentorsPerPage),
+                    unit: "mentors",
+                },
+                totalReports,
+                mentorFellowCounts: await fellowCountsFor(pageMentorIds),
+            });
+        }
+
+        const [data, total] = await Promise.all([
+            populatedQuery(filter).skip(skip).limit(limit).lean(),
             MentorMonthlyReport.countDocuments(filter),
         ]);
 
@@ -141,16 +182,13 @@ export async function GET(request: Request) {
         let mentorFellowCounts: Record<string, number> | undefined;
         if (sort.mentor) {
             const mentorIds = Array.from(new Set(data.map((r) => String(r.mentor?._id ?? r.mentor)).filter(Boolean)));
-            const counts = await Fellow.aggregate<{ _id: unknown; count: number }>([
-                { $match: { mentor: { $in: mentorIds.map((id) => new mongoose.Types.ObjectId(id)) } } },
-                { $group: { _id: "$mentor", count: { $sum: 1 } } },
-            ]);
-            mentorFellowCounts = Object.fromEntries(counts.map((c) => [String(c._id), c.count]));
+            mentorFellowCounts = await fellowCountsFor(mentorIds.map((id) => new mongoose.Types.ObjectId(id)));
         }
 
         return NextResponse.json({
             data,
-            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit), unit: "reports" },
+            totalReports: total,
             ...(mentorFellowCounts ? { mentorFellowCounts } : {}),
         });
     } catch (error: any) {
