@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole, STATES } from "@/lib/constants";
-import { safeFormatISO } from "@/lib/date-helpers";
+import { safeFormatISO, monthKey } from "@/lib/date-helpers";
 import { Eye, FilePen, FileText, Plus, Trash2, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 
 const RATING_COLORS: Record<string, string> = {
@@ -259,7 +259,9 @@ export default function MentorMonthlyReportsPage() {
   const [debouncedName, setDebouncedName] = useState("");
   const [mentorFilter, setMentorFilter] = useState("");
   const [debouncedMentor, setDebouncedMentor] = useState("");
-  const [monthFilter, setMonthFilter] = useState("");
+  // Defaults to the current month; future months cannot be selected.
+  const currentMonth = monthKey(new Date());
+  const [monthFilter, setMonthFilter] = useState(currentMonth);
   const [scopedStates, setScopedStates] = useState<string[]>([]);
   const [showDrafts, setShowDrafts] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
@@ -502,7 +504,14 @@ export default function MentorMonthlyReportsPage() {
                   <Input
                     type="month"
                     value={monthFilter}
-                    onChange={(e) => { setMonthFilter(e.target.value); setPage(1); }}
+                    max={currentMonth}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Native `max` doesn't stop a typed-in value, so clamp here too.
+                      if (value && value > currentMonth) return;
+                      setMonthFilter(value);
+                      setPage(1);
+                    }}
                     aria-label="Filter by month"
                     className="w-full sm:w-44"
                   />
