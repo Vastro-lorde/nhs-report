@@ -258,7 +258,7 @@ export const api = {
 
     fellowMonthly: {
       list: (params?: URLSearchParams | Record<string, string>) =>
-        request<PaginatedResponse<MentorMonthlyReport>>(`/api/reports/fellow-monthly?${new URLSearchParams(params).toString()}`),
+        request<MentorMonthlyReportListResponse>(`/api/reports/fellow-monthly?${new URLSearchParams(params).toString()}`),
       get: (id: string) => request<MentorMonthlyReport>(`/api/reports/fellow-monthly/${id}`, { cache: "no-store" }),
       create: (data: CreateMentorMonthlyReportInput) =>
         request<MentorMonthlyReport>("/api/reports/fellow-monthly", { method: "POST", body: JSON.stringify(data) }),
@@ -1024,6 +1024,11 @@ export interface MentorMonthlyReport {
   status: string;
   createdAt: string;
   canEdit?: boolean;
+}
+
+export interface MentorMonthlyReportListResponse extends PaginatedResponse<MentorMonthlyReport> {
+  /** Fellows per mentor id, present when the listing is sorted by mentor. */
+  mentorFellowCounts?: Record<string, number>;
 }
 
 export interface CreateMentorMonthlyReportInput {

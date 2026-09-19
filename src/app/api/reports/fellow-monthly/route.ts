@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { MentorMonthlyReport } from "@/models/MentorMonthlyReport";
@@ -135,7 +136,23 @@ export async function GET(request: Request) {
             MentorMonthlyReport.countDocuments(filter),
         ]);
 
-        return NextResponse.json({ data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+        // Grouped listings show "reports / fellows" per mentor, so return how
+        // many fellows each mentor on this page is responsible for.
+        let mentorFellowCounts: Record<string, number> | undefined;
+        if (sort.mentor) {
+            const mentorIds = Array.from(new Set(data.map((r) => String(r.mentor?._id ?? r.mentor)).filter(Boolean)));
+            const counts = await Fellow.aggregate<{ _id: unknown; count: number }>([
+                { $match: { mentor: { $in: mentorIds.map((id) => new mongoose.Types.ObjectId(id)) } } },
+                { $group: { _id: "$mentor", count: { $sum: 1 } } },
+            ]);
+            mentorFellowCounts = Object.fromEntries(counts.map((c) => [String(c._id), c.count]));
+        }
+
+        return NextResponse.json({
+            data,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+            ...(mentorFellowCounts ? { mentorFellowCounts } : {}),
+        });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

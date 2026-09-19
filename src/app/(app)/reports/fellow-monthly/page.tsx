@@ -36,6 +36,7 @@ interface MonthGroup {
 
 interface MentorGroup {
   key: string;
+  mentorId: string;
   label: string;
   count: number;
   months: MonthGroup[];
@@ -53,6 +54,7 @@ function groupReports(reports: MentorMonthlyReport[], byMentor: boolean): Mentor
     if (!mentorGroup) {
       mentorGroup = {
         key: `mentor:${mentorId}`,
+        mentorId,
         label: r.mentor?.authId?.name ?? "Unknown mentor",
         count: 0,
         months: [],
@@ -262,6 +264,7 @@ export default function MentorMonthlyReportsPage() {
   const [showDrafts, setShowDrafts] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [fellowCounts, setFellowCounts] = useState<Record<string, number>>({});
 
   // Debounce search inputs so we don't refetch on every keystroke
   useEffect(() => {
@@ -296,6 +299,7 @@ export default function MentorMonthlyReportsPage() {
       const result = await api.reports.fellowMonthly.list(params);
       setReports(result.data);
       setPagination(result.pagination);
+      setFellowCounts(result.mentorFellowCounts ?? {});
     } catch {
       // ignore
     } finally {
@@ -442,15 +446,21 @@ export default function MentorMonthlyReportsPage() {
     );
   };
 
-  const renderMonthGroup = (m: MonthGroup, indent: boolean) => {
+  // Under a mentor, a month reads "5/8 fellows" so gaps in reporting stand
+  // out; for mentors themselves it is just the report count.
+  const renderMonthGroup = (m: MonthGroup, indent: boolean, fellowTotal?: number) => {
     const open = expanded.has(m.key);
+    const meta =
+      fellowTotal !== undefined
+        ? `${m.reports.length}/${fellowTotal} fellow${fellowTotal === 1 ? "" : "s"} reported`
+        : `${m.reports.length} report${m.reports.length === 1 ? "" : "s"}`;
     return [
       <GroupToggle
         key={m.key}
         expanded={open}
         onClick={() => toggle(m.key)}
         label={m.label}
-        meta={`${m.reports.length} report${m.reports.length === 1 ? "" : "s"}`}
+        meta={meta}
         indent={indent}
         colSpan={columnCount}
         tone="month"
@@ -589,17 +599,22 @@ export default function MentorMonthlyReportsPage() {
               ) : groupByMentor ? (
                 groups.flatMap((g) => {
                   const open = expanded.has(g.key);
+                  const fellowTotal = fellowCounts[g.mentorId];
+                  const reportsMeta =
+                    fellowTotal !== undefined
+                      ? `${g.count} report${g.count === 1 ? "" : "s"} / ${fellowTotal} fellow${fellowTotal === 1 ? "" : "s"}`
+                      : `${g.count} report${g.count === 1 ? "" : "s"}`;
                   return [
                     <GroupToggle
                       key={g.key}
                       expanded={open}
                       onClick={() => toggle(g.key)}
                       label={g.label}
-                      meta={`${g.count} report${g.count === 1 ? "" : "s"} · ${g.months.length} month${g.months.length === 1 ? "" : "s"}`}
+                      meta={`${reportsMeta} · ${g.months.length} month${g.months.length === 1 ? "" : "s"}`}
                       colSpan={columnCount}
                       tone="mentor"
                     />,
-                    ...(open ? g.months.flatMap((m) => renderMonthGroup(m, true)) : []),
+                    ...(open ? g.months.flatMap((m) => renderMonthGroup(m, true, fellowTotal)) : []),
                   ];
                 })
               ) : (
