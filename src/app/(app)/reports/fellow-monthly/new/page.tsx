@@ -30,6 +30,8 @@ import { AlertTriangle, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import {
   DEFAULT_REPORT_SEASON,
   normalizeReportSeason,
+  optionalOrRequiredSuffix,
+  fellowMonthlySubmitError,
   phcVisitsLabel,
   phcVisitsPlaceholder,
   showsLearningField,
@@ -265,6 +267,13 @@ export default function NewMentorMonthlyReportPage() {
     if (duplicateReason) {
       setError(duplicateReason);
       return;
+    }
+    if (!isDraft) {
+      const submitError = fellowMonthlySubmitError(season, { progressRating, achievements });
+      if (submitError) {
+        setError(submitError);
+        return;
+      }
     }
 
     const filteredChallenges = challenges.filter(c => c.trim());
@@ -627,7 +636,7 @@ export default function NewMentorMonthlyReportPage() {
         {/* ── Section 6: Progress Rating ── */}
         <Card>
           <CardHeader>
-            <CardTitle>Section 6 – Progress Rating (Optional)</CardTitle>
+            <CardTitle>Section 6 – Progress Rating {optionalOrRequiredSuffix(season)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
@@ -661,7 +670,7 @@ export default function NewMentorMonthlyReportPage() {
         {/* ── Section 7: Key Achievements ── */}
         <Card>
           <CardHeader>
-            <CardTitle>Section 7 – Key Achievements (Optional)</CardTitle>
+            <CardTitle>Section 7 – Key Achievements {optionalOrRequiredSuffix(season)}</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea

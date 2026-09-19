@@ -13,6 +13,7 @@ import { UserRole, ReportHistoryReportType, ReportHistoryAction } from "@/lib/co
 import { logActivity } from "@/lib/activity-logger";
 import { monthLockReason, monthLabel, isValidMonthKey } from "@/lib/date-helpers";
 import { getCurrentReportSeason } from "@/lib/report-season-server";
+import { fellowMonthlySubmitError } from "@/lib/report-season";
 
 /** Fellows per mentor id, for the "reports / fellows" group headers. */
 async function fellowCountsFor(mentorIds: mongoose.Types.ObjectId[]): Promise<Record<string, number>> {
@@ -242,6 +243,13 @@ export async function POST(request: Request) {
 
         // Stamp the season in force right now; it never changes after creation.
         const season = await getCurrentReportSeason();
+
+        // Capstone submissions must carry a rating and achievements; a draft
+        // can still be saved without them.
+        if (!isDraft) {
+            const submitError = fellowMonthlySubmitError(season, body);
+            if (submitError) return NextResponse.json({ error: submitError }, { status: 400 });
+        }
 
         const report = await MentorMonthlyReport.create({
             ...body,

@@ -22,6 +22,8 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import {
   DEFAULT_REPORT_SEASON,
   normalizeReportSeason,
+  optionalOrRequiredSuffix,
+  fellowMonthlySubmitError,
   phcVisitsLabel,
   phcVisitsPlaceholder,
   showsLearningField,
@@ -172,6 +174,14 @@ export default function EditMentorMonthlyReportPage() {
       const lockReason = monthLockReason(month);
       if (lockReason) {
         setError(lockReason);
+        return;
+      }
+    }
+    // Anything that ends up submitted must meet its season's requirements.
+    if (!keepingDraft) {
+      const submitError = fellowMonthlySubmitError(season, { progressRating, achievements });
+      if (submitError) {
+        setError(submitError);
         return;
       }
     }
@@ -477,7 +487,7 @@ export default function EditMentorMonthlyReportPage() {
         {/* ── Section 6: Progress Rating ── */}
         <Card>
           <CardHeader>
-            <CardTitle>Section 6 – Progress Rating (Optional)</CardTitle>
+            <CardTitle>Section 6 – Progress Rating {optionalOrRequiredSuffix(season)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
@@ -511,7 +521,7 @@ export default function EditMentorMonthlyReportPage() {
         {/* ── Section 7: Key Achievements ── */}
         <Card>
           <CardHeader>
-            <CardTitle>Section 7 – Key Achievements (Optional)</CardTitle>
+            <CardTitle>Section 7 – Key Achievements {optionalOrRequiredSuffix(season)}</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea

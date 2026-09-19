@@ -64,3 +64,29 @@ export function phcVisitsPlaceholder(season: unknown): string {
     ? "Summarise progress made on the capstone implementation this month…"
     : "Summarise PHC visits or community engagements undertaken…";
 }
+
+/* ── Fellow monthly report: progress rating + achievements are mandatory in capstone ── */
+export function requiresProgressAndAchievements(season: unknown): boolean {
+  return isCapstoneSeason(season);
+}
+
+export function optionalOrRequiredSuffix(season: unknown): string {
+  return requiresProgressAndAchievements(season) ? "(Required)" : "(Optional)";
+}
+
+/**
+ * Validation for submitting a fellow monthly report. Drafts are never
+ * checked — the caller only asks when the report is being submitted.
+ * Returns an error message, or null when the report passes.
+ */
+export function fellowMonthlySubmitError(
+  season: unknown,
+  fields: { progressRating?: string | null; achievements?: string | null },
+): string | null {
+  if (!requiresProgressAndAchievements(season)) return null;
+  const missing: string[] = [];
+  if (!String(fields.progressRating ?? "").trim()) missing.push("a progress rating");
+  if (!String(fields.achievements ?? "").trim()) missing.push("key achievements");
+  if (!missing.length) return null;
+  return `During the capstone season ${missing.join(" and ")} ${missing.length === 1 ? "is" : "are"} required before submitting.`;
+}

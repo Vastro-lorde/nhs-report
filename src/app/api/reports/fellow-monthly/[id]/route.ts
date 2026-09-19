@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fellowMonthlySubmitError } from "@/lib/report-season";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { AppSettings } from "@/models";
@@ -178,6 +179,14 @@ export async function PATCH(
         }
 
         Object.assign(report, body);
+
+        // Whatever the report looks like after this edit, if it is (or is
+        // becoming) submitted it must satisfy the rules of its own season.
+        if (report.status !== "draft") {
+            const submitError = fellowMonthlySubmitError(report.season, report);
+            if (submitError) return NextResponse.json({ error: submitError }, { status: 400 });
+        }
+
         await report.save();
 
         void ReportHistory.create({
