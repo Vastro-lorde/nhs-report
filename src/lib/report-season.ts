@@ -53,3 +53,14 @@ export function sessionTopicPlaceholder(season: unknown): string {
 export function showsLearningField(season: unknown): boolean {
   return !isCapstoneSeason(season);
 }
+
+/* ── Fellow monthly report: PHC visits field is relabelled in capstone ── */
+export function phcVisitsLabel(season: unknown): string {
+  return isCapstoneSeason(season) ? "Capstone Implementation Progress" : "PHC Visits / Community Engagements";
+}
+
+export function phcVisitsPlaceholder(season: unknown): string {
+  return isCapstoneSeason(season)
+    ? "Summarise progress made on the capstone implementation this month…"
+    : "Summarise PHC visits or community engagements undertaken…";
+}

@@ -30,6 +30,8 @@ import { AlertTriangle, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import {
   DEFAULT_REPORT_SEASON,
   normalizeReportSeason,
+  phcVisitsLabel,
+  phcVisitsPlaceholder,
   showsLearningField,
   type ReportSeason,
 } from "@/lib/report-season";
@@ -488,13 +490,13 @@ export default function NewMentorMonthlyReportPage() {
             )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                PHC Visits / Community Engagements
+                {phcVisitsLabel(season)}
               </label>
               <Textarea
                 rows={3}
                 value={summaryPhcVisits}
                 onChange={e => setSummaryPhcVisits(e.target.value)}
-                placeholder="Summarise PHC visits or community engagements undertaken…"
+                placeholder={phcVisitsPlaceholder(season)}
               />
             </div>
             <div>

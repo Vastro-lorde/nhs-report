@@ -14,7 +14,7 @@ import {
 } from "@react-pdf/renderer";
 import type { MentorMonthlyReport } from "@/lib/api-client";
 import { APP_NAME } from "@/lib/constants";
-import { showsLearningField } from "@/lib/report-season";
+import { phcVisitsLabel, showsLearningField } from "@/lib/report-season";
 
 Font.register({
   family: "Helvetica",
@@ -196,7 +196,7 @@ export function MentorMonthlyReportPDF({ report, mentorName, monthLabel }: Mento
         {showsLearningField(report.season) && (
           <SummaryField label="Learning / Courses Completed" value={report.summaryLearning} />
         )}
-        <SummaryField label="PHC Visits / Community Engagements" value={report.summaryPhcVisits} />
+        <SummaryField label={phcVisitsLabel(report.season)} value={report.summaryPhcVisits} />
         <SummaryField label="Activities & Outcomes" value={report.summaryActivities} />
         <SummaryField label="Fellow's Growth & Development" value={report.summaryGrowth} />
         <SummaryField label="Impact of Mentoring" value={report.summaryImpact} />
