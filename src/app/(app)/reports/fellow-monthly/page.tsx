@@ -3,7 +3,7 @@
    ────────────────────────────────────────── */
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Header } from "@/components/layout";
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { api, type MentorMonthlyReport } from "@/lib/api-client";
 import { UserRole, STATES } from "@/lib/constants";
 import { safeFormatISO } from "@/lib/date-helpers";
-import { Eye, FilePen, FileText, Plus, Trash2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, FilePen, FileText, Plus, Trash2, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 
 const RATING_COLORS: Record<string, string> = {
   Excellent: "bg-green-100 text-green-800",
@@ -22,6 +22,93 @@ const RATING_COLORS: Record<string, string> = {
   Fair: "bg-yellow-100 text-yellow-800",
   "Needs Improvement": "bg-red-100 text-red-800",
 };
+
+/* ─── Grouping ──────────────────────────────
+   Mentors see their reports grouped by month; coordinators and above see
+   them grouped by mentor, then by month. Grouping happens within the page
+   the API returned, so the server sort must keep groups contiguous.
+   ────────────────────────────────────────── */
+interface MonthGroup {
+  key: string;
+  label: string;
+  reports: MentorMonthlyReport[];
+}
+
+interface MentorGroup {
+  key: string;
+  label: string;
+  count: number;
+  months: MonthGroup[];
+}
+
+function monthLabel(month: string | undefined) {
+  return safeFormatISO(month ? `${month}-01` : null, "MMMM yyyy");
+}
+
+function groupReports(reports: MentorMonthlyReport[], byMentor: boolean): MentorGroup[] {
+  const mentors = new Map<string, MentorGroup>();
+  for (const r of reports) {
+    const mentorId = byMentor ? String(r.mentor?._id ?? "unknown") : "all";
+    let mentorGroup = mentors.get(mentorId);
+    if (!mentorGroup) {
+      mentorGroup = {
+        key: `mentor:${mentorId}`,
+        label: r.mentor?.authId?.name ?? "Unknown mentor",
+        count: 0,
+        months: [],
+      };
+      mentors.set(mentorId, mentorGroup);
+    }
+    mentorGroup.count += 1;
+
+    const monthKey = `${mentorGroup.key}|${r.month ?? ""}`;
+    let monthGroup = mentorGroup.months.find((m) => m.key === monthKey);
+    if (!monthGroup) {
+      monthGroup = { key: monthKey, label: monthLabel(r.month), reports: [] };
+      mentorGroup.months.push(monthGroup);
+    }
+    monthGroup.reports.push(r);
+  }
+  return Array.from(mentors.values());
+}
+
+function GroupToggle({
+  expanded,
+  onClick,
+  label,
+  meta,
+  indent = false,
+  colSpan,
+  tone,
+}: {
+  expanded: boolean;
+  onClick: () => void;
+  label: string;
+  meta: string;
+  indent?: boolean;
+  colSpan: number;
+  tone: "mentor" | "month";
+}) {
+  const Icon = expanded ? ChevronDown : ChevronRight;
+  return (
+    <tr className={tone === "mentor" ? "bg-gray-100" : "bg-gray-50"}>
+      <td colSpan={colSpan} className="p-0">
+        <button
+          type="button"
+          onClick={onClick}
+          aria-expanded={expanded}
+          className={`w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-gray-200/60 ${indent ? "pl-9" : ""}`}
+        >
+          <Icon className="h-4 w-4 text-gray-500 shrink-0" />
+          <span className={tone === "mentor" ? "font-semibold text-gray-900" : "font-medium text-gray-800"}>
+            {label}
+          </span>
+          <span className="text-xs text-gray-500">{meta}</span>
+        </button>
+      </td>
+    </tr>
+  );
+}
 
 
 /* ─── Drafts Modal ──────────────────────────
@@ -153,10 +240,12 @@ function DraftsModal({
 }
 
 export default function MentorMonthlyReportsPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userRole = session?.user?.role;
   const canCreate = userRole === UserRole.MENTOR;
   const canDelete = userRole === UserRole.MENTOR || userRole === UserRole.ADMIN;
+  // Mentors only ever see their own reports, so the mentor level is dropped.
+  const groupByMentor = userRole !== UserRole.MENTOR;
 
   const [reports, setReports] = useState<MentorMonthlyReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +258,7 @@ export default function MentorMonthlyReportsPage() {
   const [scopedStates, setScopedStates] = useState<string[]>([]);
   const [showDrafts, setShowDrafts] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Debounce name input so we don't refetch on every keystroke
   useEffect(() => {
@@ -180,11 +270,14 @@ export default function MentorMonthlyReportsPage() {
   }, [nameFilter]);
 
   const fetchReports = useCallback(async () => {
+    // The sort depends on the role, so wait until the session is known.
+    if (sessionStatus === "loading") return;
     setLoading(true);
     try {
       const params: Record<string, string> = { page: String(page), limit: String(pageSize) };
       if (stateFilter) params.state = stateFilter;
       if (debouncedName) params.q = debouncedName;
+      if (groupByMentor) params.sort = "mentor";
       const result = await api.reports.fellowMonthly.list(params);
       setReports(result.data);
       setPagination(result.pagination);
@@ -193,7 +286,7 @@ export default function MentorMonthlyReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, stateFilter, debouncedName]);
+  }, [page, pageSize, stateFilter, debouncedName, groupByMentor, sessionStatus]);
 
   // Fetch the states the current user is allowed to see
   useEffect(() => {
@@ -239,6 +332,39 @@ export default function MentorMonthlyReportsPage() {
     fetchDraftCount();
   }, [fetchDraftCount]);
 
+  const groups = useMemo(() => groupReports(reports, groupByMentor), [reports, groupByMentor]);
+
+  const allGroupKeys = useMemo(
+    () => groups.flatMap((g) => [g.key, ...g.months.map((m) => m.key)]),
+    [groups],
+  );
+
+  // When a page loads, open the first group so the table isn't a wall of
+  // collapsed headers; a name search opens everything since the user is
+  // looking for specific rows.
+  useEffect(() => {
+    if (!groups.length) {
+      setExpanded(new Set());
+      return;
+    }
+    if (debouncedName) {
+      setExpanded(new Set(allGroupKeys));
+      return;
+    }
+    const first = groups[0];
+    setExpanded(new Set([first.key, first.months[0]?.key].filter(Boolean) as string[]));
+  }, [groups, allGroupKeys, debouncedName]);
+
+  const toggle = (key: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const allExpanded = allGroupKeys.length > 0 && allGroupKeys.every((k) => expanded.has(k));
+
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this report? This cannot be undone.")) return;
     try {
@@ -247,6 +373,74 @@ export default function MentorMonthlyReportsPage() {
     } catch (err: any) {
       alert(`Failed to delete: ${err.message}`);
     }
+  };
+
+  const columnCount = 5;
+
+  const renderReportRow = (r: MentorMonthlyReport) => {
+    const attendancePct =
+      r.sessionsHeld > 0 ? Math.round((r.sessionsAttended / r.sessionsHeld) * 100) : 0;
+
+    return (
+      <tr key={r._id} className="hover:bg-gray-50">
+        <td className={`px-4 py-3 ${groupByMentor ? "pl-14" : "pl-9"}`}>{r.fellowName}</td>
+        <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{r.fellowLGA}</td>
+        <td className="px-4 py-3 text-gray-600">
+          {r.sessionsAttended}/{r.sessionsHeld}
+          {r.sessionsHeld > 0 && (
+            <span className="ml-1 text-xs text-gray-400">({attendancePct}%)</span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden sm:table-cell">
+          {r.progressRating ? (
+            <span
+              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${RATING_COLORS[r.progressRating] ?? "bg-gray-100 text-gray-700"}`}
+            >
+              {r.progressRating}
+            </span>
+          ) : (
+            <span className="text-gray-400 text-xs">—</span>
+          )}
+        </td>
+        <td className="px-4 py-3 text-right">
+          <div className="flex justify-end gap-1">
+            <Link href={`/reports/fellow-monthly/${r._id}`} data-tooltip="View fellow monthly report details">
+              <Button variant="ghost" size="icon" aria-label="View" tooltip="View fellow monthly report details">
+                <Eye className="h-4 w-4" />
+              </Button>
+            </Link>
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Delete"
+                onClick={() => handleDelete(r._id)}
+                tooltip="Delete this fellow monthly report"
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderMonthGroup = (m: MonthGroup, indent: boolean) => {
+    const open = expanded.has(m.key);
+    return [
+      <GroupToggle
+        key={m.key}
+        expanded={open}
+        onClick={() => toggle(m.key)}
+        label={m.label}
+        meta={`${m.reports.length} report${m.reports.length === 1 ? "" : "s"}`}
+        indent={indent}
+        colSpan={columnCount}
+        tone="month"
+      />,
+      ...(open ? m.reports.map(renderReportRow) : []),
+    ];
   };
 
   return (
@@ -285,6 +479,21 @@ export default function MentorMonthlyReportsPage() {
                   className="w-full sm:w-48"
                 />
               )}
+              {groups.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setExpanded(allExpanded ? new Set() : new Set(allGroupKeys))}
+                  tooltip={allExpanded ? "Collapse every group" : "Expand every group"}
+                >
+                  {allExpanded ? (
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                  )}
+                  {allExpanded ? "Collapse all" : "Expand all"}
+                </Button>
+              )}
             </div>
             {canCreate && (
               <div className="flex items-center gap-2">
@@ -311,8 +520,9 @@ export default function MentorMonthlyReportsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left">
               <tr>
-                <th className="px-4 py-3 font-medium text-gray-600">Month</th>
-                <th className="px-4 py-3 font-medium text-gray-600">Fellow</th>
+                <th className="px-4 py-3 font-medium text-gray-600">
+                  {groupByMentor ? "Mentor / Month / Fellow" : "Month / Fellow"}
+                </th>
                 <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">LGA</th>
                 <th className="px-4 py-3 font-medium text-gray-600">Attendance</th>
                 <th className="px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Progress</th>
@@ -322,13 +532,13 @@ export default function MentorMonthlyReportsPage() {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={columnCount} className="px-4 py-8 text-center text-gray-400">
                     Loading reports…
                   </td>
                 </tr>
               ) : !reports.length ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={columnCount} className="px-4 py-8 text-center text-gray-400">
                     <div className="flex flex-col items-center space-y-2">
                       <FileText className="h-8 w-8 text-gray-300" />
                       <p>No fellow monthly reports found.</p>
@@ -342,59 +552,24 @@ export default function MentorMonthlyReportsPage() {
                     </div>
                   </td>
                 </tr>
-              ) : (
-                reports.map(r => {
-                  const displayMonth = safeFormatISO(r.month ? `${r.month}-01` : null, "MMMM yyyy");
-                  const attendancePct =
-                    r.sessionsHeld > 0
-                      ? Math.round((r.sessionsAttended / r.sessionsHeld) * 100)
-                      : 0;
-
-                  return (
-                    <tr key={r._id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{displayMonth}</td>
-                      <td className="px-4 py-3">{r.fellowName}</td>
-                      <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{r.fellowLGA}</td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {r.sessionsAttended}/{r.sessionsHeld}
-                        {r.sessionsHeld > 0 && (
-                          <span className="ml-1 text-xs text-gray-400">({attendancePct}%)</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        {r.progressRating ? (
-                          <span
-                            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${RATING_COLORS[r.progressRating] ?? "bg-gray-100 text-gray-700"}`}
-                          >
-                            {r.progressRating}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Link href={`/reports/fellow-monthly/${r._id}`} data-tooltip="View fellow monthly report details">
-                            <Button variant="ghost" size="icon" aria-label="View" tooltip="View fellow monthly report details">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          {canDelete && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Delete"
-                              onClick={() => handleDelete(r._id)}
-                              tooltip="Delete this fellow monthly report"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
+              ) : groupByMentor ? (
+                groups.flatMap((g) => {
+                  const open = expanded.has(g.key);
+                  return [
+                    <GroupToggle
+                      key={g.key}
+                      expanded={open}
+                      onClick={() => toggle(g.key)}
+                      label={g.label}
+                      meta={`${g.count} report${g.count === 1 ? "" : "s"} · ${g.months.length} month${g.months.length === 1 ? "" : "s"}`}
+                      colSpan={columnCount}
+                      tone="mentor"
+                    />,
+                    ...(open ? g.months.flatMap((m) => renderMonthGroup(m, true)) : []),
+                  ];
                 })
+              ) : (
+                groups.flatMap((g) => g.months.flatMap((m) => renderMonthGroup(m, false)))
               )}
             </tbody>
           </table>

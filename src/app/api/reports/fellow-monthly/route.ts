@@ -28,6 +28,12 @@ export async function GET(request: Request) {
         const qParam = (searchParams.get("q") || "").trim();
         const mentorIdParam = searchParams.get("mentorId");
         const statusParam = searchParams.get("status");
+        // ?sort=mentor keeps each mentor's reports contiguous across pages so
+        // the listing can be grouped by mentor. Default order is newest month first.
+        const sort: Record<string, 1 | -1> =
+            searchParams.get("sort") === "mentor"
+                ? { mentor: 1, month: -1, createdAt: -1 }
+                : { month: -1, createdAt: -1 };
         const filter: Record<string, any> = {};
 
         // Drafts belong to their author alone. Only a mentor asking for
@@ -95,7 +101,7 @@ export async function GET(request: Request) {
             MentorMonthlyReport.find(filter)
                 .populate({ path: "mentor", populate: { path: "authId", select: "name email" } })
                 .populate({ path: "fellow", select: "name lga qualification" })
-                .sort({ month: -1, createdAt: -1 })
+                .sort(sort)
                 .skip(skip)
                 .limit(limit)
                 .lean(),
