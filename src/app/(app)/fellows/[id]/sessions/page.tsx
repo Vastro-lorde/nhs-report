@@ -200,6 +200,50 @@ function ListHeading({ name, lga, filterSummary }: { name: string; lga?: string;
     );
 }
 
+/** Page navigation, shown both above and below the session list. Hidden when everything fits on one page. */
+function Pagination({
+    page,
+    totalPages,
+    total,
+    loading,
+    onPageChange,
+}: {
+    page: number;
+    totalPages: number;
+    total: number;
+    loading: boolean;
+    onPageChange: (page: number) => void;
+}) {
+    if (totalPages <= 1) return null;
+    return (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>
+                Page {page} of {totalPages} &mdash; {total} session{total === 1 ? "" : "s"}
+            </span>
+            <div className="flex gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1 || loading}
+                    onClick={() => onPageChange(page - 1)}
+                    tooltip="Previous page"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages || loading}
+                    onClick={() => onPageChange(page + 1)}
+                    tooltip="Next page"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 export default function FellowSessionsPage() {
     const { id } = useParams() as { id: string };
     const { data: session } = useSession();
@@ -481,6 +525,7 @@ export default function FellowSessionsPage() {
                 {/* Current page of sessions */}
                 <div className="space-y-3">
                     <ListHeading name={fellowName} lga={fellowLga} filterSummary={filterSummary} />
+                    <Pagination page={page} totalPages={totalPages} total={total} loading={loading} onPageChange={setPage} />
                     {loading ? (
                         <p className="text-sm text-gray-400 py-8 text-center">Loading…</p>
                     ) : !sessions.length ? (
@@ -494,34 +539,7 @@ export default function FellowSessionsPage() {
                     )}
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>
-                            Page {page} of {totalPages} &mdash; {total} session{total === 1 ? "" : "s"}
-                        </span>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={page <= 1 || loading}
-                                onClick={() => setPage((p) => p - 1)}
-                                tooltip="Previous page"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={page >= totalPages || loading}
-                                onClick={() => setPage((p) => p + 1)}
-                                tooltip="Next page"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                <Pagination page={page} totalPages={totalPages} total={total} loading={loading} onPageChange={setPage} />
             </div>
 
             {/* Off-screen PDF source: every filtered session, not just the current page */}
