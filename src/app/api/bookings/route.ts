@@ -17,26 +17,6 @@
  *         description: When "true", only future sessions are returned.
  *         schema: { type: string, enum: ["true", "false"] }
  *       - in: query
- *         name: past
- *         description: When "true" (and upcoming is not), only sessions that have ended are returned.
- *         schema: { type: string, enum: ["true", "false"] }
- *       - in: query
- *         name: fellowId
- *         description: Only sessions with this fellow (still scoped to the caller's role).
- *         schema: { type: string }
- *       - in: query
- *         name: from
- *         description: Sessions starting on or after this day (YYYY-MM-DD, app timezone).
- *         schema: { type: string, format: date }
- *       - in: query
- *         name: to
- *         description: Sessions starting on or before this day (YYYY-MM-DD, app timezone).
- *         schema: { type: string, format: date }
- *       - in: query
- *         name: order
- *         description: Sort by session start; ascending by default.
- *         schema: { type: string, enum: [asc, desc] }
- *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
  *       - in: query
@@ -81,21 +61,13 @@ import { connectDB } from "@/lib/db";
 import { Fellow, Mentor, User, TimeSlot, Booking } from "@/models";
 import { UserRole, TimeSlotStatus, BookingStatus, NotificationType } from "@/lib/constants";
 import { createNotification } from "@/lib/notify";
-import { formatSlotLabel, zonedMidnightUtc } from "@/lib/schedule-helpers";
-import { isValidObjectId } from "mongoose";
+import { formatSlotLabel } from "@/lib/schedule-helpers";
 import {
     bookingConfirmedFellowTemplate,
     bookingConfirmedMentorTemplate,
 } from "@/lib/email-templates";
 import { env } from "@/lib/env";
 import { logActivity } from "@/lib/activity-logger";
-
-/** Parse a "YYYY-MM-DD" query value; anything else is ignored. */
-function parseDateParam(value: string | null): { year: number; monthIndex: number; day: number } | null {
-    const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!match) return null;
-    return { year: Number(match[1]), monthIndex: Number(match[2]) - 1, day: Number(match[3]) };
-}
 
 export const GET = withExceptionLog("GET /api/bookings", async (request: NextRequest) => {
     const { session, error } = await requireAuth();
@@ -114,33 +86,10 @@ export const GET = withExceptionLog("GET /api/bookings", async (request: NextReq
     const statusParam = url.searchParams.get("status");
     if (statusParam) filter.status = statusParam;
     if (url.searchParams.get("upcoming") === "true") filter.endAt = { $gte: new Date() };
-    else if (url.searchParams.get("past") === "true") filter.endAt = { $lt: new Date() };
-
-    // Narrow to one fellow. Role scoping below still applies, so a mentor only
-    // ever sees their own sessions with that fellow.
-    const fellowIdParam = url.searchParams.get("fellowId");
-    if (fellowIdParam) {
-        if (!isValidObjectId(fellowIdParam)) return jsonError("Invalid fellowId", 400);
-        filter.fellow = fellowIdParam;
-    }
-
-    // Date range on the session start, as calendar days in the app timezone.
-    const startAt: Record<string, Date> = {};
-    const from = parseDateParam(url.searchParams.get("from"));
-    const to = parseDateParam(url.searchParams.get("to"));
-    if (from) startAt.$gte = zonedMidnightUtc(from.year, from.monthIndex, from.day);
-    if (to) startAt.$lt = zonedMidnightUtc(to.year, to.monthIndex, to.day + 1);
-    if (from || to) filter.startAt = startAt;
-
-    const sortDir = url.searchParams.get("order") === "desc" ? -1 : 1;
 
     if (role === UserRole.FELLOW) {
         const fellow = await Fellow.findOne({ authId: session!.user.id }).select("_id").lean();
         if (!fellow) return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
-        // Fellows can only ever see their own bookings.
-        if (fellowIdParam && fellowIdParam !== String(fellow._id)) {
-            return jsonOk({ data: [], pagination: { page, limit, total: 0, totalPages: 0 } });
-        }
         filter.fellow = fellow._id;
     } else if (role === UserRole.MENTOR) {
         const mentor = await Mentor.findOne({ authId: session!.user.id }).select("_id").lean();
@@ -150,7 +99,7 @@ export const GET = withExceptionLog("GET /api/bookings", async (request: NextReq
 
     const [data, total] = await Promise.all([
         Booking.find(filter)
-            .sort({ startAt: sortDir })
+            .sort({ startAt: 1 })
             .skip(skip)
             .limit(limit)
             .populate("fellow", "name email")

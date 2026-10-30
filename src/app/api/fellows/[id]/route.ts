@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { isValidObjectId } from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Fellow } from "@/models/Fellow";
@@ -7,51 +6,6 @@ import { Mentor } from "@/models/Mentor";
 import { UserRole, resolveMentorStates } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
 import { ensureMentorCoversLga, resolveFellowLga } from "@/services/mentor-coverage.service";
-
-export async function GET(
-    _request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    const { id } = await params;
-    try {
-        const session = await auth();
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        if (session.user.role !== UserRole.MENTOR && session.user.role !== UserRole.ADMIN) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
-        if (!isValidObjectId(id)) {
-            return NextResponse.json({ error: "Fellow not found" }, { status: 404 });
-        }
-
-        await connectDB();
-
-        const fellow = await Fellow.findById(id).lean();
-
-        if (!fellow) {
-            return NextResponse.json({ error: "Fellow not found" }, { status: 404 });
-        }
-
-        if (session.user.role === UserRole.MENTOR) {
-            const mentorDoc = await Mentor.findOne({ authId: session.user.id }).lean();
-            if (!mentorDoc) {
-                return NextResponse.json({ error: "Mentor profile not found" }, { status: 403 });
-            }
-
-            // Only the assigned mentor can view
-            if (fellow.mentor.toString() !== mentorDoc._id.toString()) {
-                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-            }
-        }
-
-        return NextResponse.json(fellow);
-    } catch (error) {
-        return NextResponse.json({ error: (error as Error).message }, { status: 400 });
-    }
-}
 
 export async function PATCH(
     request: Request,

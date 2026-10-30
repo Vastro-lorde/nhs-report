@@ -332,7 +332,8 @@ export const api = {
   fellows: {
     list: (params?: URLSearchParams | Record<string, string>) =>
       request<PaginatedResponse<Fellow>>(`/api/fellows?${new URLSearchParams(params).toString()}`),
-    get: (id: string) => request<Fellow>(`/api/fellows/${id}`),
+    sessions: (id: string, params?: Record<string, string>) =>
+      request<FellowSessionsResponse>(`/api/fellows/${id}/sessions?${new URLSearchParams(params).toString()}`),
     create: (data: CreateFellowInput) =>
       request<Fellow>("/api/fellows", { method: "POST", body: JSON.stringify(data) }),
     update: (id: string, data: Partial<Fellow>) =>
@@ -784,6 +785,24 @@ export interface MentorshipSessionInput {
   challenges: string[];
   solutions: string[];
   actionPlan: string[];
+}
+
+/** A weekly-report session entry matched to one fellow. */
+export interface FellowSessionItem extends MentorshipSessionInput {
+  _id: string;
+  reportId: string;
+  weekKey: string;
+  weekEnding: string;
+  reportStatus: string;
+  /** Absent on reports predating seasons (treat as regular). */
+  season?: ReportSeason;
+}
+
+export interface FellowSessionsResponse {
+  fellow: { _id: string; name: string; lga: string; qualification?: string };
+  total: number;
+  reportCount: number;
+  sessions: FellowSessionItem[];
 }
 
 export interface Report {
