@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/Badge";
 import { api, type FellowSessionItem, type FellowSessionsResponse } from "@/lib/api-client";
 import { UserRole } from "@/lib/constants";
 import { isCapstoneSeason, sessionTopicLabel } from "@/lib/report-season";
-import { downloadFile, exportToCSV } from "@/lib/export";
+import { downloadFile } from "@/lib/export";
 import { exportElementToPdf } from "@/lib/pdf-export";
 
 const TZ = "Africa/Lagos";
@@ -53,11 +53,10 @@ const REPORT_STATUS_OPTIONS = [
 ];
 const DRAFT_STATUS_OPTION = { label: "Drafts", value: "draft" };
 
-type ExportFormat = "json" | "csv" | "pdf" | "txt";
+type ExportFormat = "json" | "pdf" | "txt";
 
 const EXPORT_FORMATS: { format: ExportFormat; label: string }[] = [
     { format: "json", label: "JSON" },
-    { format: "csv", label: "CSV" },
     { format: "pdf", label: "PDF" },
     { format: "txt", label: "Text" },
 ];
@@ -330,24 +329,6 @@ export default function FellowSessionsPage() {
                     })),
                 };
                 downloadFile(JSON.stringify(payload, null, 2), `${filename}.json`, "application/json");
-            } else if (format === "csv") {
-                exportToCSV(
-                    all.map((s) => ({
-                        Date: s.sessionDate.slice(0, 10),
-                        "Start Time": s.startTime,
-                        "End Time": s.endTime,
-                        Duration: s.duration,
-                        LGA: s.menteeLGA ?? "",
-                        Week: s.weekKey,
-                        Season: isCapstoneSeason(s.season) ? "Capstone" : "Regular",
-                        "Report Status": statusLabel(s.reportStatus),
-                        "Topic Discussed": s.topicDiscussed,
-                        Challenges: s.challenges,
-                        Solutions: s.solutions,
-                        "Action Plan": s.actionPlan,
-                    })),
-                    filename,
-                );
             } else if (format === "txt") {
                 const bullets = (title: string, items: string[]) => {
                     const clean = items.filter((i) => i.trim());

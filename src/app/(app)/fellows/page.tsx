@@ -10,12 +10,12 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/ActionMenu";
 import { UserRole } from "@/lib/constants";
 import { api, type Fellow } from "@/lib/api-client";
 import { mentorLgaSelectOptions } from "@/lib/lga-options";
 import { Plus, UserMinus, FileDown, Trash2, FileUp, ChevronLeft, ChevronRight, Search, Pencil, Mail, CalendarClock } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
-import Link from "next/link";
 
 /* ─── Add Fellow Modal ──────────────────── */
 function AddFellowModal({
@@ -401,6 +401,41 @@ export default function FellowsPage() {
         setShowInvite(true);
     };
 
+    const rowActions = (f: Fellow): ActionMenuItem[] => {
+        const documents: ActionMenuItem = {
+            label: "Documents",
+            icon: <FileUp />,
+            href: `/fellows/${f._id}/documents/upload`,
+        };
+        const remove: ActionMenuItem = {
+            label: "Remove fellow",
+            icon: <UserMinus />,
+            onSelect: () => handleDelete(f._id),
+            destructive: true,
+        };
+        if (role !== UserRole.MENTOR) return [documents, remove];
+        return [
+            {
+                label: "Edit details",
+                icon: <Pencil className="text-blue-600" />,
+                onSelect: () => {
+                    setEditingFellow(f);
+                    setShowEdit(true);
+                },
+            },
+            {
+                label: "Send invitation",
+                icon: <Mail className="text-orange-600" />,
+                onSelect: () => handleInvite(f),
+                disabled: f.inviteStatus === "active",
+                hint: f.inviteStatus === "active" ? "Account is already active" : undefined,
+            },
+            { label: "Sessions", icon: <CalendarClock />, href: `/fellows/${f._id}/sessions` },
+            documents,
+            remove,
+        ];
+    };
+
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
             const allIds = fellows.map((f) => f._id);
@@ -592,57 +627,8 @@ export default function FellowsPage() {
                                         </td>
 
                                         {canWrite && (
-                                        <td className="px-4 py-3 text-right space-x-2">
-                                            {session?.user?.role === UserRole.MENTOR && (
-                                                <>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => {
-                                                             setEditingFellow(f);
-                                                            setShowEdit(true);
-                                                        }}
-                                                        tooltip="Edit fellow profile and details"
-                                                    >
-                                                        <Pencil className="h-4 w-4 text-blue-600" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => handleInvite(f)}
-                                                        tooltip={f.inviteStatus === "active" ? "Fellow account is active" : "Send invitation email to fellow"}
-                                                        disabled={f.inviteStatus === "active"}
-                                                    >
-                                                        <Mail className="h-4 w-4 text-orange-600" />
-                                                    </Button>
-                                                    <Link href={`/fellows/${f._id}/sessions`}>
-                                                        <Button variant="secondary" size="sm" tooltip="View, filter and export sessions with this fellow">
-                                                            <CalendarClock className="h-3 w-3 mr-1" /> Sessions
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/fellows/${f._id}/documents/upload`}>
-                                                        <Button variant="secondary" size="sm" tooltip="Upload or view required documents for this fellow">
-                                                            <FileUp className="h-3 w-3 mr-1" /> Documents
-                                                        </Button>
-                                                    </Link>
-                                                </>
-                                            )}
-                                            {session?.user?.role === UserRole.ADMIN && (
-                                                <Link href={`/fellows/${f._id}/documents/upload`}>
-                                                    <Button variant="secondary" size="sm" tooltip="Review uploaded documents for this fellow">
-                                                        <FileUp className="h-3 w-3 mr-1" /> Documents
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                onClick={() => handleDelete(f._id)}
-                                                tooltip="Remove fellow from system"
-                                            >
-                                                <UserMinus className="h-4 w-4" />
-                                            </Button>
+                                        <td className="px-4 py-3 text-right">
+                                            <ActionMenu label={`Actions for ${f.name}`} items={rowActions(f)} />
                                         </td>
                                         )}
                                     </tr>

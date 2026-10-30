@@ -4,6 +4,7 @@ export { Select } from "./Select";
 export { Textarea } from "./Textarea";
 export { Card, CardHeader, CardTitle, CardContent } from "./Card";
 export { Badge } from "./Badge";
+export { ActionMenu, type ActionMenuItem } from "./ActionMenu";
 export { ScoreCard } from "./ScoreCard";
 export { LocationSelector } from "./LocationSelector";
 export { SearchableSelect } from "./SearchableSelect";
