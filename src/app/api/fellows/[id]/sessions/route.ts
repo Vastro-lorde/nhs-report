@@ -35,8 +35,14 @@
  *         name: q
  *         description: Keyword matched against topic, challenges, solutions and action plan.
  *         schema: { type: string }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20, maximum: 100 }
  *     responses:
- *       200: { description: Fellow summary and matching sessions }
+ *       200: { description: Fellow summary, totals across all matches, and one page of sessions }
  *       401: { description: Not authenticated }
  *       403: { description: Role not permitted / not this mentor's fellow }
  *       404: { description: Fellow not found }
@@ -44,7 +50,7 @@
 import { NextRequest } from "next/server";
 import { isValidObjectId } from "mongoose";
 import { requireRole } from "@/lib/auth-guard";
-import { jsonOk, jsonError, withExceptionLog } from "@/lib/api-helpers";
+import { jsonOk, jsonError, parsePagination, withExceptionLog } from "@/lib/api-helpers";
 import { connectDB } from "@/lib/db";
 import { Fellow, Mentor, WeeklyReport } from "@/models";
 import { UserRole, ReportStatus } from "@/lib/constants";
@@ -128,38 +134,52 @@ export const GET = withExceptionLog(
             ];
         }
 
-        const sessions = await WeeklyReport.aggregate([
+        const { page, limit, skip } = parsePagination(url);
+
+        const [result] = await WeeklyReport.aggregate([
             { $match: reportMatch },
             { $unwind: "$sessions" },
             { $match: sessionMatch },
-            { $sort: { "sessions.sessionDate": -1, weekEnding: -1 } },
             {
-                $project: {
-                    _id: "$sessions._id",
-                    reportId: "$_id",
-                    weekKey: 1,
-                    weekEnding: 1,
-                    reportStatus: "$status",
-                    season: 1,
-                    menteeName: "$sessions.menteeName",
-                    menteeLGA: "$sessions.menteeLGA",
-                    sessionDate: "$sessions.sessionDate",
-                    startTime: "$sessions.startTime",
-                    endTime: "$sessions.endTime",
-                    duration: "$sessions.duration",
-                    topicDiscussed: "$sessions.topicDiscussed",
-                    challenges: "$sessions.challenges",
-                    solutions: "$sessions.solutions",
-                    actionPlan: "$sessions.actionPlan",
+                $facet: {
+                    // Totals cover every matching session, not just this page.
+                    meta: [{ $group: { _id: null, total: { $sum: 1 }, reports: { $addToSet: "$_id" } } }],
+                    data: [
+                        { $sort: { "sessions.sessionDate": -1, weekEnding: -1, "sessions._id": 1 } },
+                        { $skip: skip },
+                        { $limit: limit },
+                        {
+                            $project: {
+                                _id: "$sessions._id",
+                                reportId: "$_id",
+                                weekKey: 1,
+                                weekEnding: 1,
+                                reportStatus: "$status",
+                                season: 1,
+                                menteeName: "$sessions.menteeName",
+                                menteeLGA: "$sessions.menteeLGA",
+                                sessionDate: "$sessions.sessionDate",
+                                startTime: "$sessions.startTime",
+                                endTime: "$sessions.endTime",
+                                duration: "$sessions.duration",
+                                topicDiscussed: "$sessions.topicDiscussed",
+                                challenges: "$sessions.challenges",
+                                solutions: "$sessions.solutions",
+                                actionPlan: "$sessions.actionPlan",
+                            },
+                        },
+                    ],
                 },
             },
         ]);
 
+        const total: number = result.meta[0]?.total ?? 0;
         return jsonOk({
             fellow: { _id: fellow._id, name: fellow.name, lga: fellow.lga, qualification: fellow.qualification },
-            total: sessions.length,
-            reportCount: new Set(sessions.map((s) => String(s.reportId))).size,
-            sessions,
+            total,
+            reportCount: result.meta[0]?.reports.length ?? 0,
+            sessions: result.data,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
         });
     },
 );

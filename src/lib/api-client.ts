@@ -802,7 +802,9 @@ export interface FellowSessionsResponse {
   fellow: { _id: string; name: string; lga: string; qualification?: string };
   total: number;
   reportCount: number;
+  /** One page of sessions; `total`/`reportCount` cover every match. */
   sessions: FellowSessionItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
 export interface Report {
