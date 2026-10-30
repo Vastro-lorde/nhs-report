@@ -34,15 +34,21 @@ export function exportToCSV<T extends Record<string, any>>(data: T[], filename: 
 
     const csvString = csvRows.join("\n");
 
-    // Create a blob and trigger download
-    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    downloadFile(csvString, filename.endsWith(".csv") ? filename : `${filename}.csv`, "text/csv;charset=utf-8;");
+}
+
+/** Trigger a browser download of `content` as a file. */
+export function downloadFile(content: string, filename: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", filename.endsWith(".csv") ? filename : `${filename}.csv`);
+    link.setAttribute("download", filename);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    // Revoke after the browser has had a chance to start the download.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

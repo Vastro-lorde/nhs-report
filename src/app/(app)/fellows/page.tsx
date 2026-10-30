@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { UserRole } from "@/lib/constants";
 import { api, type Fellow } from "@/lib/api-client";
 import { mentorLgaSelectOptions } from "@/lib/lga-options";
-import { Plus, UserMinus, FileDown, Trash2, FileUp, ChevronLeft, ChevronRight, Search, Pencil, Mail } from "lucide-react";
+import { Plus, UserMinus, FileDown, Trash2, FileUp, ChevronLeft, ChevronRight, Search, Pencil, Mail, CalendarClock } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
 import Link from "next/link";
 
@@ -615,6 +615,11 @@ export default function FellowsPage() {
                                                     >
                                                         <Mail className="h-4 w-4 text-orange-600" />
                                                     </Button>
+                                                    <Link href={`/fellows/${f._id}/sessions`}>
+                                                        <Button variant="secondary" size="sm" tooltip="View, filter and export sessions with this fellow">
+                                                            <CalendarClock className="h-3 w-3 mr-1" /> Sessions
+                                                        </Button>
+                                                    </Link>
                                                     <Link href={`/fellows/${f._id}/documents/upload`}>
                                                         <Button variant="secondary" size="sm" tooltip="Upload or view required documents for this fellow">
                                                             <FileUp className="h-3 w-3 mr-1" /> Documents

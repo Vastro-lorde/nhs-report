@@ -332,6 +332,7 @@ export const api = {
   fellows: {
     list: (params?: URLSearchParams | Record<string, string>) =>
       request<PaginatedResponse<Fellow>>(`/api/fellows?${new URLSearchParams(params).toString()}`),
+    get: (id: string) => request<Fellow>(`/api/fellows/${id}`),
     create: (data: CreateFellowInput) =>
       request<Fellow>("/api/fellows", { method: "POST", body: JSON.stringify(data) }),
     update: (id: string, data: Partial<Fellow>) =>
