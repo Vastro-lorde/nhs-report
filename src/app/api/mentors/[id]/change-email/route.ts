@@ -14,6 +14,8 @@ import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { mentorEmailChangedTemplate } from "@/lib/email-templates";
 import { sendMail } from "@/lib/mailer";
 import { env } from "@/lib/env";
+import { logException } from "@/lib/exception-logger";
+import { isValidObjectId } from "mongoose";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -22,10 +24,12 @@ function generateTempPassword(): string {
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
-  const { error } = await requireRole(UserRole.ADMIN);
+  const { session, error } = await requireRole(UserRole.ADMIN);
   if (error) return error;
 
   const { id } = await params;
+  if (!isValidObjectId(id)) return jsonError("Mentor not found", 404);
+
   const body = await parseBody<{ email?: string }>(request);
 
   const newEmail = String(body?.email ?? "")
@@ -35,33 +39,53 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!newEmail) return jsonError("New email is required");
   if (!newEmail.includes("@")) return jsonError("Invalid email address");
 
-  await connectDB();
+  try {
+    await connectDB();
 
-  const user = await User.findById(id).select("name email role active").lean();
-  if (!user) return jsonError("Mentor not found", 404);
-  if (user.role !== UserRole.MENTOR) return jsonError("Mentor not found", 404);
+    // Keep the old email + password hash so we can roll back if the email can't be delivered.
+    const user = await User.findById(id).select("+password name email role active").lean();
+    if (!user) return jsonError("Mentor not found", 404);
+    if (user.role !== UserRole.MENTOR) return jsonError("Mentor not found", 404);
 
-  const emailInUse = await User.findOne({ email: newEmail, _id: { $ne: id } }).select("_id").lean();
-  if (emailInUse) return jsonError("Email is already in use", 409);
+    const emailInUse = await User.findOne({ email: newEmail, _id: { $ne: id } }).select("_id").lean();
+    if (emailInUse) return jsonError("Email is already in use", 409);
 
-  const tempPassword = generateTempPassword();
-  const hashedPassword = await bcrypt.hash(tempPassword, 12);
+    const tempPassword = generateTempPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
-  await User.updateOne(
-    { _id: id },
-    {
-      $set: {
-        email: newEmail,
-        password: hashedPassword,
-      },
-    },
-  );
+    await User.updateOne({ _id: id }, { $set: { email: newEmail, password: hashedPassword } });
 
-  const tpl = mentorEmailChangedTemplate(user.name, newEmail, tempPassword, env.NEXTAUTH_URL());
-  await sendMail({ to: newEmail, subject: tpl.subject, text: tpl.text, html: tpl.html });
+    try {
+      const tpl = mentorEmailChangedTemplate(user.name, newEmail, tempPassword, env.NEXTAUTH_URL());
+      await sendMail({ to: newEmail, subject: tpl.subject, text: tpl.text, html: tpl.html });
+    } catch (mailErr) {
+      // Without the email the mentor would be locked out (new login, unknown password),
+      // so restore the previous credentials and report the failure.
+      await User.updateOne({ _id: id }, { $set: { email: user.email, password: user.password } });
+      void logException({
+        error: mailErr,
+        context: "POST /api/mentors/[id]/change-email (sendMail)",
+        session,
+        meta: { mentorId: id, newEmail },
+      });
+      return jsonError(
+        "Could not send the temporary password to the new email address, so no changes were made. Please check the address and try again.",
+        502,
+      );
+    }
 
-  return jsonOk({
-    success: true,
-    message: "Mentor email updated and temporary password sent",
-  });
+    return jsonOk({
+      success: true,
+      message: "Mentor email updated and temporary password sent",
+    });
+  } catch (err) {
+    if ((err as { code?: number })?.code === 11000) return jsonError("Email is already in use", 409);
+    void logException({
+      error: err,
+      context: "POST /api/mentors/[id]/change-email",
+      session,
+      meta: { mentorId: id, newEmail },
+    });
+    return jsonError("Failed to change mentor email", 500);
+  }
 }
