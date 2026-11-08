@@ -19,6 +19,7 @@ import {
   CalendarClock,
   CalendarPlus,
   CalendarCheck,
+  Layers,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { APP_NAME, APP_LOGO_URL, UserRole } from "@/lib/constants";
@@ -131,6 +132,13 @@ const NAV_ITEMS = [
     icon: CalendarCheck,
     description: "Track Google Meet session links, attendance, and duration logs",
     roles: [UserRole.ADMIN, UserRole.COORDINATOR],
+  },
+  {
+    label: "Cohorts",
+    href: "/admin/cohorts",
+    icon: Layers,
+    description: "Start the next cohort, carry people over, and browse past cohorts",
+    roles: [UserRole.ADMIN],
   },
   {
     label: "Admins Management",

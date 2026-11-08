@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User, Coordinator } from "@/models";
 import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
+import { removeMembersFromCohort } from "@/services/cohort.service";
 
 export async function DELETE(request: NextRequest) {
     try {
@@ -17,16 +17,10 @@ export async function DELETE(request: NextRequest) {
 
         await connectDB();
 
-        // 1. Delete the Auth user docs
-        const deleteResult = await User.deleteMany({
-            _id: { $in: body.ids },
-            role: UserRole.COORDINATOR
-        });
-
-        // 2. Delete the Coordinator detail configs
-        await Coordinator.deleteMany({
-            authId: { $in: body.ids }
-        });
+        // Remove them from the cohort being viewed. A login is only deleted when
+        // the person belongs to no other cohort, so earlier cohorts keep their history.
+        const result = await removeMembersFromCohort("coordinator", body.ids);
+        const deleteResult = { deletedCount: result.profilesRemoved };
 
         return jsonOk({
             success: true,

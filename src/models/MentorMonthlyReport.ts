@@ -4,6 +4,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { REPORT_SEASONS, DEFAULT_REPORT_SEASON, type ReportSeason } from "@/lib/report-season";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export type ProgressRating = "Excellent" | "Good" | "Fair" | "Needs Improvement" | "";
 
@@ -42,6 +43,8 @@ export interface IMentorMonthlyReport extends Document {
     // Audit
     weeklyReportIds: Types.ObjectId[];
     status: "draft" | "submitted";
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -90,6 +93,8 @@ MentorMonthlyReportSchema.index(
     { fellow: 1, month: 1 },
     { unique: true }
 );
+
+MentorMonthlyReportSchema.plugin(cohortScopePlugin, { modelName: "MentorMonthlyReport" });
 
 export const MentorMonthlyReport: Model<IMentorMonthlyReport> =
     models.MentorMonthlyReport ||

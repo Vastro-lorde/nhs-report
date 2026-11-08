@@ -6,6 +6,7 @@
 import type { ReportHistoryReportType, ReportHistoryAction, ReportStatus } from "@/lib/constants";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
 import type { ReportSeason } from "@/lib/report-season";
+import type { CohortContextInfo, CohortStaffRole, CohortSummary } from "@/lib/cohort";
 import type {
   INationalAuditReport,
   INationalAuditPeriodReport,
@@ -16,11 +17,14 @@ import type {
 class ApiError extends Error {
   /** Extra fields the endpoint returned alongside `error`, e.g. `draftId`. */
   readonly draftId?: string;
+  /** Itemised validation problems (e.g. from the new-cohort wizard). */
+  readonly problems?: string[];
 
   constructor(public status: number, message: string, extra?: Record<string, unknown>) {
     super(message);
     this.name = "ApiError";
     if (typeof extra?.draftId === "string") this.draftId = extra.draftId;
+    if (Array.isArray(extra?.problems)) this.problems = extra.problems as string[];
   }
 }
 
@@ -436,6 +440,29 @@ export const api = {
       request<ReportSettings>("/api/admin/report-settings", {
         method: "PATCH",
         body: JSON.stringify(data),
+      }),
+  },
+
+  cohorts: {
+    list: () => request<{ data: CohortSummary[] }>("/api/cohorts", { cache: "no-store" }),
+    current: () => request<CohortContextInfo>("/api/cohorts/current", { cache: "no-store" }),
+    roster: () => request<CohortRoster>("/api/cohorts/roster", { cache: "no-store" }),
+    create: (plan: NewCohortPlan) =>
+      request<CohortSummary>("/api/cohorts", { method: "POST", body: JSON.stringify(plan) }),
+    update: (id: string, data: { name?: string; notes?: string }) =>
+      request<CohortSummary>(`/api/cohorts/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    discard: (id: string) =>
+      request<{ discarded: string }>(`/api/cohorts/${id}`, { method: "DELETE" }),
+    activate: (id: string, opts: { resetReportSeason: boolean }) =>
+      request<{ activated: CohortSummary; archived: string }>(`/api/cohorts/${id}/activate`, {
+        method: "POST",
+        body: JSON.stringify(opts),
+      }),
+    /** Switch which cohort an admin is looking at; null = back to the live cohort. */
+    view: (cohortId: string | null) =>
+      request<{ viewing: { _id: string; name: string; status: string } | null }>("/api/cohorts/view", {
+        method: "POST",
+        body: JSON.stringify({ cohortId }),
       }),
   },
 
@@ -1179,6 +1206,42 @@ export interface ReportSettings {
   blockZonalAuditEdits: boolean;
   /** Season stamped onto reports created from now on ("regular" | "capstone"). */
   reportSeason: ReportSeason;
+}
+
+// ─── Cohorts ────────────────────────────────
+export interface CohortRosterStaff {
+  userId: string;
+  name: string;
+  email: string;
+  active: boolean;
+  role: CohortStaffRole;
+  states: string[];
+  lgas: string[];
+  coordinatorUserId?: string | null;
+  fellowCount?: number;
+}
+
+export interface CohortRosterFellow {
+  fellowId: string;
+  name: string;
+  email?: string;
+  lga: string;
+  userId?: string | null;
+  mentorUserId?: string | null;
+}
+
+export interface CohortRoster {
+  cohort: CohortSummary;
+  nextNumber: number;
+  staff: CohortRosterStaff[];
+  fellows: CohortRosterFellow[];
+}
+
+export interface NewCohortPlan {
+  name?: string;
+  notes?: string;
+  staff: { userId: string; role: CohortStaffRole; coordinatorUserId?: string }[];
+  fellows: { fellowId: string; mentorUserId: string }[];
 }
 
 export interface ActivityLog {

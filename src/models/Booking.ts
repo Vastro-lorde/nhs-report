@@ -5,6 +5,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { BookingStatus } from "@/lib/constants";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IBooking extends Document {
     timeSlot: Types.ObjectId;
@@ -20,6 +21,8 @@ export interface IBooking extends Document {
     cancelledBy?: Types.ObjectId;
     cancelledAt?: Date;
     reminderSentAt?: Date;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -56,6 +59,8 @@ BookingSchema.index(
         partialFilterExpression: { status: { $ne: BookingStatus.CANCELLED } },
     },
 );
+
+BookingSchema.plugin(cohortScopePlugin, { modelName: "Booking" });
 
 export const Booking: Model<IBooking> =
     models.Booking || mongoose.model<IBooking>("Booking", BookingSchema);

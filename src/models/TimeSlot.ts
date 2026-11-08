@@ -6,6 +6,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { TimeSlotStatus, TimeSlotSource } from "@/lib/constants";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface ITimeSlot extends Document {
     mentor: Types.ObjectId;
@@ -17,6 +18,8 @@ export interface ITimeSlot extends Document {
     meetingLinkOverride?: string;
     /** The recurring template this slot was materialized from, if any. */
     template?: Types.ObjectId;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -45,6 +48,8 @@ const TimeSlotSchema = new Schema<ITimeSlot>(
 
 // One slot per mentor per start time — prevents duplicate/overlapping materialization.
 TimeSlotSchema.index({ mentor: 1, startAt: 1 }, { unique: true });
+
+TimeSlotSchema.plugin(cohortScopePlugin, { modelName: "TimeSlot" });
 
 export const TimeSlot: Model<ITimeSlot> =
     models.TimeSlot || mongoose.model<ITimeSlot>("TimeSlot", TimeSlotSchema);

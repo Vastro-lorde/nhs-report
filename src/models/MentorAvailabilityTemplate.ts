@@ -5,6 +5,7 @@
    documents by the slot materializer service.
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IMentorAvailabilityTemplate extends Document {
     mentor: Types.ObjectId;
@@ -15,6 +16,8 @@ export interface IMentorAvailabilityTemplate extends Document {
     /** Local "HH:MM" end of the availability window. */
     endTime: string;
     active: boolean;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -29,6 +32,8 @@ const MentorAvailabilityTemplateSchema = new Schema<IMentorAvailabilityTemplate>
     },
     { timestamps: true }
 );
+
+MentorAvailabilityTemplateSchema.plugin(cohortScopePlugin, { modelName: "MentorAvailabilityTemplate" });
 
 export const MentorAvailabilityTemplate: Model<IMentorAvailabilityTemplate> =
     models.MentorAvailabilityTemplate ||

@@ -3,6 +3,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { AlertStatus } from "@/lib/constants";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IAlert extends Document {
   report: Types.ObjectId;
@@ -17,6 +18,8 @@ export interface IAlert extends Document {
   notes?: string;
   resolvedBy?: Types.ObjectId;
   resolvedAt?: Date;
+  /** Cohort this record belongs to (stamped by the cohort plugin). */
+  cohort?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +43,8 @@ const AlertSchema = new Schema<IAlert>(
   },
   { timestamps: true }
 );
+
+AlertSchema.plugin(cohortScopePlugin, { modelName: "Alert" });
 
 export const Alert: Model<IAlert> =
   models.Alert || mongoose.model<IAlert>("Alert", AlertSchema);

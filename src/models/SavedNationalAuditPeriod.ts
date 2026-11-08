@@ -9,6 +9,7 @@ import type {
   IPeriodicCoverage,
   NationalAuditPeriodType,
 } from "@/types/national-audit";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface ISavedNationalAuditPeriod extends Document {
   generatedBy: Types.ObjectId;
@@ -18,6 +19,8 @@ export interface ISavedNationalAuditPeriod extends Document {
   periodLabel: string;
   auditData: INationalAuditPeriodReport;
   coverage: IPeriodicCoverage;
+  /** Cohort this record belongs to (stamped by the cohort plugin). */
+  cohort?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,7 +62,10 @@ const SavedNationalAuditPeriodSchema = new Schema<ISavedNationalAuditPeriod>(
 );
 
 // One saved periodic national audit per exact month range.
-SavedNationalAuditPeriodSchema.index({ startMonth: 1, endMonth: 1 }, { unique: true });
+// Per cohort (legacy startMonth_1_endMonth_1 is dropped on bootstrap).
+SavedNationalAuditPeriodSchema.index({ cohort: 1, startMonth: 1, endMonth: 1 }, { unique: true });
+
+SavedNationalAuditPeriodSchema.plugin(cohortScopePlugin, { modelName: "SavedNationalAuditPeriod" });
 
 export const SavedNationalAuditPeriod: Model<ISavedNationalAuditPeriod> =
   models.SavedNationalAuditPeriod ||

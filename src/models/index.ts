@@ -27,3 +27,4 @@ export { SavedNationalAuditPeriod, type ISavedNationalAuditPeriod } from "./Save
 export { AppSettings, type IAppSettings, type IEditLockConfig } from "./AppSettings";
 export { FellowDocument, type IFellowDocument } from "./FellowDocument";
 export { DocumentType, type IDocumentType } from "./DocumentType";
+export { Cohort, type ICohort } from "./Cohort";

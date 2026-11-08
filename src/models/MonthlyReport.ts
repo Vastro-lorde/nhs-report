@@ -7,6 +7,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IMonthlyReport extends Document {
     type: "mentor" | "zonal";
@@ -21,6 +22,8 @@ export interface IMonthlyReport extends Document {
     zonalAuditData?: IZonalAuditReport | null;
     weeklyReports: Types.ObjectId[];
     status: string;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -52,6 +55,8 @@ MonthlyReportSchema.index(
     { mentor: 1, month: 1 },
     { unique: true, partialFilterExpression: { type: "mentor", mentor: { $exists: true } } }
 );
+
+MonthlyReportSchema.plugin(cohortScopePlugin, { modelName: "MonthlyReport" });
 
 export const MonthlyReport: Model<IMonthlyReport> =
     models.MonthlyReport || mongoose.model<IMonthlyReport>("MonthlyReport", MonthlyReportSchema);

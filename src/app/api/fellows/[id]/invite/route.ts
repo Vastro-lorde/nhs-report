@@ -49,6 +49,7 @@ import { connectDB } from "@/lib/db";
 import { jsonOk, jsonError, parseBody, withExceptionLog } from "@/lib/api-helpers";
 import { Fellow, Mentor, User } from "@/models";
 import { UserRole, FellowInviteStatus, NotificationType } from "@/lib/constants";
+import { checkEmailForNewMember } from "@/services/cohort.service";
 import { fellowInviteTemplate } from "@/lib/email-templates";
 import { sendMail } from "@/lib/mailer";
 import { env } from "@/lib/env";
@@ -97,7 +98,10 @@ export const POST = withExceptionLog(
         // the user already linked to this fellow).
         const existingUser = await User.findOne({ email }).select("+inviteTokenHash");
         if (existingUser && String(existingUser._id) !== String(fellow.authId ?? "")) {
-            return jsonError("Email already used by another account", 409);
+            // Someone from an earlier cohort can be invited again, as long as
+            // they are not already part of this one (and are not an admin).
+            const check = await checkEmailForNewMember(email);
+            if (!check.ok) return jsonError("Email already used by another account", 409);
         }
 
         // Generate a secure invite token (store only its hash).

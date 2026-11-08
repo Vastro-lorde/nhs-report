@@ -2,6 +2,7 @@
    Model: Mentor
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IMentor extends Document {
     authId: Types.ObjectId;
@@ -17,6 +18,8 @@ export interface IMentor extends Document {
         meetingUri?: string;
         connectedAt?: Date;
     };
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -49,6 +52,8 @@ const MentorSchema = new Schema<IMentor>(
     },
     { timestamps: true }
 );
+
+MentorSchema.plugin(cohortScopePlugin, { modelName: "Mentor" });
 
 export const Mentor: Model<IMentor> =
     models.Mentor || mongoose.model<IMentor>("Mentor", MentorSchema);

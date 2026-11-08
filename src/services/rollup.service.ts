@@ -5,13 +5,14 @@
 import { connectDB } from "@/lib/db";
 import { WeeklyReport, WeeklyRollup, User, Alert } from "@/models";
 import { ReportStatus } from "@/lib/constants";
+import { memberUserIds } from "@/services/cohort.service";
 
 export async function rebuildRollupForWeek(weekKey: string) {
   await connectDB();
 
-  // Count active mentors
+  // Count active mentors in this cohort
   const expectedReports = await User.countDocuments({
-    role: "mentor",
+    _id: { $in: await memberUserIds("mentor") },
     active: true,
   });
 

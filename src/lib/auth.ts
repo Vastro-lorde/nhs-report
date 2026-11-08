@@ -1,12 +1,14 @@
 /* ──────────────────────────────────────────
    NextAuth v5 configuration
    ────────────────────────────────────────── */
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import { User, Coordinator, Mentor, DeskOfficer, Fellow } from "@/models";
+import { User } from "@/models";
 import { UserRole } from "@/lib/constants";
+import { getActiveCohort } from "@/lib/cohort-scope";
+import { resolveSessionIdentity, type SessionIdentity } from "@/services/cohort.service";
 
 declare module "next-auth" {
   interface Session {
@@ -22,6 +24,8 @@ declare module "next-auth" {
       aiAccessEnabled?: boolean;
       fellowId?: string;
       mentorId?: string;
+      /** The live cohort this session's role/assignments were resolved in. */
+      cohortId?: string;
     };
   }
 
@@ -34,6 +38,7 @@ declare module "next-auth" {
     aiAccessEnabled?: boolean;
     fellowId?: string;
     mentorId?: string;
+    cohortId?: string;
   }
 }
 
@@ -48,7 +53,26 @@ declare module "next-auth" {
     aiAccessEnabled?: boolean;
     fellowId?: string;
     mentorId?: string;
+    cohortId?: string;
   }
+}
+
+/** Login refused: the account has no place in the live cohort. */
+class NotInCohortError extends CredentialsSignin {
+  code = "not_in_cohort";
+}
+/** Login refused: the account belongs to a cohort that hasn't gone live yet. */
+class CohortNotStartedError extends CredentialsSignin {
+  code = "cohort_not_started";
+}
+
+function applyIdentity(target: Record<string, unknown>, identity: SessionIdentity) {
+  target.role = identity.role;
+  target.state = identity.state;
+  target.states = identity.states;
+  target.mentorId = identity.mentorId;
+  target.fellowId = identity.fellowId;
+  target.cohortId = identity.cohortId;
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -78,37 +102,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
         if (!isValid) return null;
 
-        let userStates: string[] | undefined = undefined;
-        let fellowId: string | undefined = undefined;
-        let mentorId: string | undefined = undefined;
-        if (user.role === UserRole.COORDINATOR) {
-          const coord = await Coordinator.findOne({ authId: user._id }).lean();
-          userStates = coord?.states;
-        } else if (user.role === UserRole.MENTOR) {
-          const mentor = await Mentor.findOne({ authId: user._id }).lean();
-          userStates = mentor?.states;
-          mentorId = mentor?._id.toString();
-        } else if (user.role === UserRole.ZONAL_DESK_OFFICER) {
-          const deskOfficer = await DeskOfficer.findOne({ authId: user._id }).lean();
-          userStates = deskOfficer?.states;
-        } else if (user.role === UserRole.FELLOW) {
-          const fellow = await Fellow.findOne({ authId: user._id }).lean();
-          fellowId = fellow?._id.toString();
-          mentorId = fellow?.mentor?.toString();
+        // Everyone below admin must belong to the live cohort; their role and
+        // assignments come from their profile in it.
+        const resolved = await resolveSessionIdentity(user);
+        if ("failure" in resolved) {
+          throw resolved.failure === "cohort_not_started" ? new CohortNotStartedError() : new NotInCohortError();
         }
+        const identity = resolved.identity;
 
         return {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: identity.role as UserRole,
           rootAdmin: user.rootAdmin,
-          state: userStates?.[0],
-          states: userStates,
+          state: identity.state,
+          states: identity.states,
           profileImage: user.profileImage,
           aiAccessEnabled: user.aiAccessEnabled ?? false,
-          fellowId,
-          mentorId,
+          fellowId: identity.fellowId,
+          mentorId: identity.mentorId,
+          cohortId: identity.cohortId,
         };
       },
     }),
@@ -125,6 +139,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.aiAccessEnabled = user.aiAccessEnabled;
         token.fellowId = user.fellowId;
         token.mentorId = user.mentorId;
+        token.cohortId = user.cohortId;
+      }
+
+      // When a new cohort goes live, re-derive the role and assignments of
+      // everyone below admin from their profile in it — or end the session if
+      // they are not part of it. (Sessions issued before cohorts existed have
+      // no cohortId and are refreshed the same way.)
+      if (token.id && token.role !== UserRole.ADMIN) {
+        try {
+          await connectDB();
+          const active = await getActiveCohort();
+          if (token.cohortId !== String(active._id)) {
+            const fresh = await User.findById(token.id).select("role active").lean();
+            if (!fresh?.active) return null;
+            const resolved = await resolveSessionIdentity(fresh);
+            if ("failure" in resolved) return null;
+            applyIdentity(token as Record<string, unknown>, resolved.identity);
+          }
+        } catch (err) {
+          // Never lock everyone out over a transient DB error; retry next request.
+          console.error("[auth] cohort refresh failed:", err);
+        }
       }
 
       // When session.update() is called, refresh mutable fields from DB
@@ -153,6 +189,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.aiAccessEnabled = token.aiAccessEnabled as boolean | undefined;
       session.user.fellowId = token.fellowId as string | undefined;
       session.user.mentorId = token.mentorId as string | undefined;
+      session.user.cohortId = token.cohortId as string | undefined;
       return session;
     },
   },

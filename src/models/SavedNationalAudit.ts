@@ -5,11 +5,14 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import type { INationalAuditReport } from "@/types/national-audit";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface ISavedNationalAudit extends Document {
   generatedBy: Types.ObjectId;
   month: string; // e.g., "2025-08"
   auditData: INationalAuditReport;
+  /** Cohort this record belongs to (stamped by the cohort plugin). */
+  cohort?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,7 +27,10 @@ const SavedNationalAuditSchema = new Schema<ISavedNationalAudit>(
 );
 
 // One national audit per month
-SavedNationalAuditSchema.index({ month: 1 }, { unique: true });
+// One national audit per month per cohort (legacy month_1 is dropped on bootstrap).
+SavedNationalAuditSchema.index({ cohort: 1, month: 1 }, { unique: true });
+
+SavedNationalAuditSchema.plugin(cohortScopePlugin, { modelName: "SavedNationalAudit" });
 
 export const SavedNationalAudit: Model<ISavedNationalAudit> =
   models.SavedNationalAudit ||

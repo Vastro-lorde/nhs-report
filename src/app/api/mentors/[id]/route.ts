@@ -8,6 +8,7 @@ import { UserRole } from "@/lib/constants";
 import { requireAuth, requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
+import { removeMembersFromCohort } from "@/services/cohort.service";
 import { normalizeMentorLocations } from "@/services/mentor-coverage.service";
 
 type Params = { params: Promise<{ id: string }> };
@@ -207,8 +208,9 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   if (permanent) {
     const targetUser = await User.findById(id).select("name").lean();
-    await User.findByIdAndDelete(id);
-    await Mentor.deleteOne({ authId: id });
+    // Removes the mentor from this cohort; their login is only deleted when
+    // they belong to no other cohort, so earlier cohorts keep their history.
+    await removeMembersFromCohort("mentor", [id]);
     void logActivity({
       session,
       action: "PERMANENT_DELETE_MENTOR",

@@ -12,6 +12,7 @@ import { sendMailWithRetry, delay } from "@/lib/mailer";
 import { newMentorEmailTemplate } from "@/lib/email-templates";
 import { env } from "@/lib/env";
 import { normalizeMentorLocations } from "@/services/mentor-coverage.service";
+import { checkEmailForNewMember, removeMembersFromCohort, reuseUserForMembership } from "@/services/cohort.service";
 
 interface BulkMentorInput {
     name: string;
@@ -92,9 +93,11 @@ export async function POST(request: NextRequest) {
                     throw new Error(`Name is missing for email ${email}`);
                 }
 
-                const existing = await User.findOne({ email });
-                if (existing) {
-                    throw new Error(`User with email ${email} already exists`);
+                // Returning people from an earlier cohort keep their login and
+                // password; anyone already in this cohort is refused.
+                const emailCheck = await checkEmailForNewMember(email);
+                if (!emailCheck.ok) {
+                    throw new Error(`${email}: ${emailCheck.error}`);
                 }
 
                 const rawPassword = generatePassword();
@@ -113,14 +116,19 @@ export async function POST(request: NextRequest) {
                     results.warnings.push(`${email}: ${locations.warnings.join(" ")}`);
                 }
 
-                const newUser = await User.create({
-                    name: mentorInput.name.trim(),
-                    email: email,
-                    password: hashedPassword,
-                    phone: mentorInput.phone?.trim() || "",
-                    role: UserRole.MENTOR,
-                    active: true,
-                });
+                const newUser = emailCheck.existingUser
+                    ? await reuseUserForMembership(emailCheck.existingUser, "mentor", emailCheck.scope, {
+                        name: mentorInput.name,
+                        phone: mentorInput.phone,
+                    })
+                    : await User.create({
+                        name: mentorInput.name.trim(),
+                        email: email,
+                        password: hashedPassword,
+                        phone: mentorInput.phone?.trim() || "",
+                        role: UserRole.MENTOR,
+                        active: true,
+                    });
 
                 await Mentor.create({
                     authId: newUser._id,
@@ -136,12 +144,15 @@ export async function POST(request: NextRequest) {
                     env.NEXTAUTH_URL()
                 );
 
-                await sendMailWithRetry({
-                    to: email,
-                    subject: emailContent.subject,
-                    text: emailContent.text,
-                    html: emailContent.html,
-                });
+                // The welcome email carries a new password — returning people keep theirs.
+                if (!emailCheck.existingUser) {
+                    await sendMailWithRetry({
+                        to: email,
+                        subject: emailContent.subject,
+                        text: emailContent.text,
+                        html: emailContent.html,
+                    });
+                }
 
                 results.successful++;
 
@@ -196,18 +207,13 @@ export async function DELETE(request: NextRequest) {
             return jsonOk({ success: true, deletedCount: 0 });
         }
 
-        const deleteResult = await User.deleteMany({
-            _id: { $in: idsToDelete },
-            role: UserRole.MENTOR
-        });
-
-        await Mentor.deleteMany({
-            authId: { $in: idsToDelete }
-        });
+        // Removes their mentor profile from this cohort; a login is only deleted
+        // when the person belongs to no other cohort, so history is preserved.
+        const result = await removeMembersFromCohort("mentor", idsToDelete);
 
         return jsonOk({
             success: true,
-            deletedCount: deleteResult.deletedCount
+            deletedCount: result.profilesRemoved
         });
     } catch (globalErr: unknown) {
         console.error("Mentor Bulk Delete Error:", globalErr);

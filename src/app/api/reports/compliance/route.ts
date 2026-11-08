@@ -130,8 +130,9 @@ export const GET = withExceptionLog("GET /api/reports/compliance", async (reques
 
     // Deactivated mentors are not expected to report.
     const users = await User.find({
+        // Membership comes from the mentor profile, not User.role (which may
+        // have changed since, when browsing an earlier cohort).
         _id: { $in: mentorDocs.map((m) => m.authId) },
-        role: UserRole.MENTOR,
         active: true,
     })
         .select("name email phone")

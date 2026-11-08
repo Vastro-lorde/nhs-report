@@ -4,6 +4,7 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { FellowInviteStatus } from "@/lib/constants";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IFellow extends Document {
     mentor: Types.ObjectId;
@@ -15,6 +16,8 @@ export interface IFellow extends Document {
     authId?: Types.ObjectId;
     inviteStatus: FellowInviteStatus;
     invitedAt?: Date;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -38,8 +41,15 @@ const FellowSchema = new Schema<IFellow>(
     { timestamps: true }
 );
 
-// Email is unique only among fellows that actually have one (sparse).
-FellowSchema.index({ email: 1 }, { unique: true, sparse: true });
+// Email is unique within a cohort, and only among fellows that actually have
+// one. A fellow carried into the next cohort keeps their email, so this must
+// be cohort-scoped (the legacy global `email_1` index is dropped on bootstrap).
+FellowSchema.index(
+    { cohort: 1, email: 1 },
+    { unique: true, partialFilterExpression: { email: { $type: "string" } } },
+);
+
+FellowSchema.plugin(cohortScopePlugin, { modelName: "Fellow" });
 
 export const Fellow: Model<IFellow> =
     models.Fellow || mongoose.model<IFellow>("Fellow", FellowSchema);

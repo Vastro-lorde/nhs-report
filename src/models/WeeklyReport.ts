@@ -4,6 +4,7 @@
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import { ReportStatus, OUTREACH_TYPES, CHALLENGE_TYPES } from "@/lib/constants";
 import { REPORT_SEASONS, DEFAULT_REPORT_SEASON, type ReportSeason } from "@/lib/report-season";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 // ─── Report comment sub-document ────────────
 export interface IReportComment {
@@ -63,6 +64,8 @@ export interface IWeeklyReport extends Document {
   reviewedBy?: Types.ObjectId;
   reviewNotes?: string;
   comments: IReportComment[];
+  /** Cohort this record belongs to (stamped by the cohort plugin). */
+  cohort?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -151,6 +154,8 @@ const WeeklyReportSchema = new Schema<IWeeklyReport>(
 
 // One report per mentor per week
 WeeklyReportSchema.index({ mentor: 1, weekKey: 1 }, { unique: true });
+
+WeeklyReportSchema.plugin(cohortScopePlugin, { modelName: "WeeklyReport" });
 
 export const WeeklyReport: Model<IWeeklyReport> =
   models.WeeklyReport ||

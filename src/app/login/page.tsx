@@ -44,7 +44,13 @@ function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password");
+      if (result.code === "cohort_not_started") {
+        setError("Your account is set up for the next cohort, which hasn't started yet. You'll be able to sign in once it goes live.");
+      } else if (result.code === "not_in_cohort") {
+        setError("Your account isn't part of the current cohort. Please contact your programme administrator.");
+      } else {
+        setError("Invalid email or password");
+      }
     } else {
       router.push(callbackUrl);
     }

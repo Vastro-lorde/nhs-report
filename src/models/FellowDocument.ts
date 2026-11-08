@@ -3,6 +3,7 @@
    Represents a document uploaded by a mentor for their fellow.
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface IFellowDocument extends Document {
     fellow: Types.ObjectId;
@@ -11,6 +12,8 @@ export interface IFellowDocument extends Document {
     deleted: boolean;
     deletedAt?: Date | null;
     deletedBy?: Types.ObjectId | null;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -26,6 +29,8 @@ const FellowDocumentSchema = new Schema<IFellowDocument>(
     },
     { timestamps: true }
 );
+
+FellowDocumentSchema.plugin(cohortScopePlugin, { modelName: "FellowDocument" });
 
 export const FellowDocument: Model<IFellowDocument> =
     models.FellowDocument || mongoose.model<IFellowDocument>("FellowDocument", FellowDocumentSchema);

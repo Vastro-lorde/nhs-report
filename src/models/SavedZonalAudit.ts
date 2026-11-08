@@ -5,12 +5,15 @@
    ────────────────────────────────────────── */
 import mongoose, { Schema, Document, Model, Types, models } from "mongoose";
 import type { IZonalAuditReport } from "@/types/zonal-audit";
+import { cohortScopePlugin } from "@/lib/cohort-plugin";
 
 export interface ISavedZonalAudit extends Document {
     coordinator: Types.ObjectId;
     zoneName: string;
     month: string; // e.g., "2025-08"
     auditData: IZonalAuditReport;
+    /** Cohort this record belongs to (stamped by the cohort plugin). */
+    cohort?: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -30,6 +33,8 @@ SavedZonalAuditSchema.index(
     { coordinator: 1, month: 1 },
     { unique: true }
 );
+
+SavedZonalAuditSchema.plugin(cohortScopePlugin, { modelName: "SavedZonalAudit" });
 
 export const SavedZonalAudit: Model<ISavedZonalAudit> =
     models.SavedZonalAudit || mongoose.model<ISavedZonalAudit>("SavedZonalAudit", SavedZonalAuditSchema);

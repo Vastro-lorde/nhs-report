@@ -5,6 +5,7 @@
    ────────────────────────────────────────── */
 import { NextResponse, type NextRequest } from "next/server";
 import { getMaintenanceConfig } from "@/lib/maintenance";
+import { COHORT_VIEW_COOKIE, CohortStatus, decodeCohortViewCookie } from "@/lib/cohort";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -103,7 +104,32 @@ export function middleware(req: NextRequest) {
   // The landing page ("/") must stay publicly viewable (exact match only, so
   // it doesn't accidentally allow every route).
   if (pathname === "/" || publicPaths.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    // An admin's "viewing cohort X" choice must not outlive their session on a
+    // shared machine — the login page is where every session starts.
+    if (pathname === "/login" && req.cookies.has(COHORT_VIEW_COOKIE)) {
+      response.cookies.delete(COHORT_VIEW_COOKIE);
+    }
+    return response;
+  }
+
+  // An admin browsing an archived cohort is in read-only mode: refuse writes
+  // up front with a clear message (the data layer enforces this too). The
+  // cohort endpoints stay open so the admin can switch back.
+  const cohortView = decodeCohortViewCookie(req.cookies.get(COHORT_VIEW_COOKIE)?.value);
+  if (
+    cohortView?.status === CohortStatus.ARCHIVED &&
+    pathname.startsWith("/api/") &&
+    !pathname.startsWith("/api/cohorts") &&
+    !["GET", "HEAD", "OPTIONS"].includes(req.method)
+  ) {
+    return NextResponse.json(
+      {
+        error: "You're viewing an archived cohort, which is read-only. Switch back to the current cohort to make changes.",
+        cohortReadOnly: true,
+      },
+      { status: 423 }
+    );
   }
 
   // Cron routes use bearer token, not session

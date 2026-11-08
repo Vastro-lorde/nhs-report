@@ -8,6 +8,7 @@ import { UserRole } from "@/lib/constants";
 import { requireRole } from "@/lib/auth-guard";
 import { jsonOk, jsonError, parseBody } from "@/lib/api-helpers";
 import { logActivity } from "@/lib/activity-logger";
+import { removeMembersFromCohort } from "@/services/cohort.service";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -107,9 +108,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
                     409
                 );
             }
-            await Coordinator.deleteOne({ _id: coordDoc._id });
         }
-        const deletedUser = await User.findByIdAndDelete(id).select("name").lean();
+        const deletedUser = await User.findById(id).select("name").lean();
+        // Removes the coordinator from this cohort; their login is only deleted
+        // when they belong to no other cohort, so earlier cohorts keep their history.
+        await removeMembersFromCohort("coordinator", [id]);
         void logActivity({
           session,
           action: "PERMANENT_DELETE_COORDINATOR",

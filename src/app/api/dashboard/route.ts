@@ -9,6 +9,7 @@ import { UserRole, AlertStatus, ReportStatus, resolveMentorStates, resolveStateF
 import { requireAuth } from "@/lib/auth-guard";
 import { jsonOk, jsonError } from "@/lib/api-helpers";
 import { currentWeekKey, isoWeekKey } from "@/lib/date-helpers";
+import { memberUserIds } from "@/services/cohort.service";
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,8 +59,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const baseMentorFilter: any = { role: UserRole.MENTOR };
-    if (mentorAuthIds) baseMentorFilter._id = { $in: mentorAuthIds };
+    // A mentor is whoever holds a mentor profile in this cohort (not User.role,
+    // which would count people who have left or been promoted since).
+    const baseMentorFilter: any = { _id: { $in: mentorAuthIds ?? (await memberUserIds("mentor")) } };
 
     const activeMentorFilter: any = { ...baseMentorFilter, active: true };
 
