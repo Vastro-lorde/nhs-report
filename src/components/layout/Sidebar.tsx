@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   ClipboardList,
+  ClipboardCheck,
   CalendarClock,
   CalendarPlus,
   CalendarCheck,
@@ -67,6 +68,13 @@ const NAV_ITEMS = [
     icon: FileText,
     description: "Browse, filter, and inspect weekly mentor reports",
     roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MENTOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
+  },
+  {
+    label: "Report Compliance",
+    href: "/reports/compliance",
+    icon: ClipboardCheck,
+    description: "See mentors who haven't submitted weekly reports and fellows with no session recorded",
+    roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ZONAL_DESK_OFFICER, UserRole.ME_OFFICER, UserRole.TEAM_RESEARCH_LEAD],
   },
   {
     label: "Monthly Report",

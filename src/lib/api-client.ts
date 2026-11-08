@@ -233,6 +233,11 @@ export const api = {
       request<{ reportSeason: ReportSeason }>("/api/reports/season", { cache: "no-store" }),
     history: (id: string) =>
       request<ReportHistoryEntry[]>(`/api/reports/${id}/history`),
+    /** Mentors missing weekly reports and fellows with no recorded sessions, for a week range. */
+    compliance: (params?: Record<string, string>) =>
+      request<ReportComplianceResponse>(`/api/reports/compliance?${new URLSearchParams(params).toString()}`, {
+        cache: "no-store",
+      }),
 
     comments: {
       list: (reportId: string) =>
@@ -796,6 +801,48 @@ export interface FellowSessionItem extends MentorshipSessionInput {
   reportStatus: string;
   /** Absent on reports predating seasons (treat as regular). */
   season?: ReportSeason;
+}
+
+/** A mentor with at least one week in the requested range lacking a submitted report. */
+export interface ComplianceMentorItem {
+  mentorId: string;
+  userId: string;
+  name: string;
+  email: string;
+  phone: string;
+  states: string[];
+  coordinatorName: string;
+  /** Weeks in range the mentor was on the platform for. */
+  expectedWeeks: number;
+  missingWeeks: string[];
+  /** Missing weeks where a draft exists but was never submitted. */
+  draftWeeks: string[];
+  lastSubmittedWeek: string | null;
+  lastSubmittedWeekEnding: string | null;
+}
+
+/** A fellow with no session recorded in any submitted report in the requested range. */
+export interface ComplianceFellowItem {
+  fellowId: string;
+  name: string;
+  lga: string;
+  state: string | null;
+  mentorId: string;
+  mentorName: string;
+  mentorReportedWeeks: number;
+  expectedWeeks: number;
+  /** Whether the mentor filed nothing, or filed reports that left this fellow out. */
+  reason: "mentor_no_report" | "not_in_report";
+  lastSessionDate: string | null;
+}
+
+export interface ReportComplianceResponse {
+  weeks: string[];
+  /** States covered by the caller's scope, for the state filter. */
+  scopeStates: string[];
+  summary: { totalMentors: number; mentorsMissing: number; totalFellows: number; fellowsWithoutSessions: number };
+  mentors: ComplianceMentorItem[];
+  fellows: ComplianceFellowItem[];
 }
 
 export interface FellowSessionsResponse {
