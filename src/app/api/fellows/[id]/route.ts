@@ -6,6 +6,7 @@ import { Mentor } from "@/models/Mentor";
 import { UserRole, resolveMentorStates } from "@/lib/constants";
 import { logActivity } from "@/lib/activity-logger";
 import { ensureMentorCoversLga, resolveFellowLga } from "@/services/mentor-coverage.service";
+import { cascadeFellowRename } from "@/services/fellow-rename.service";
 
 export async function PATCH(
     request: Request,
@@ -44,6 +45,7 @@ export async function PATCH(
 
         const body = await request.json();
 
+        const previousName = fellow.name;
         if (body.name !== undefined) fellow.name = body.name;
         if (body.gender !== undefined) fellow.gender = body.gender;
         if (body.qualification !== undefined) fellow.qualification = body.qualification;
@@ -63,6 +65,10 @@ export async function PATCH(
         }
 
         await fellow.save();
+
+        if (fellow.name !== previousName) {
+            await cascadeFellowRename(fellow._id, fellow.mentor, previousName, fellow.name);
+        }
 
         void logActivity({ session, action: "UPDATE_FELLOW", targetType: "Fellow", targetId: id, targetName: fellow.name });
         return NextResponse.json(fellow);
